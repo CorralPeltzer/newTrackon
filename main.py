@@ -22,7 +22,7 @@ def rndrtracker(t):
         else:
             print "<td>-</td>" % s
 
-    r = s['answer']
+    r = s['response']
     cell(t)
     cell(s['latency'])
     cell(r['interval'])
