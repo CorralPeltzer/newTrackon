@@ -1,0 +1,5 @@
+cron:
+- url: /_ah/queue/update-trackers
+  description: Update tracker status
+  schedule: every 10 minutes
+

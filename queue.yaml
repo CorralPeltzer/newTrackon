@@ -1,0 +1,9 @@
+queue:
+- name: new-trackers
+  rate: 2/m # One every ~30 sec (max req timeout)
+  bucket_size: 1 # Try to avoid races
+
+- name: update-trackers
+  rate: 6/m
+  bucket_size: 5 # No races here
+
