@@ -13,7 +13,7 @@ def main():
     if 'tracker-address' in args:
         t = args['tracker-address'].value
         (r, url) = tracker.check(t)
-        tracker.update(t, data)
+        tracker.update(t, r)
         if 'error' in r:
             info("Update failed for %s: %s" % (t, r['error']))
         
