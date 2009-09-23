@@ -1,0 +1,22 @@
+table.sortable thead {
+    background-color:#eee;
+    color:#666666;
+    font-weight: bold;
+    cursor: default;
+}
+body {
+    background-color: #c1b89b;
+}
+td, th, table {
+    font-family:Arial,sans-serif;
+    border: 1px solid black;
+}
+td, th {
+    padding: 0.05em 0.4em;
+}
+td {
+    background-color: #ddd;
+}
+a {
+    text-decoration: none;
+}
