@@ -12,13 +12,10 @@ def main():
 
     if 'tracker-address' in args:
         t = args['tracker-address'].value
-        (success, data, url) = tracker.check(t)
-        mc.set(t, data, namespace="status")
-        tim = int(time())
-        mc.set("%s!%d" % (t, tim), data, namespace="logs")
-        l = mc.get(t, namespace="logs") or []
-        l.insert(0, tim)
-        mc.set(t, l[:64]) # Keep 64 samples
+        (r, url) = tracker.check(t)
+        tracker.update(t, data)
+        if 'error' in r:
+            info("Update failed for %s: %s" % (t, r['error']))
         
     else:
         for t in (mc.get('tracker-list') or []):

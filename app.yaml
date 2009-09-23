@@ -1,4 +1,4 @@
-application: trackon
+application: track-on
 version: 1
 runtime: python
 api_version: 1
@@ -13,7 +13,6 @@ handlers:
 
 - url: /static/
   static_dir: static
-  upload: static/(.*)
 
 - url: /favicon.ico
   static_files: static/imgs/favicon.ico
