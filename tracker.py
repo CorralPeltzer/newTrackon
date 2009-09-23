@@ -19,30 +19,35 @@ def check(addr):
     """Check if a tracker is up."""
     thash = trackerhash(addr) # The info_hash we will use for this tracker 
     requrl = addr+genqstr(thash)
+    d = {}
     try:
         t1 = time()
         r = fetch(requrl, deadline=10)
-        t2 = time()
-        latency = t2 - t1
+        d['latency'] = time() - t1
     except FetchError, e:
-        return ({'error': "Fetchurl error: %s" % str(e)}, requrl)
+        d['error'] = "Fetchurl error: %s" % str(e)
+        d['latency'] = time() - t1
+        return (d, requrl)
+
 
     if r.status_code != 200:
-        return ({'error': "Unexpected HTTP status: %d" % r.status_code}, requrl)
+        d['error'] = "Unexpected HTTP status: %d" % r.status_code
     
-    if not r.content:
-        return ({'error': "Got empty HTTP response."}, requrl)
+    elif not r.content:
+        d['error'] = "Got empty HTTP response."
 
-    try:
-        be = bdecode(r.content)
-    except:
-        return ({'error': "Couldn't bdecode response: %s." % r.content}, requrl)
+    else:
+        try:
+            d['response'] = bdecode(r.content)
+        except:
+            d['error'] = "Couldn't bdecode response: %s." % r.content
 
-    if 'failure reason' in be:
-        return ({'error': "Tracker failure reason: %s." % be['failure reason']}, requrl)
+    if 'response' in d and 'failure reason' in d['response']:
+        d['error'] = "Tracker failure reason: %s." % be['failure reason']
+
     # TODO Do a more extensive check of what was returned
 
-    return ({'response': be, 'latency': latency } , requrl) 
+    return (d, requrl) 
 
 
 def update(t, info):
