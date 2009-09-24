@@ -25,7 +25,7 @@ def rndrtracker(t):
 
 
     cell(t.split('/')[2]) # Domain ('Tracker')
-    cell("%.4f"%s['latency'])
+    cell("%.3f"%s['latency'])
     cell("%dm ago" % ((int(time()) - s['updated']) / 60) )
     if 'error' in s:
         cell('<b title="%s">Error!</b>'%s['error']) # Possible injection!
