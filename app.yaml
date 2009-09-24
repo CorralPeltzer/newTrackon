@@ -8,9 +8,6 @@ handlers:
 - url: /
   script: src/main.py
 
-- url: /test
-  script: src/test.py
-
 - url: /static/
   static_dir: static
 
