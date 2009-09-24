@@ -1,8 +1,8 @@
-from cgi import parse_qs, FieldStorage
-from logging import debug, error, info
+from cgi import FieldStorage
+from logging import error
 from google.appengine.api import memcache as mc
 from google.appengine.api.labs import taskqueue as tq
-from time import gmtime, time
+from time import time
 
 """
 Trackon

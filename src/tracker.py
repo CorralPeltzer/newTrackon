@@ -25,7 +25,7 @@ def check(addr):
         r = fetch(requrl, deadline=10)
         d['latency'] = time() - t1
     except FetchError, e:
-        d['error'] = "Fetchurl error: %s" % str(e)
+        d['error'] = "Fetchurl error: %s" % repr(e)
         d['latency'] = time() - t1
         return (d, requrl)
 
@@ -71,10 +71,3 @@ def add(t, info):
     #task = tq.Task(params=params)
     #update_queue.add(task)
 
-##############################
-class Tracker(object):
-    def __init__(self, announce, name=None, homepage=None):
-        self.announce = announce
-        self.name = name
-        if not name:
-            self.name = announce # Todo - extract domain name

@@ -1,6 +1,5 @@
 # Written by Petru Paler
 # Some bits removed by uriel, all bugs are his fault.
-# see LICENSE.txt for license information
 
 def decode_int(x, f):
     f += 1
