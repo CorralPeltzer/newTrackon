@@ -69,7 +69,6 @@ def main():
                 print "<tr>"
                 rndrtracker(t)
                 print "</tr>"
-                #print "<tr><td>%s - %s</td></tr>\n" % (t, mc.get(t))
 
         print "</table>"
         print "<br>"
@@ -77,7 +76,7 @@ def main():
 
         print "<p>Extremely experimental, <b>please do not post to torrent freak or any public forum yet! ;)</b></p>"
         print "<p>If you post a new tracker, please allow for a few minutes while we gather statistics before it is added to the list.</p>"
-        print "<p><a href='http://uriel.cat-v.org'>Contact for comments and bug reports</a>.</p>"
+        print "<p><a href='http://uriel.cat-v.org/contact'>Contact for comments and bug reports</a>.</p>"
         print "<br><img src='http://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='The Trackon' alt='The Trackon' />"
 
     rndpage(html)
