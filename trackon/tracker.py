@@ -2,7 +2,7 @@ from hashlib import md5
 from google.appengine.api.urlfetch import fetch, Error as FetchError
 from google.appengine.api import memcache as mc
 from time import time
-from bencode import bdecode
+from trackon.bencode import bdecode
 from google.appengine.api.labs import taskqueue as tq
 
 update_queue = tq.Queue('update-trackers')
@@ -20,6 +20,8 @@ def check(addr):
     thash = trackerhash(addr) # The info_hash we will use for this tracker 
     requrl = addr+genqstr(thash)
     d = {}
+    d['name'] = addr.split('/')[2] # Use domain name by default
+    d['announce_url'] = addr
     try:
         t1 = time()
         r = fetch(requrl, deadline=10)

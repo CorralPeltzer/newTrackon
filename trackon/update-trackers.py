@@ -3,7 +3,7 @@ from cgi import parse_qs, FieldStorage
 from time import time
 from google.appengine.api.labs import taskqueue as tq
 from google.appengine.api import memcache as mc
-import tracker
+from trackon import tracker
 
 update_queue = tq.Queue('update-trackers')
 

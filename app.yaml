@@ -1,12 +1,12 @@
 application: track-on
-version: 1
+version: 2
 runtime: python
 api_version: 1
 
 handlers:
 
 - url: /
-  script: src/main.py
+  script: trackon/main.py
 
 - url: /static/
   static_dir: static
@@ -16,12 +16,12 @@ handlers:
   upload: static/imgs/favicon.ico
 
 - url: /_ah/queue/new-trackers
-  script: src/new-trackers.py
-  login: admin # Dev server is broken
+  script: trackon/new-trackers.py
+  #login: admin # Dev server is broken
 
 - url: /_ah/queue/update-trackers
-  script: src/update-trackers.py
-  login: admin
+  script: trackon/update-trackers.py
+  #login: admin
 
 - url: /app-admin/
   script: $PYTHON_LIB/google/appengine/ext/admin

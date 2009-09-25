@@ -2,7 +2,7 @@ from logging import debug, error, info
 from cgi import parse_qs, FieldStorage
 from google.appengine.api.labs import taskqueue as tq
 from google.appengine.api import memcache as mc
-import tracker
+from trackon import tracker
 
 new_queue = tq.Queue('new-trackers')
 
