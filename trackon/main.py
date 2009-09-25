@@ -18,18 +18,30 @@ tpl_lookup = TemplateLookup(directories=['../tpl/'])
 
 def main():
      
+    new_tracker_error = None
     req = FieldStorage()
     if 'tracker-address' in req:
+        from urlparse import urlparse 
         trdrs = req['tracker-address'].value.split()
         for t in trdrs:
-            # TODO: perhaps validate that we got at least a valid url?
-            # XXX Need some kind of rate-limiting to avoid abuse / DoS
-            task = tq.Task(params={'tracker-address': t, 'attempts': 0})
-            new_trackers_queue.add(task)
+            u = urlparse(t)
+            if (u.scheme in ['http', 'https']) and u.netloc and u.path:
+                if u.port not in [80, 443]:
+                    new_tracker_error = "Only trackers running on ports 80 or 443 are supported!"
+                else:
+                    t = "%s://%s%s" % (u.scheme, u.netloc, u.path)
 
-        print "Status: 303 See Other"
-        print "Location: /\n"
-        return
+                    task = tq.Task(params={'tracker-address': t, 'attempts': 0})
+
+                    # XXX Need some kind of rate-limiting to avoid abuse / DoS
+                    new_trackers_queue.add(task)
+
+            else:
+                new_tracker_error = "Invalid URL!"
+        if not new_tracker_error:
+            print "Status: 303 See Other"
+            print "Location: /\n"
+            return
 
 
     print "Content-type: text/html\n"
@@ -43,10 +55,8 @@ def main():
     from mako import exceptions
 
     try:
-        #template = lookup.get_template(uri)
-        #print template.render()
         tpl_main = tpl_lookup.get_template('main.mako')
-        print tpl_main.render(trackers=ts)
+        print tpl_main.render(trackers=ts, new_tracker_error=new_tracker_error)
     except:
         print exceptions.html_error_template().render()
 
