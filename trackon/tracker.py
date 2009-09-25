@@ -1,5 +1,5 @@
 from hashlib import md5
-from google.appengine.api.urlfetch import fetch, Error as FetchError
+from google.appengine.api.urlfetch import fetch, Error as FetchError, DownloadError
 from google.appengine.api import memcache as mc
 from time import time
 from trackon.bencode import bdecode
@@ -20,14 +20,16 @@ def check(addr):
     thash = trackerhash(addr) # The info_hash we will use for this tracker 
     requrl = addr+genqstr(thash)
     d = {}
-    d['name'] = addr.split('/')[2] # Use domain name by default
-    #d['announce_url'] = addr # not really needed, this is the key in memcache
     try:
         t1 = time()
         r = fetch(requrl, deadline=10)
         d['latency'] = time() - t1
+    except DownloadError, e:
+        d['error'] = "Could not reach tracker." # XXX Should find out why!
     except FetchError, e:
         d['error'] = "Fetchurl error: %s" % repr(e)
+    
+    if 'error' in d:
         d['latency'] = time() - t1
         return (d, requrl)
 
@@ -44,8 +46,11 @@ def check(addr):
         except:
             d['error'] = "Couldn't bdecode response: %s." % r.content
 
-    if 'response' in d and 'failure reason' in d['response']:
-        d['error'] = "Tracker failure reason: %s." % be['failure reason']
+    if 'response' in d:
+        if 'failure reason' in d['response']:
+            d['error'] = "Tracker failure reason: %s." % d['response']['failure reason']
+        elif 'peers' not in d['response']:
+            d['error'] = "Invalid response, 'peers' field is missing!"
 
     # TODO Do a more extensive check of what was returned
 
@@ -73,3 +78,10 @@ def add(t, info):
     #task = tq.Task(params=params)
     #update_queue.add(task)
 
+def allinfo():
+    tl = mc.get('tracker-list')
+    ts = {}
+    if tl:
+        ts = mc.get_multi(tl, namespace='status')
+
+    return ts
