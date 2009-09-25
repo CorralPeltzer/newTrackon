@@ -18,16 +18,39 @@
 
 <div class="container_12">
 
+<div class="grid_12">
+    <h1 id=branding><a href="/"><i>Trackon <b><small>Pre-Alpha 2</small></b></i></a></h1>
+</div>
+
+
+<div class="grid_12">
+    <ul class="nav main">
+        <li><a href="/">main</a></li>
+        <li><a href="/api-docs">api</a></li>
+        <li><a href="/faq">faq</a></li>
+        <li><a href="http://repo.cat-v.org/trackon/">source</a></li>
+        <li><a href="http://uriel.cat-v.org/contact">contact</a></li>
+        <li><a>links</a>
+            <ul>
+            <li><a href="http://repo.cat-v.org/atrack/">Atrack</a></li>
+            <li><a href="http://bittrk.appspot.com/">Bittrk</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+
 ${self.body()}
 
-<div class="clear"></div>
 
 <div class="grid_12" id="site_info">
     <div class="box center">
         <p><a href="http://cat-v.org">A cat-v.org production</a> - <i>Because sharing is caring.</i></p>
     </div>
 </div>
+
 <div class="clear"></div>
+
 </div>
 
 </body></html>

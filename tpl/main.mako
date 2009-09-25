@@ -2,19 +2,6 @@
 <%inherit file="base.mako"/>
 <%page cached="False"/>
 
-<div class="grid_12">
-<h1 id=branding><i>Trackon <b><small>Pre-Alpha 2</small></b></i></h1>
-</div>
-
-
-<div class="clear"></div>
-<div class="grid_12">
-    <ul class="nav main">
-        <li><a href="http://repo.cat-v.org/trackon/">source</a></li>
-        <li><a href="http://uriel.cat-v.org/contact">contact</a></li>
-        <li><a href="http://repo.cat-v.org/atrack/">atrack</a></li>
-    </ul>
-</div>
 
 <div class=grid_12>
 <p>Stil experimental, <b>please do not post to torrent freak or any public
@@ -27,9 +14,9 @@ forum yet! ;)</b></p>
         <th>Tracker</th>
         <th>Latency</th>
         <th>Checked</th>
+        <th>Announce</th>
         <th>Up?</th>
         <th>Interval</th>
-        <th>Announce</th>
         <th>...</th>
     </tr></thead>
     % for a in trackers:
@@ -44,12 +31,12 @@ forum yet! ;)</b></p>
             <td><a href="${a}" title="">Link</a></td>
 
         % if 'error' in t:
-            <b title="${t['error']}">Error!</b>
-            <td></td> <td></td> <td></td>
+            <td><b title="${t['error']}">Error!</b></td>
+            <td></td> <td></td>
         % else:
             <% r = t['response'] %>
             <td><b>UP!</b></td>
-            <td>${r['interval']}</td>
+            <td>${r.get('interval', '-')}</td>
             ##cell("%d/%d/%d %d:%d:%d"%(gmtime(s['updated'])[:6]))
             <td>${repr(r)}</td>
         % endif
@@ -62,8 +49,11 @@ forum yet! ;)</b></p>
 
 
 <form method="POST" class=grid_12>
-
     <fieldset class="login">
+
+% if new_tracker_error:
+        <p><b>Could not add tracker: ${new_tracker_error | h}</b></p>
+% endif 
         <input type="text" name="tracker-address" value="" size=64>
         <input type="submit" value="Add Tracker">
     </fieldset>
@@ -74,8 +64,6 @@ forum yet! ;)</b></p>
 <p>If you post a new tracker, please allow for a few minutes while we gather
 statistics before it is added to the list.</p>
 
-<p><a href='http://uriel.cat-v.org/contact'>Contact for comments and bug
-reports</a>.</p>
 </div>
 
 
