@@ -38,7 +38,7 @@ def main():
     if tl:
         ts = mc.get_multi(tl, namespace='status')
         #ts = (t for t in mc.get_multi(tl, namespace='status') if t)
-    error( repr(ts))
+    #error( repr(ts))
 
     from mako import exceptions
 

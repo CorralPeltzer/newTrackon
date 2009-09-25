@@ -21,7 +21,7 @@ def check(addr):
     requrl = addr+genqstr(thash)
     d = {}
     d['name'] = addr.split('/')[2] # Use domain name by default
-    d['announce_url'] = addr
+    #d['announce_url'] = addr # not really needed, this is the key in memcache
     try:
         t1 = time()
         r = fetch(requrl, deadline=10)
