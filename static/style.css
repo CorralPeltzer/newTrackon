@@ -3,12 +3,38 @@ table.sortable thead {
     cursor: default;
 }
 body {
-    background-color: #c1b89b;
+    background-color: #edb;
+    border-top: none;
 }
 td, th, table {
     font-family:Arial,sans-serif;
     border: 1px solid #888;
 }
 a {
+    color: #c1b89b;
+    text-decoration: underline;
     xtext-decoration: none;
+}
+
+dt {
+    font-weight: bold;
+}
+dd {
+    padding-left: 2em;
+    border-bottom: solid 1px #ccc;
+}
+
+.main {
+    font-size: 140%; 
+}
+
+/* Generic classes */
+.center {
+    text-align: center;
+}
+
+/* Specific layout elments */ 
+#branding a {
+    text-decoration: none;
+    color: #333;
 }
