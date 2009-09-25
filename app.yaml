@@ -8,8 +8,18 @@ handlers:
 - url: /
   script: trackon/main.py
 
+# Api
+- url: /api/live
+  script: trackon/api/live.py
+
+
+# Static stuff
 - url: /static/
   static_dir: static
+
+- url: /(api-docs|faq)
+  static_files: static/\1.html
+  upload: static/(.*).html
 
 - url: /favicon.ico
   static_files: static/imgs/favicon.ico
