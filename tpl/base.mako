@@ -17,8 +17,16 @@
 <body>
 
 <div class="container_12">
+
 ${self.body()}
 
+<div class="clear"></div>
+
+<div class="grid_12" id="site_info">
+    <div class="box center">
+        <p><a href="http://cat-v.org">A cat-v.org production</a> - <i>Because sharing is caring.</i></p>
+    </div>
+</div>
 <div class="clear"></div>
 </div>
 

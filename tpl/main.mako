@@ -10,12 +10,16 @@
 <div class="clear"></div>
 <div class="grid_12">
     <ul class="nav main">
-        <li></li>
+        <li><a href="http://repo.cat-v.org/trackon/">source</a></li>
+        <li><a href="http://uriel.cat-v.org/contact">contact</a></li>
+        <li><a href="http://repo.cat-v.org/atrack/">atrack</a></li>
     </ul>
 </div>
 
-<p class=grid_12>Stil experimental, <b>please do not post to torrent freak or any public
+<div class=grid_12>
+<p>Stil experimental, <b>please do not post to torrent freak or any public
 forum yet! ;)</b></p>
+</div>
 
 % if trackers:
 <table cellspacing=0 class='sortable grid_12'>
@@ -34,10 +38,10 @@ forum yet! ;)</b></p>
             <% continue %>
         % endif
         <tr>
-            <td>${t['name']}</td>
+            <td>${a.split('/')[2]}</td>
             <td>${"%.3f" % t['latency']}</td>
             <td>${(int(time()) - t['updated']) / 60}m ago</td>
-            <td><a href="${t['announce_url']}" title="">Link</a></td>
+            <td><a href="${a}" title="">Link</a></td>
 
         % if 'error' in t:
             <b title="${t['error']}">Error!</b>
@@ -75,6 +79,6 @@ reports</a>.</p>
 </div>
 
 
-<div class=grid_12>
+<div class="grid_12 center">
 <img src='http://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='The Trackon' alt='The Trackon' />
 </div>
