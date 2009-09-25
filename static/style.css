@@ -1,6 +1,4 @@
 table.sortable thead {
-    background-color:#eee;
-    color:#666666;
     font-weight: bold;
     cursor: default;
 }
@@ -9,14 +7,8 @@ body {
 }
 td, th, table {
     font-family:Arial,sans-serif;
-    border: 1px solid black;
-}
-td, th {
-    padding: 0.05em 0.4em;
-}
-td {
-    background-color: #ddd;
+    border: 1px solid #888;
 }
 a {
-    text-decoration: none;
+    xtext-decoration: none;
 }

@@ -2,11 +2,23 @@
 <%inherit file="base.mako"/>
 <%page cached="False"/>
 
+<div class="grid_12">
+<h1 id=branding><i>Trackon <b><small>Pre-Alpha 2</small></b></i></h1>
+</div>
 
-<h1><i>Trackon <b><small>Pre-Alpha 2</small></b></i></h1>
+
+<div class="clear"></div>
+<div class="grid_12">
+    <ul class="nav main">
+        <li></li>
+    </ul>
+</div>
+
+<p class=grid_12>Stil experimental, <b>please do not post to torrent freak or any public
+forum yet! ;)</b></p>
 
 % if trackers:
-<table cellspacing=0 class='sortable'>
+<table cellspacing=0 class='sortable grid_12'>
     <thead><tr>
         <th>Tracker</th>
         <th>Latency</th>
@@ -44,23 +56,25 @@
 
 </table>
 
-<br>
 
-<form method="POST">
-    <input type="text" name="tracker-address" value="" size=64>
-    <input type="submit" value="Add Tracker">
+<form method="POST" class=grid_12>
+
+    <fieldset class="login">
+        <input type="text" name="tracker-address" value="" size=64>
+        <input type="submit" value="Add Tracker">
+    </fieldset>
 </form>
 
-<p>Extremely experimental, <b>please do not post to torrent freak or any public
-forum yet! ;)</b></p>
+<div class=grid_12>
 
 <p>If you post a new tracker, please allow for a few minutes while we gather
 statistics before it is added to the list.</p>
 
 <p><a href='http://uriel.cat-v.org/contact'>Contact for comments and bug
 reports</a>.</p>
+</div>
 
-<br>
 
+<div class=grid_12>
 <img src='http://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='The Trackon' alt='The Trackon' />
-
+</div>
