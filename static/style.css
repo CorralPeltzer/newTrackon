@@ -34,6 +34,10 @@ dd {
     text-align: center;
 }
 
+.small {
+    font-size: 75%;
+}
+
 /* Specific layout elments */ 
 #branding a {
     text-decoration: none;
