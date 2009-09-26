@@ -18,9 +18,10 @@ def main():
         else:
             info("Initial tracker check for %s failed: %s" % (url, r['error']))
             attp = int(args['attempts'].value)+1
-            info("Attempt %d scheduled in %d seconds."%(attp, attp*20))
             if attp > 4: # TODO: We should raise the number of attempts?
-                return # We give up XXX log this somewhere
+                info("Giving up after %d attempts to contact: %s" % (attp, addr))
+                return 
+            info("Attempt %d scheduled in %d seconds." % (attp, attp*20))
             params = {'tracker-address': addr, 'attempts': attp }
             task = tq.Task(params=params, countdown=attp*30)
             new_queue.add(task)
