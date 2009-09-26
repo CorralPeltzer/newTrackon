@@ -26,7 +26,7 @@ def main():
         for t in trdrs:
             u = urlparse(t)
             if (u.scheme in ['http', 'https']) and u.netloc and u.path:
-                if u.port not in [80, 443]:
+                if u.port and u.port not in [80, 443]:
                     new_tracker_error = "Only trackers running on ports 80 or 443 are supported!"
                 else:
                     t = "%s://%s%s" % (u.scheme, u.netloc, u.path)
