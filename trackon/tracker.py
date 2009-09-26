@@ -6,6 +6,7 @@ from trackon.bencode import bdecode
 from google.appengine.api.labs import taskqueue as tq
 
 update_queue = tq.Queue('update-trackers')
+new_queue = tq.Queue('new-trackers')
 
 def trackerhash(addr):
     """Generate a 'fake' info_hash to be used with this tracker."""
@@ -70,13 +71,14 @@ def update(t, info):
 
 def add(t, info):
     l = mc.get('tracker-list') or []
-    l.append(t) # XXX Rare race, plus we avoid it by having a single task in bucket.
+    l.append(t) # XXX Rare race, we avoid it by having a single task in bucket.
     mc.set('tracker-list', l)
 
     update(t, info)
-    #params = {'tracker-address': addr}
-    #task = tq.Task(params=params)
-    #update_queue.add(task)
+
+def new(t):
+    task = tq.Task(params={'tracker-address': t, 'attempts': 0})
+    new_queue.add(task)
 
 def allinfo():
     tl = mc.get('tracker-list')
