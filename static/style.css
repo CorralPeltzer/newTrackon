@@ -3,6 +3,7 @@ table.sortable thead {
     cursor: default;
 }
 body {
+    font-size: 0.75em; 
     background-color: #edb;
     border-top: none;
 }
