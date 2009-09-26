@@ -4,6 +4,10 @@
 
 
 <div class=grid_12>
+<h2 id=page-heading>Tracking the Trackers</h2>
+
+<p>Trackon is a service to monitor the status and health of existing open and public trackers that anyone can use.</p>
+
 <p>Stil experimental, <b>please do not post to torrent freak or any public
 forum yet! ;)</b></p>
 </div>

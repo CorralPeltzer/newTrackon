@@ -12,7 +12,7 @@
     <dt>GET /api/live</dt>
     <dd>Returns a new-line delimited list announce URLs of currenlty active and responding trackers.</dd>
 
-    <dt>GET /api/trackers</dt>
+    <dt>GET /api/trackers.json</dt>
     <dd>Returns a JSON object with all the information associated with all known trackers, the specific infomration included is still subject to change.</dd>
 </dl>
 

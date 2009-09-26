@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<title>The Trackons Lair</title>
+<title>Trackon's Lair</title>
 <link rel="stylesheet" type="text/css" href="/static/css/reset.css" media="screen">
 <link rel="stylesheet" type="text/css" href="/static/css/text.css" media="screen">
 <link rel="stylesheet" type="text/css" href="/static/css/grid.css" media="screen">

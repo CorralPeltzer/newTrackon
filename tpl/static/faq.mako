@@ -12,7 +12,6 @@
     <dt>What is the picture in the main page?</dt>
     <dd>It is part of "<i>The Nine Dragons</i>" Handscroll by Chen Rong, a painter of the Southern Song Dynastyhalf of the 13th century China. It is dated to 1244. Or anyway this is what Wikipedia claims.</dd>
 
-
 </dl>
 
 </div>
