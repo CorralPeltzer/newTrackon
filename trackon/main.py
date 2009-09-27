@@ -1,6 +1,5 @@
 from cgi import FieldStorage
 from google.appengine.api import memcache as mc
-from google.appengine.api.labs import taskqueue as tq
 from mako.template import Template
 from mako.lookup import TemplateLookup
 from mako.exceptions import html_error_template

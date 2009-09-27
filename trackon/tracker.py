@@ -1,9 +1,9 @@
 from hashlib import md5
+from time import time
 from google.appengine.api.urlfetch import fetch, Error as FetchError, DownloadError
 from google.appengine.api import memcache as mc
-from time import time
-from trackon.bencode import bdecode
 from google.appengine.api.labs import taskqueue as tq
+from trackon.bencode import bdecode
 
 update_queue = tq.Queue('update-trackers')
 new_queue = tq.Queue('new-trackers')

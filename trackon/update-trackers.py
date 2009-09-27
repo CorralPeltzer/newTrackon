@@ -1,12 +1,12 @@
-from logging import debug, error, info
 from cgi import FieldStorage
+from logging import debug, error, info
 from time import time
 from google.appengine.api.labs import taskqueue as tq
 from trackon import tracker
 
 update_queue = tq.Queue('update-trackers')
-MAX_MIN_INTERAVAL = 60*60*10
-DEFAULT_CHECK_INTERVAL = 60*15
+MAX_MIN_INTERAVAL = 60*60*5
+DEFAULT_CHECK_INTERVAL = 60*10
 
 
 def main():
