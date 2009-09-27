@@ -8,6 +8,10 @@ handlers:
 - url: /
   script: trackon/main.py
 
+- url: /admin
+  script: trackon/admin.py
+  login: admin
+
 # Api
 - url: /api/live
   script: trackon/api/live.py
