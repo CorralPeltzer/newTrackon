@@ -7,7 +7,7 @@ from google.appengine.api.labs import taskqueue as TQ
 from trackon.bencode import bdecode
 
 update_queue = TQ.Queue('update-trackers')
-new_queue = TQ.Queue('new-trackers')
+incoming_queue = TQ.Queue('new-trackers')
 
 def trackerhash(addr):
     """Generate a 'fake' info_hash to be used with this tracker."""
@@ -79,8 +79,9 @@ def add(t, info):
     debug("Added tracker: %s"%t)
 
 def incoming(t):
+    """Add a tracker to the list of trackers to check before adding to the proper tracker list"""
     task = TQ.Task(params={'tracker-address': t, 'attempts': 0})
-    new_queue.add(task)
+    incoming_queue.add(task)
 
 def allinfo():
     tl = MC.get('tracker-list')

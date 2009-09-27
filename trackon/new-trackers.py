@@ -3,7 +3,7 @@ from logging import debug, error, info
 from google.appengine.api.labs import taskqueue as tq
 from trackon import tracker
 
-new_queue = tq.Queue('new-trackers')
+incoming_queue = tq.Queue('new-trackers')
 
 def main():
     args = FieldStorage()
@@ -22,7 +22,7 @@ def main():
             info("Attempt %d scheduled in %d seconds." % (attp, attp*20))
             params = {'tracker-address': addr, 'attempts': attp }
             task = tq.Task(params=params, countdown=attp*30)
-            new_queue.add(task)
+            incoming_queue.add(task)
 
 
 if __name__ == '__main__':
