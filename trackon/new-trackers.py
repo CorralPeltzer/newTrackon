@@ -12,7 +12,6 @@ def main():
         (r, url) = tracker.check(addr)
         debug("Fetching %s"%url)
         if 'error' not in r:
-            debug("Added tracker: %s"%addr)
             tracker.add(addr, r)
         else:
             info("Initial tracker check for %s failed: %s" % (url, r['error']))
