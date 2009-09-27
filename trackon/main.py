@@ -48,7 +48,7 @@ def main():
 
 
     try:
-        tpl_main = tpl_lookup.get_template('main.mako')
+        tpl_main = tpl_lookup.get_template('main.mako') # TODO: cache
         print tpl_main.render(trackers=ts, new_tracker_error=new_tracker_error)
     except:
         print html_error_template().render()
