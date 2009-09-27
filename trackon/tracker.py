@@ -1,3 +1,4 @@
+from logging import debug, error, info
 from hashlib import md5
 from time import time
 from google.appengine.api.urlfetch import fetch, Error as FetchError, DownloadError
@@ -64,19 +65,27 @@ def update(t, info):
     info['updated'] = tim
     MC.set(t, info, namespace="status")
 
+    # Add t to cache list in case we are new or fell off
+    lc = MC.get('tracker-list') or []
+    if t not in lc:
+        lc.append(t) # XXX Race with add()
+        MC.set('tracker-list', lc)
+
+
     # Status log 
     MC.set("%s!%d" % (t, tim), info, namespace="logs")
     l = MC.get(t, namespace="logs") or []
     l.insert(0, tim)
     MC.set(t, l[:64], namespace="logs") # Keep 64 samples
 
-def add(t, info):
-    l = MC.get('tracker-list') or []
-    l.append(t) # XXX Rare race, we avoid it by having a single task in bucket.
-    MC.set('tracker-list', l)
 
+def add(t, info):
     update(t, info)
     debug("Added tracker: %s"%t)
+    
+    # Persist...
+    tl = DS.Entity('Tracker', name=t)
+    DS.Put(tl)
 
 def incoming(t):
     """Add a tracker to the list of trackers to check before adding to the proper tracker list"""
@@ -85,8 +94,24 @@ def incoming(t):
 
 def allinfo():
     tl = MC.get('tracker-list')
-    ts = {}
-    if tl:
-        ts = MC.get_multi(tl, namespace='status')
 
-    return ts
+    if not tl:
+        # Fresh install or tracker-list fell off memcache
+        # Try to recover it from datastore
+        q = DS.Query('Tracker', keys_only=True)
+        tl = [k.name() for k in q.Get(100)]
+
+    td = MC.get_multi(tl, namespace='status')
+
+    # Look for any trackers that might have fallen from memcache
+    for t in tl:
+        if t not in td:
+            schedule_update(t)
+
+    return td
+
+def schedule_update(t):
+    params = {'tracker-address': t}
+    task = TQ.Task(params=params)
+    update_queue.add(task)
+

@@ -1,5 +1,4 @@
 from cgi import FieldStorage
-from google.appengine.api import memcache as mc
 from mako.template import Template
 from mako.lookup import TemplateLookup
 from mako.exceptions import html_error_template
@@ -29,7 +28,7 @@ def main():
                 else:
                     t = "%s://%s%s" % (u.scheme, u.netloc, u.path)
                     # XXX Need some kind of rate-limiting to avoid abuse / DoS
-                    tracker.new(t)
+                    tracker.incoming(t)
             else:
                 new_tracker_error = "Invalid URL!"
 
@@ -40,11 +39,7 @@ def main():
 
 
     print "Content-type: text/html\n"
-    tl = mc.get('tracker-list')
-    ts = {}
-    if tl:
-        ts = mc.get_multi(tl, namespace='status')
-
+    ts = tracker.allinfo() 
 
     try:
         tpl_main = tpl_lookup.get_template('main.mako') # TODO: cache
