@@ -19,7 +19,7 @@
 <div class="container_12">
 
 <div class="grid_12">
-    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Alpha 3</span></i></a></h1>
+    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Alpha 4</span></i></a></h1>
 </div>
 
 

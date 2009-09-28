@@ -3,7 +3,7 @@ from logging import debug, error, info
 from time import time
 from trackon import tracker
 
-MAX_MIN_INTERAVAL = 60*60*5
+MAX_MIN_INTERVAL = 60*60*5
 DEFAULT_CHECK_INTERVAL = 60*10
 
 
