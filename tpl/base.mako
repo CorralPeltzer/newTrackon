@@ -27,6 +27,7 @@
     <ul class="nav main">
         <li><a href="/">main</a></li>
         <li><a href="/api-docs">api</a></li>
+        <li><a href="/incoming-log">incoming</a></li>
         <li><a href="/faq">faq</a></li>
         <li><a href="http://repo.cat-v.org/trackon/">source</a></li>
         <li><a href="http://uriel.cat-v.org/contact">contact</a></li>

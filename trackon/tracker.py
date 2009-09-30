@@ -6,6 +6,7 @@ from google.appengine.api import memcache as MC
 from google.appengine.api import datastore as DS
 from google.appengine.api.labs import taskqueue as TQ
 from trackon.bencode import bdecode
+from trackon.gaeutils import logmsg
 
 update_queue = TQ.Queue('update-trackers')
 incoming_queue = TQ.Queue('new-trackers')
@@ -91,6 +92,7 @@ def incoming(t):
     """Add a tracker to the list of trackers to check before adding to the proper tracker list"""
     task = TQ.Task(params={'tracker-address': t, 'attempts': 0})
     incoming_queue.add(task)
+    logmsg("Added %s to the queue of incoming trackers to be checked before addition." % t, 'incoming') 
 
 def allinfo():
     tl = MC.get('tracker-list')

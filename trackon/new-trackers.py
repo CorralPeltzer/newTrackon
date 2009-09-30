@@ -2,6 +2,7 @@ from cgi import FieldStorage
 from logging import debug, error, info
 from google.appengine.api.labs import taskqueue as tq
 from trackon import tracker
+from trackon.gaeutils import logmsg
 
 incoming_queue = tq.Queue('new-trackers')
 
@@ -13,13 +14,14 @@ def main():
         debug("Fetching %s"%url)
         if 'error' not in r:
             tracker.add(addr, r)
+            logmsg("Check of %s was successful, added to proper tracker list!" % addr, 'incoming')
         else:
-            info("Initial tracker check for %s failed: %s" % (url, r['error']))
+            logmsg("Incoming tracker check for %s failed: %s" % (addr, r['error']), 'incoming')
             attp = int(args['attempts'].value)+1
             if attp > 4: # TODO: We should raise the number of attempts?
-                info("Giving up after %d attempts to contact: %s" % (attp, addr))
+                logmsg("Giving up after %d attempts to contact: %s" % (attp, addr), 'incoming')
                 return 
-            info("Attempt %d scheduled in %d seconds." % (attp, attp*20))
+            logmsg("Check %d for %s scheduled in %d seconds." % (attp, addr, attp*20))
             params = {'tracker-address': addr, 'attempts': attp }
             task = tq.Task(params=params, countdown=attp*30)
             incoming_queue.add(task)

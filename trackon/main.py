@@ -1,17 +1,10 @@
 from cgi import FieldStorage
-from mako.template import Template
-from mako.lookup import TemplateLookup
-from mako.exceptions import html_error_template
 from trackon import tracker
+from trackon.web import renderpage, postredir
 
 """
 Trackon
 """
-
-DEBUG = True
-tpl_lookup = TemplateLookup(directories=['../tpl/'])
-#tpl_main = tpl_lookup.get_template('main.mako')
-
 
 def main():
      
@@ -33,19 +26,11 @@ def main():
                 new_tracker_error = "Invalid URL!"
 
         if not new_tracker_error:
-            print "Status: 303 See Other"
-            print "Location: /\n"
+            postredir('/incoming-log')
             return
 
-
-    print "Content-type: text/html\n"
     ts = tracker.allinfo() 
-
-    try:
-        tpl_main = tpl_lookup.get_template('main.mako') # TODO: cache
-        print tpl_main.render(trackers=ts, new_tracker_error=new_tracker_error)
-    except:
-        print html_error_template().render()
+    renderpage('main', trackers=ts, new_tracker_error=new_tracker_error)
 
 
 if __name__ == '__main__':
