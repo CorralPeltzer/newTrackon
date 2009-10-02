@@ -13,7 +13,8 @@ forum yet! ;)</b></p>
 </div>
 
 % if trackers:
-<table cellspacing=0 class='sortable grid_12'>
+<div class=grid_12>
+<table cellspacing=0 class=sortable>
     <thead><tr>
         <th>Tracker</th>
         <th>Latency</th>
@@ -50,6 +51,7 @@ forum yet! ;)</b></p>
 % endif
 
 </table>
+</div>
 
 
 <form method="POST" class=grid_12>

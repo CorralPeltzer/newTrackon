@@ -19,7 +19,7 @@
 <div class="container_12">
 
 <div class="grid_12">
-    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Alpha 4</span></i></a></h1>
+    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Alpha 5</span></i></a></h1>
 </div>
 
 
@@ -53,5 +53,19 @@ ${self.body()}
 <div class="clear"></div>
 
 </div>
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-1220719-11");
+pageTracker._trackPageview();
+
+var pageTracker2 = _gat._getTracker("UA-1220719-12");
+pageTracker2._trackPageview();
+} catch(err) {}</script>
+
 
 </body></html>
