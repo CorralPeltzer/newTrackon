@@ -12,38 +12,38 @@
 forum yet! ;)</b></p>
 </div>
 
-% if trackers:
 <div class=grid_12>
 <table cellspacing=0 class=sortable>
     <thead><tr>
-        <th>Tracker</th>
+        <th>Tracker's Announce URL</th>
         <th>Latency</th>
         <th>Checked</th>
-        <th>Announce</th>
-        <th>Up?</th>
+        <th>Status</th>
         <th>Interval</th>
-        <th>...</th>
     </tr></thead>
+
+% if trackers:
     % for a in trackers:
         <% t = trackers[a] %>
         % if not t:
             <% continue %>
         % endif
         <tr>
-            <td>${a.split('/')[2]}</td>
+            <td>${a}</td>
             <td>${"%.3f" % t['latency']}</td>
             <td>${(int(time()) - t['updated']) / 60}m ago</td>
-            <td><a href="${a}" title="">Link</a></td>
-
         % if 'error' in t:
-            <td><b title="${t['error']}">Error!</b></td>
-            <td></td> <td></td>
+            <td class=error><b title="${t['error']}">Error!</b></td>
+            <td></td>
         % else:
             <% r = t['response'] %>
-            <td><b>UP!</b></td>
+            % if r['peers']:
+                <td class=excellent><b>Excellent!</b></td>
+            % else:
+                <td class=ok><b>Ok</b></td>
+            % endif
             <td>${r.get('interval', '-')}</td>
             ##cell("%d/%d/%d %d:%d:%d"%(gmtime(s['updated'])[:6]))
-            <td>${repr(r)}</td>
         % endif
 
         </tr>

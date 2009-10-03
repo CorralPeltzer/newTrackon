@@ -43,3 +43,12 @@ dd {
     text-decoration: none;
     color: #333;
 }
+
+/* Status classes */
+
+td.excellent {
+    background-color: #CCFF9F;
+}
+td.error {
+    background-color: #FF9F9F;
+}
