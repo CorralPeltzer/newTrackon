@@ -22,8 +22,10 @@ def genqstr(h):
 def check(addr):
     """Check if a tracker is up."""
     thash = trackerhash(addr) # The info_hash we will use for this tracker 
-    requrl = addr+genqstr(thash)
+    querystring = genqstr(thash) 
+    requrl = addr+querystring
     d = {}
+    d['query-string'] = querystring
     try:
         t1 = time()
         r = fetch(requrl, deadline=10)
@@ -48,7 +50,7 @@ def check(addr):
         try:
             d['response'] = bdecode(r.content)
         except:
-            d['error'] = "Couldn't bdecode response: %s." % r.content
+            d['error'] = "Couldn't bdecode response: %s." % r.content[:128]
 
     if 'response' in d:
         if 'failure reason' in d['response']:
