@@ -52,3 +52,8 @@ td.excellent {
 td.error {
     background-color: #FF9F9F;
 }
+
+
+td.right { text-align: right; }
+th { text-align: center; }
+th span.units { font-size: 70%; }

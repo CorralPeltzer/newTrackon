@@ -8,7 +8,7 @@
 
 <p>Trackon is a service to monitor the status and health of existing open and public trackers that anyone can use.</p>
 
-<p>Stil experimental, <b>please do not post to torrent freak or any public
+<p>Still experimental, <b>please do not post to torrent freak or any public
 forum yet! ;)</b></p>
 </div>
 
@@ -16,10 +16,11 @@ forum yet! ;)</b></p>
 <table cellspacing=0 class=sortable>
     <thead><tr>
         <th>Tracker's Announce URL</th>
-        <th>Latency</th>
-        <th>Checked</th>
+        <th>Latency <span class=units>(ms)</span></th>
+        <th>Checked <span class=units>(min ago)</span></th>
         <th>Status</th>
-        <th>Interval</th>
+        <th>Interval / Min Interval</th>
+        <th>Uptime</th>
     </tr></thead>
 
 % if trackers:
@@ -30,11 +31,12 @@ forum yet! ;)</b></p>
         % endif
         <tr>
             <td>${a}</td>
-            <td>${"%.3f" % t['latency']}</td>
-            <td>${(int(time()) - t['updated']) / 60}m ago</td>
+            <td class=right>${"%.3f" % t['latency']}</td>
+            <td class=right>${(int(time()) - t['updated']) / 60}</td>
         % if 'error' in t:
             <td class=error><b title="${t['error']}">Error!</b></td>
-            <td></td>
+            <td class=right>- / -</td>
+            <td>...</td>
         % else:
             <% r = t['response'] %>
             % if r['peers']:
@@ -42,8 +44,8 @@ forum yet! ;)</b></p>
             % else:
                 <td class=ok><b>Ok</b></td>
             % endif
-            <td>${r.get('interval', '-')}</td>
-            ##cell("%d/%d/%d %d:%d:%d"%(gmtime(s['updated'])[:6]))
+            <td class=right>${r.get('interval', '-')} / ${r.get('min interval', '-')}</td>
+            <td class=right>${t.get('uptime', '-')}%</td>
         % endif
 
         </tr>
@@ -51,6 +53,16 @@ forum yet! ;)</b></p>
 % endif
 
 </table>
+
+Possible status values:
+<ul>
+    <li><b>Excellent</b>: The tracker was reachable, returned a valid response <i>that included peers</i>.
+
+    <li><b>Ok</b>: The tracker was reachable, and while it returned a valid response, it didn't include any peers.
+
+    <li><b>Error</b>:The tracker was either unreachable or returned some kind of error. For a detailed error message see tooltip.
+<ul>
+
 </div>
 
 

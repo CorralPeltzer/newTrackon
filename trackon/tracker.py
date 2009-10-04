@@ -66,7 +66,6 @@ def check(addr):
 def update(t, info):
     tim = int(time())
     info['updated'] = tim
-    MC.set(t, info, namespace="status")
 
     # Add t to cache list in case we are new or fell off
     lc = MC.get('tracker-list') or []
@@ -74,12 +73,20 @@ def update(t, info):
         lc.append(t) # XXX Race with add()
         MC.set('tracker-list', lc)
 
-
-    # Status log 
-    MC.set("%s!%d" % (t, tim), info, namespace="logs")
-    l = MC.get(t, namespace="logs") or []
+    # Save status log
+    MC.set("%s!%d" % (t, tim), info, namespace='logs')
+    l = MC.get(t, namespace='logs') or []
     l.insert(0, tim)
-    MC.set(t, l[:64], namespace="logs") # Keep 64 samples
+    MC.set(t, l[:64], namespace='logs') # Keep 64 samples
+
+    # Uptime calculation (XXX Wasteful, we fetch the info we just stored!)
+    s = MC.get_multi(["%s!%d" % (t, tm) for tm in l], namespace='logs').values()
+    e = sum(1 for x in s if ('error' in x))
+    i = len(s)
+    info['uptime'] = (i-e)*100/i
+
+    # Finally save the new status
+    MC.set(t, info, namespace="status")
 
 
 def add(t, info):
