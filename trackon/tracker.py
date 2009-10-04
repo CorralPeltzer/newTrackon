@@ -1,12 +1,25 @@
 from logging import debug, error, info
 from hashlib import md5
 from time import time
+from urlparse import urlparse 
+from urllib import unquote as url_unquote
 from google.appengine.api.urlfetch import fetch, Error as FetchError, DownloadError
 from google.appengine.api import memcache as MC
 from google.appengine.api import datastore as DS
 from google.appengine.api.labs import taskqueue as TQ
 from trackon.bencode import bdecode
 from trackon.gaeutils import logmsg
+
+"""
+Memcache namespaces:
+    'status': tracker-url -> Dict with latest tracker info
+    'logs': "%s!%d" % (tracker-url, time) -> Historical tracker info.
+    'logs': tracker-url -> List of latest timestamps to reach historical info.
+
+Keys in default namespace:
+    'tracker-list' -> List of urls of currently live trackers.
+"""
+
 
 update_queue = TQ.Queue('update-trackers')
 incoming_queue = TQ.Queue('new-trackers')
@@ -54,7 +67,7 @@ def check(addr):
 
     if 'response' in d:
         if 'failure reason' in d['response']:
-            d['error'] = "Tracker failure reason: %s." % d['response']['failure reason']
+            d['error'] = "Tracker failure reason: \"%s\"." % unicode(d['response']['failure reason'], errors='replace')
         elif 'peers' not in d['response']:
             d['error'] = "Invalid response, 'peers' field is missing!"
 
@@ -97,11 +110,36 @@ def add(t, info):
     tl = DS.Entity('Tracker', name=t)
     DS.Put(tl)
 
+import re
+UCHARS = re.compile('^[a-zA-Z0-9_\-\./]+$')
+# http://code.google.com/p/pubsubhubbub/source/browse/trunk/hub/main.py?r=256#198
+GAE_ALLOWED_PORTS = frozenset(['80', '443', '4443', '8080', '8081', '8082', '8083',
+    '8084', '8085', '8086', '8087', '8088', '8089', '8188', '8444', '8990'])
 def incoming(t):
-    """Add a tracker to the list of trackers to check before adding to the proper tracker list"""
+    """Add a tracker to the list to check before adding to the proper tracker list"""
+
+    u = urlparse(url_unquote(t))
+    if u.scheme not in ('http', 'https'):
+        return "Unsupported URL scheme."
+    
+    if UCHARS.match(u.netloc) and  UCHARS.match(u.path):
+        if u.port and u.port not in GAE_ALLOWED_PORTS:
+            return "Tracker on unsuported port, see FAQ for details."
+        else:
+            t = "%s://%s%s" % (u.scheme, u.netloc.lower(), u.path)
+    else:
+        return "Invalid announce URL!"
+
+    # This is not 100% reliable but should keep dupes most of the time.
+    if MC.get(t, namespace='status'):
+        return "Tracker already being tracked!"
+
+    # XXX Need some kind of rate-limiting to avoid abuse / DoS
+
     task = TQ.Task(params={'tracker-address': t, 'attempts': 0})
     incoming_queue.add(task)
-    logmsg("Added %s to the queue of incoming trackers to be checked before addition." % t, 'incoming') 
+    logmsg("Added %s to the incoming queue of trackers to check." % t, 'incoming') 
+
 
 def allinfo():
     tl = MC.get('tracker-list')
