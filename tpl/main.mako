@@ -15,12 +15,13 @@ forum yet! ;)</b></p>
 <div class=grid_12>
 <table cellspacing=0 class=sortable>
     <thead><tr>
-        <th>Tracker's Announce URL</th>
-        <th>Latency <span class=units>(ms)</span></th>
-        <th>Checked <span class=units>(min ago)</span></th>
+        <th>Tracker</th>
+        <th>Announce URL</th>
+        <th class="sorttable_numeric">Latency <span class=units></span></th>
+        <th class="sorttable_numeric">Checked <span class=units></span></th>
         <th>Status</th>
-        <th>Interval / Min Interval</th>
-        <th>Uptime</th>
+        <th class="sorttable_numeric">Interval / Min</th>
+        <th class="sorttable_numeric">Uptime</th>
     </tr></thead>
 
 % if trackers:
@@ -30,23 +31,23 @@ forum yet! ;)</b></p>
             <% continue %>
         % endif
         <tr>
+            <td>${t.get('title', a.split('/')[2])}</td>
             <td>${a}</td>
-            <td class=right>${"%.3f" % t['latency']}</td>
-            <td class=right>${(int(time()) - t['updated']) / 60}</td>
+            <td class=right>${"%.3f" % t['latency']} sec</td>
+            <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
         % if 'error' in t:
-            <td class=error><b title="${t['error']}">Error!</b></td>
+            <td sorttable_customkey="3" class=error><b title="${t['error']}">Error!</b></td>
             <td class=right>- / -</td>
-            <td>...</td>
         % else:
             <% r = t['response'] %>
             % if r['peers']:
-                <td class=excellent><b>Excellent!</b></td>
+                <td sorttable_customkey="1" class=excellent><b>Excellent!</b></td>
             % else:
-                <td class=ok><b>Ok</b></td>
+                <td sorttable_customkey="2" class=ok><b>Ok</b></td>
             % endif
             <td class=right>${r.get('interval', '-')} / ${r.get('min interval', '-')}</td>
-            <td class=right>${t.get('uptime', '-')}%</td>
         % endif
+            <td class=right>${t.get('uptime', '-')}%</td>
 
         </tr>
     % endfor

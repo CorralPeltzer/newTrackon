@@ -8,7 +8,7 @@ from google.appengine.api import memcache as MC
 from google.appengine.api import datastore as DS
 from google.appengine.api.labs import taskqueue as TQ
 from trackon.bencode import bdecode
-from trackon.gaeutils import logmsg
+from trackon.gaeutils import logmsg, getentity
 
 """
 Memcache namespaces:
@@ -77,14 +77,29 @@ def check(addr):
 
 
 def update(t, info):
+    """
+    Refresh memcache with new info, log status, calculate uptime, ...; Returns 
+    the updated info dict.
+    """
+
+    r = getentity('Tracker', t) or {}
+
+    if 'title' in r:
+        info['title'] = r['title']
+    else:
+        l = t.split('/')
+        if l[0] == 'https':
+            info['title'] = "%s (SSL)" % l[2]
+        else:
+            info['title'] = l[2]
+
+    if 'home' in r:
+        info['home'] = r['home']
+    else:
+        info['home'] = '/'.join(t.replace('//tracker.','//www.').split('/')[:-1])
+
     tim = int(time())
     info['updated'] = tim
-
-    # Add t to cache list in case we are new or fell off
-    lc = MC.get('tracker-list') or []
-    if t not in lc:
-        lc.append(t) # XXX Race with add()
-        MC.set('tracker-list', lc)
 
     # Save status log
     MC.set("%s!%d" % (t, tim), info, namespace='logs')
@@ -101,14 +116,35 @@ def update(t, info):
     # Finally save the new status
     MC.set(t, info, namespace="status")
 
+    return info
+
 
 def add(t, info):
-    update(t, info)
-    debug("Added tracker: %s"%t)
-    
-    # Persist...
+    info = update(t, info)
+
     tl = DS.Entity('Tracker', name=t)
+    tl['home'] = info['home']
+    tl['title'] = info['title']
     DS.Put(tl)
+
+    # Add t to cache list
+    lc = MC.get('tracker-list') or []
+    if t not in lc:
+        lc.append(t) # XXX Race with remove()
+        MC.set('tracker-list', lc)
+
+    debug("Added tracker: %s"%t)
+
+def delete(t):
+    e = getentity('Tracker', t)
+    DS.Delete(e.key())
+    MC.delete(t, namespace='status')
+
+    lc = MC.get('tracker-list') or []
+    if t in lc:
+        lc.remove(t) # XXX Race with add()
+        MC.set('tracker-list', lc)
+
 
 import re
 UCHARS = re.compile('^[a-zA-Z0-9_\-\./]+$')
