@@ -29,8 +29,8 @@ def trackerhash(addr):
     return md5(addr).hexdigest()[:20]
 
 def genqstr(h):
-    peerid = "-TO0001-XX"+str(int(time())) # 'random' peer id
-    return "?info_hash=%s&port=999&peer_id=%s" % (h, peerid)
+    pid = "-TO0001-XX"+str(int(time())) # 'random' peer id
+    return "?info_hash=%s&port=999&peer_id=%s&compact=1" % (h, pid)
 
 def check(addr):
     """Check if a tracker is up."""
