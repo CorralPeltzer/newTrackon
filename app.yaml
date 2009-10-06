@@ -27,7 +27,7 @@ handlers:
 - url: /static/
   static_dir: static
 
-- url: /(api-docs|faq)
+- url: /(api-docs|faq|about)
   static_files: static/\1.html
   upload: static/(.*).html
 

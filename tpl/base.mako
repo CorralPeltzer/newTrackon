@@ -19,7 +19,7 @@
 <div class="container_12">
 
 <div class="grid_12">
-    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Alpha 5</span></i></a></h1>
+    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Alpha 7</span></i></a></h1>
 </div>
 
 
@@ -31,13 +31,13 @@
         <li><a href="/trackers-raw-info">raw</a></li>
         <li><a href="/faq">faq</a></li>
         <li><a href="http://repo.cat-v.org/trackon/">source</a></li>
-        <li><a href="http://uriel.cat-v.org/contact">contact</a></li>
         <li><a>links</a>
             <ul>
             <li><a href="http://repo.cat-v.org/atrack/">Atrack</a></li>
             <li><a href="http://bittrk.appspot.com/">Bittrk</a></li>
             </ul>
         </li>
+        <li class=secondary><a href="/about">about</a></li>
     </ul>
 </div>
 
