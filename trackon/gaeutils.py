@@ -1,5 +1,6 @@
 from google.appengine.api import datastore as DS
 from google.appengine.api import memcache as MC
+from google.appengine.api.datastore_errors import EntityNotFoundError
 from time import gmtime
 
 
@@ -16,6 +17,8 @@ def getmsglog(log_name='default'):
 
 def getentity(kind, id):
     """ Get entity by name/id (name if string, 'id' if int). """
-
-    return DS.Get(DS.Key.from_path(kind, id))
+    try:
+        return DS.Get(DS.Key.from_path(kind, id))
+    except EntityNotFoundError, e:
+        return None
 
