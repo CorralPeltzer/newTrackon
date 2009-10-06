@@ -1,3 +1,4 @@
+from google.appengine.api import datastore as DS
 from google.appengine.api import memcache as MC
 from time import gmtime
 
@@ -12,4 +13,9 @@ def logmsg(msg, log_name='default'):
 
 def getmsglog(log_name='default'):
     return MC.get(log_name, namespace='msg-logs')
+
+def getentity(kind, id):
+    """ Get entity by name/id (name if string, 'id' if int). """
+
+    return DS.Get(DS.Key.from_path(kind, id))
 
