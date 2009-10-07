@@ -1,6 +1,7 @@
+from logging import warning, error, info
 from google.appengine.api import datastore as DS
 from google.appengine.api import memcache as MC
-from google.appengine.api.datastore_errors import EntityNotFoundError
+from google.appengine.api.datastore_errors import EntityNotFoundError, Timeout
 from time import gmtime
 
 
@@ -15,10 +16,18 @@ def logmsg(msg, log_name='default'):
 def getmsglog(log_name='default'):
     return MC.get(log_name, namespace='msg-logs')
 
-def getentity(kind, id):
+def getentity(kind, id, retry=True):
     """ Get entity by name/id (name if string, 'id' if int). """
     try:
         return DS.Get(DS.Key.from_path(kind, id))
     except EntityNotFoundError, e:
         return None
+    except Timeout, e:
+        if retry:
+            warning("Timeout trying to get entity %s/%s. Will retry." % (kind, id))
+            return getentity(kind, id, False)
+        else:
+            error("Timeout trying to get entity %s/%s. Giving up!" % (kind, id))
+            return None
+
 
