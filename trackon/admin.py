@@ -38,7 +38,7 @@ class AdminPage(webapp.RequestHandler):
                 if req.get('title'):
                     e['title'] = req.get('title')
                     s['title'] = req.get('title')
-                if req.get('home'):
+                if req.get('home') is not None: # We allow '' to mean 'no home'.
                     e['home'] = req.get('home')
                     s['home'] = req.get('home')
                 MC.set(t, s, namespace='status') # XXX Race with update()
