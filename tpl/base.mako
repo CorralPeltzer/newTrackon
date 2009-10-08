@@ -2,15 +2,15 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<title>Trackon's Lair</title>
+<title>${self.title()}</title>
 <link rel="stylesheet" type="text/css" href="/static/fluid960gs/all.css" media="screen">
 <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
 <!--[if IE 7]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie.css" media="screen" /><![endif]-->
 
 <link rel="stylesheet" href="/static/style.css" type="text/css">
 <script type="text/javascript" src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
-</head>
-<body>
+
+</head><body>
 
 <div class="container_12">
 
@@ -66,3 +66,6 @@ pageTracker2._trackPageview();
 
 
 </body></html>
+
+
+<%def name="title()">Trackon's Lair</%def>
