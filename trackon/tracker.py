@@ -18,6 +18,11 @@ Memcache namespaces:
 
 Keys in default namespace:
     'tracker-list' -> List of urls of currently live trackers.
+
+Silly requirements made by various obnoxious trackers:
+    - Require 'compact=1', instead of just returning compact format by default.
+    - Require 'key'.
+    - Require 'uploaded'. (http://tracko.appspot.com/announce)
 """
 
 
@@ -30,7 +35,7 @@ def trackerhash(addr):
 
 def genqstr(h):
     pid = "-TO0001-XX"+str(int(time())) # 'random' peer id
-    return "?info_hash=%s&port=999&peer_id=%s&compact=1" % (h, pid)
+    return "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0" % (h, pid)
 
 def check(addr):
     """Check if a tracker is up."""
