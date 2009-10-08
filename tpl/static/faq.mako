@@ -13,7 +13,8 @@
     <dd>As in <i>dragon</i> but starting with <b>t</b>.</dd>
 
     <dt>What is the picture in the main page?</dt>
-    <dd>It is part of "<i>The Nine Dragons</i>" Handscroll by Chen Rong, a painter of the Southern Song Dynastyhalf of the 13th century China. It is dated to 1244. Or anyway this is what Wikipedia claims.</dd>
+    <dd>It is <i>Trago the dragon</i>, the mascot of tracko.org. It was originally
+    part of "<i>The Nine Dragons</i>" handscroll (九龍圖卷) by Chen Rong (陳容), a painter of the Southern Song Dynasty during the first half of the 13th century in China. It is dated to 1244. Or anyway this is what Wikipedia claims.</dd>
 
 </dl>
 
