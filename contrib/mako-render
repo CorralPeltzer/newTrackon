@@ -4,9 +4,9 @@ def render(data):
     from mako.template import Template
     from mako.lookup import TemplateLookup
 
-    lookup = TemplateLookup([".", "tpl/"]) # This shit doesn't work: , input_encoding='utf-8', output_encoding='utf-8', encoding_errors='replace')
+    lookup = TemplateLookup([".", "tpl/"])
 
-    return Template(data, lookup=lookup).render()
+    return Template(data, lookup=lookup, input_encoding='utf-8', output_encoding='utf-8', encoding_errors='replace').render()
 
 def main(argv=None):
     from os.path import isfile
