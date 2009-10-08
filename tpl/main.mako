@@ -1,15 +1,13 @@
 <%! from time import time %>
 <%inherit file="base.mako"/>
-<%page cached="False"/>
 
 
 <div class=grid_12>
 <h2 id=page-heading>Tracking the Trackers</h2>
 
-<p>Trackon is a service to monitor the status and health of existing open and public trackers that anyone can use.</p>
+<p>Trackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the torrents listed here to your torrents, or submit any other open/public trackers you might know of.</p>
 
-<p>Still experimental, <b>please do not post to torrent freak or any public
-forum yet! ;)</b></p>
+<p>Still experimental, <b>please do not post to torrent freak yet! ;)</b></p>
 </div>
 
 <div class=grid_12>
@@ -36,7 +34,7 @@ forum yet! ;)</b></p>
             <td class=right>${"%.3f" % t['latency']} sec</td>
             <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
         % if 'error' in t:
-            <td sorttable_customkey="3" class=error><b title="${t['error']}">Error!</b></td>
+            <td sorttable_customkey="3" class=error><b title="${t['error']|h}">Error!</b></td>
             <td class=right>- / -</td>
         % else:
             <% r = t['response'] %>
@@ -86,6 +84,6 @@ statistics before it is added to the list.</p>
 </div>
 
 
-<div class="grid_12 center">
-<img src='http://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='The Trackon' alt='The Trackon' />
+<div class="center">
+<img style="border: solid black 0.4em" src='http://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='Trago is the mascot dragon of Trackon.org' alt='Trago the dragon' />
 </div>
