@@ -22,7 +22,7 @@ Keys in default namespace:
 Silly requirements made by various obnoxious trackers:
     - Require 'compact=1', instead of just returning compact format by default.
     - Require 'key'.
-    - Require 'uploaded'. (http://tracko.appspot.com/announce)
+    - Require 'uploaded', 'downloaded' and 'left'. (http://tracko.appspot.com/announce)
 """
 
 
@@ -35,7 +35,7 @@ def trackerhash(addr):
 
 def genqstr(h):
     pid = "-TO0001-XX"+str(int(time())) # 'random' peer id
-    return "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0" % (h, pid)
+    return "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0&downloaded=0&left=0" % (h, pid)
 
 def check(addr):
     """Check if a tracker is up."""
