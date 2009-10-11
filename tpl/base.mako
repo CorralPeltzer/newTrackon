@@ -68,4 +68,4 @@ pageTracker2._trackPageview();
 </body></html>
 
 
-<%def name="title()">Trackon's Lair</%def>
+<%def name="title()">Trackon: Tracking the trackers.</%def>
