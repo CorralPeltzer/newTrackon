@@ -1,11 +1,14 @@
+from os import environ
 from cgi import FieldStorage
 from trackon import tracker
-from trackon.web import renderpage, postredir
+from trackon.web import renderpage, postredir, permredir
 
 """ Trackon """
 
 def main():
-     
+    if environ['SERVER_NAME'] == 'track-on.appspot.com':
+        permredir('http://www.trackon.org')
+
     new_tracker_error = None
     req = FieldStorage()
     if 'tracker-address' in req:
