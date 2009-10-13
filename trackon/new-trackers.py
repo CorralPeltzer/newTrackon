@@ -18,12 +18,12 @@ def main():
         else:
             logmsg("Incoming tracker check for %s failed: %s" % (addr, r['error']), 'incoming')
             attp = int(args['attempts'].value)+1
-            if attp > 4: # TODO: We should raise the number of attempts?
+            if attp > 2: # TODO: We should raise the number of attempts?
                 logmsg("Giving up after %d attempts to contact: %s" % (attp, addr), 'incoming')
                 return 
-            logmsg("Check %d for %s scheduled in %d seconds." % (attp, addr, attp*20))
+
             params = {'tracker-address': addr, 'attempts': attp }
-            task = tq.Task(params=params, countdown=attp*30)
+            task = tq.Task(params=params, countdown=attp*50)
             incoming_queue.add(task)
 
 

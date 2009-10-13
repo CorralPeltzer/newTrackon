@@ -11,7 +11,7 @@
     </tr></thead>
     % for m in msgs:
         ## Should remove the decode call now that we decode error strings on input.
-        <tr><td>${m.decode('utf-8', 'ignore')|n}</td></tr>
+        <tr><td>${m|h}</td></tr>
     % endfor
 </table>
 
