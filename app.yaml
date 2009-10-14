@@ -51,6 +51,10 @@ handlers:
   static_files: static/google1c5d509bd1822f1d.html
   upload: static/google1c5d509bd1822f1d.html
 
+- url: /mestat
+  script: mestat.py
+  login: admin
+
 #- url: /.*
 #  script: 404.py
 
