@@ -116,7 +116,10 @@ def update(t, info):
     s = MC.get_multi(["%s!%d" % (t, tm) for tm in l], namespace='logs').values()
     e = sum(1 for x in s if ('error' in x))
     i = len(s)
-    info['uptime'] = (i-e)*100/i
+    if i:
+        info['uptime'] = (i-e)*100/i
+    else:
+        info['uptime'] = 0 # Not sure if 0 or 100 makes more sense here...
 
     # Finally save the new status
     MC.set(t, info, namespace="status")
@@ -133,7 +136,11 @@ def add(t, info):
     DS.Put(tl)
 
     # Add t to cache list
-    lc = MC.get('tracker-list') or []
+    lc = MC.get('tracker-list')
+    if not lc:
+        allinfo() # The tracker list got lost, recover it before we add to it!
+        lc = MC.get('tracker-list') or []
+
     if t not in lc:
         lc.append(t) # XXX Race with remove()
         MC.set('tracker-list', lc)
@@ -190,6 +197,7 @@ def allinfo():
         # Try to recover it from datastore
         q = DS.Query('Tracker', keys_only=True)
         tl = [k.name() for k in q.Get(100)]
+        MC.set('tracker-list', tl)
 
     td = MC.get_multi(tl, namespace='status')
 
