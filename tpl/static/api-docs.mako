@@ -24,4 +24,13 @@
 
 <p>Do whatever the hell you want as long as you don't try to DoS me, and if you power some website or app by using this APIs it would be cool if you link to trackon.</p>
 
+
+<h3>License</h3>
+
+<p>All the information and data provided through this API is in the <i>Public Domain</i> and
+you are free to do whatever perverted things you like with it, just don't
+complain to me if something breaks ;) (But bug reports are of course very welcome.)</p>
+
+<p><i>Note: I hate legalese, and this notice is only here to make chelz happy ;P</i></p>
+
 </div>
