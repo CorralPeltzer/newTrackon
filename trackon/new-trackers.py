@@ -10,8 +10,8 @@ def main():
     args = FieldStorage()
     if 'tracker-address' in args and args['tracker-address'].value:
         addr = args['tracker-address'].value 
-        (r, url) = tracker.check(addr)
-        debug("Fetching %s"%url)
+        r = tracker.check(addr)
+ 
         if 'error' not in r:
             tracker.add(addr, r)
             logmsg("Check of %s was successful, added to proper tracker list!" % addr, 'incoming')

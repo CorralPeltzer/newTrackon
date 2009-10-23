@@ -37,6 +37,9 @@ def genqstr(h):
     pid = "-TO0001-XX"+str(int(time())) # 'random' peer id
     return "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0&downloaded=0&left=0" % (h, pid)
 
+def check_ssl(addr):
+    return check(addr.replace('http://', 'https://')
+
 def check(addr):
     """Check if a tracker is up."""
     thash = trackerhash(addr) # The info_hash we will use for this tracker 
@@ -55,7 +58,7 @@ def check(addr):
     
     if 'error' in d:
         d['latency'] = time() - t1
-        return (d, requrl)
+        return d
 
 
     if r.status_code != 200:
@@ -78,7 +81,7 @@ def check(addr):
 
     # TODO Do a more extensive check of what was returned
 
-    return (d, requrl) 
+    return d
 
 
 def update(t, info):
@@ -167,8 +170,10 @@ GAE_ALLOWED_PORTS = frozenset([4443, 8080, 8081, 8082, 8083, 8084, 8085,
 def incoming(t):
     """Add a tracker to the list to check before adding to the proper tracker list"""
 
-    u = urlparse(url_unquote(t))
-    if u.scheme not in ('http', 'https'):
+    # We trat https urls as plain http, will check if https is supported as part of
+    # standard tracker testing process.
+    u = urlparse(url_unquote(t).replace('https://', 'http://'))
+    if u.scheme != 'http':
         return "Unsupported URL scheme."
     
     if UCHARS.match(u.netloc) and  UCHARS.match(u.path):

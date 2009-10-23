@@ -13,7 +13,7 @@ def main():
 
     if 'tracker-address' in args:
         t = args['tracker-address'].value
-        (r, url) = tracker.check(t)
+        r = tracker.check(t)
 
         nxt = DEFAULT_CHECK_INTERVAL
         if 'response' in r and 'min interval' in r['response']:
