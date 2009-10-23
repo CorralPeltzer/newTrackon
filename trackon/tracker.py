@@ -43,13 +43,11 @@ def check_ssl(addr):
 def check(addr):
     """Check if a tracker is up."""
     thash = trackerhash(addr) # The info_hash we will use for this tracker 
-    querystring = genqstr(thash) 
-    requrl = addr+querystring
     d = {}
-    d['query-string'] = querystring
+    d['query-string'] = genqstr(thash) 
     try:
         t1 = time()
-        r = fetch(requrl, deadline=10)
+        r = fetch(addr+d['query-string'], deadline=10)
         d['latency'] = time() - t1
     except DownloadError, e:
         d['error'] = "Could not reach tracker." # XXX Should find out why!
