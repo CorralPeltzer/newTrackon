@@ -23,6 +23,7 @@
         <th class="sorttable_numeric">Uptime</th>
     </tr></thead>
 
+<% lt = dt = 0 %>
 % if trackers:
     % for a in trackers:
         <% t = trackers[a] %>
@@ -35,9 +36,11 @@
             <td class=right>${"%.3f" % t['latency']} sec</td>
             <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
         % if 'error' in t:
+            <% dt += 1 %>
             <td sorttable_customkey="3" class=error><b title="${t['error']|h}">Error!</b></td>
             <td class=right>- / -</td>
         % else:
+            <% lt += 1 %>
             <% r = t['response'] %>
             % if r['peers']:
                 <td sorttable_customkey="1" class=excellent><b>Excellent!</b></td>
@@ -50,6 +53,9 @@
 
         </tr>
     % endfor
+
+    <p><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</p>
+
 % endif
 
 </table>
@@ -67,20 +73,21 @@ Possible status values:
 
 
 <form method="POST" class=grid_12>
-    <fieldset class="login">
+    <fieldset class="login center">
 
 % if new_tracker_error:
         <p><b>Could not add tracker: ${new_tracker_error | h}</b></p>
 % endif 
         <input type="text" name="tracker-address" value="" size=64>
         <input type="submit" value="Add Tracker">
+<hr style="margin: 0.8em">
+If you post a new tracker, please allow for a few minutes while we gather
+statistics before it is added to the list.
     </fieldset>
 </form>
 
 <div class=grid_12>
 
-<p>If you post a new tracker, please allow for a few minutes while we gather
-statistics before it is added to the list.</p>
 
 </div>
 
