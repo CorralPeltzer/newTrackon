@@ -1,0 +1,5 @@
+* More complete api
+* Check our competition:
+    - http://thebeehive.info/
+    - http://bitreactor.to/trackerlist
+
