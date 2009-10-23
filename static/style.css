@@ -5,6 +5,7 @@ table.sortable thead {
 body {
     font-size: 0.75em; 
     background-color: #edb;
+    background-color: white;
     border-top: none;
 }
 td, th, table {
@@ -42,6 +43,10 @@ dd {
 #branding a {
     text-decoration: none;
     color: #333;
+}
+
+#branding {
+    background-color: #FFD700!important; /* Gold */
 }
 
 /* Status classes */
