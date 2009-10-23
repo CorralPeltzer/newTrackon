@@ -38,7 +38,7 @@ def genqstr(h):
     return "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0&downloaded=0&left=0" % (h, pid)
 
 def check_ssl(addr):
-    return check(addr.replace('http://', 'https://')
+    return check(addr.replace('http://', 'https://'))
 
 def check(addr):
     """Check if a tracker is up."""
@@ -88,16 +88,25 @@ def update(t, info):
     the updated info dict.
     """
 
+    if t.startswith('https://') == 0:
+        old = MC.get(t, namespace="status") or {}
+        t = t.replace('https://', 'http://')
+        # If ssl worked, try it five times before giving it up.
+        if 'error' in info:
+            if old.get('ssl', 0) > 0:
+                info['ssl'] = old['ssl'] - 1
+            else:
+                info['ssl'] = 0
+                info['next-check'] = 0 # Force imediate (non-ssl) re-check
+        else:
+            info['ssl'] = 5
+
     r = getentity('Tracker', t) or {}
 
     if 'title' in r:
         info['title'] = r['title']
     else:
-        l = t.split('/')
-        if l[0] == 'https':
-            info['title'] = "%s (SSL)" % l[2]
-        else:
-            info['title'] = l[2]
+        info['title'] = t.replace('http://', '')
 
     if 'home' in r:
         info['home'] = r['home']

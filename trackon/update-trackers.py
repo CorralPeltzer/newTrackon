@@ -31,6 +31,10 @@ def main():
         ti = tracker.allinfo() or {}
         for t in ti:
             if 'next-check' not in ti[t] or ti[t]['next-check'] < now: 
+                # XXX TODO From time to time we should check again for ssl
+                if ti[t].get('ssl', True):
+                    t = t.replace('http://', 'https://')
+
                 tracker.schedule_update(t)
 
 

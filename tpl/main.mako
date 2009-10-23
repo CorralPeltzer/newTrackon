@@ -16,6 +16,7 @@
     <thead><tr>
         <th>Tracker</th>
         <th>Announce URL</th>
+        <th>SSL</th>
         <th class="sorttable_numeric">Latency <span class=units></span></th>
         <th class="sorttable_numeric">Checked <span class=units></span></th>
         <th>Status</th>
@@ -33,6 +34,13 @@
         <tr>
             <td>${t.get('title', a.split('/')[2])}</td>
             <td>${a}</td>
+            <td>
+                % if t.get('ssl', False):
+                    Yes
+                % else:
+                    No
+                % endif
+            </td>
             <td class=right>${"%.3f" % t['latency']} sec</td>
             <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
         % if 'error' in t:
