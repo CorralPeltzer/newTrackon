@@ -4,7 +4,7 @@ from time import time
 from trackon import tracker
 
 MAX_MIN_INTERVAL = 60*60*5
-DEFAULT_CHECK_INTERVAL = 60*10
+DEFAULT_CHECK_INTERVAL = 60*15
 
 
 def main():
