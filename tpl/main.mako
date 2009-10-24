@@ -2,7 +2,6 @@
 <%inherit file="base.mako"/>
 
 <div class=grid_12>
-<div style="text-align: right; padding-top: 1px;"><script type="text/javascript">var addthis_disable_flash = true; var addthis_pub="uriell";</script> <a href="http://www.addthis.com/bookmark.php?v=20" onmouseover="return addthis_open(this, '', '[URL]', '[TITLE]')" onmouseout="addthis_close()" onclick="return addthis_sendto()"><img src="http://s7.addthis.com/static/btn/lg-share-en.gif" width="125" height="16" alt="Bookmark and Share" style="border:0"/></a><script type="text/javascript" src="http://s7.addthis.com/js/200/addthis_widget.js"></script></div>
 
 <h2 id=page-heading>Tracking the Trackers</h2>
 
@@ -12,7 +11,7 @@
 </div>
 
 <div class=grid_12>
-<table cellspacing=0 class=sortable>
+<table cellspacing=0 cellpadding=0 class=sortable>
     <thead><tr>
         <th>Tracker</th>
         <th>Announce URL</th>
@@ -40,6 +39,7 @@
                 % else:
                     No
                 % endif
+                ##(${t.get('ssl', '-')})
             </td>
             <td class=right>${"%.3f" % t['latency']} sec</td>
             <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
@@ -62,7 +62,7 @@
         </tr>
     % endfor
 
-    <p><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</p>
+    <caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
 
 % endif
 
@@ -75,10 +75,12 @@ Possible status values:
     <li><b>Ok</b>: The tracker was reachable, and while it returned a valid response, it didn't include any peers.
 
     <li><b>Error</b>:The tracker was either unreachable or returned some kind of error. For a detailed error message see tooltip.
-<ul>
+</ul>
 
 </div>
 
+
+<div class=grid_12>
 
 <form method="POST" class=grid_12>
     <fieldset class="login center">
@@ -94,12 +96,7 @@ statistics before it is added to the list.
     </fieldset>
 </form>
 
-<div class=grid_12>
-
-
 </div>
 
 
-<div class="center">
-<img style="border: solid black 0.4em" src='http://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='Trago is the mascot dragon of Trackon.org' alt='Trago the dragon' />
-</div>
+<%def name="extraheaders()"><script type="text/javascript" src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script></%def>

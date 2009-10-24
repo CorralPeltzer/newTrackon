@@ -25,5 +25,10 @@ and capabilities of open/public BitTorrent trackers.</p>
 <li>Grozdan, for reporting errors and adding many trackers.
 </ul>
 
+<div class="center">
+<img style="border: solid black 0.4em" src='http://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='Trago is the mascot dragon of Trackon.org' alt='Trago the dragon' />
 </div>
 
+</div>
+
+<%def name="title()">About Trackon.org</%def>

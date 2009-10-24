@@ -12,6 +12,13 @@ td, th, table {
     font-family:Arial,sans-serif;
     border: 1px solid #888;
 }
+thead th {
+    padding: 0.2em 0.1em;
+}
+td, th {
+    padding: 0.3em;
+    margin: 0;
+}
 a {
     color: #c1b89b;
     text-decoration: underline;
@@ -47,6 +54,12 @@ dd {
 
 #branding {
     background-color: #FFD700!important; /* Gold */
+}
+
+.container_12 {
+    width: 94%;
+    margin-left: 3%;
+    margin-right: 3%;
 }
 
 /* Status classes */
