@@ -1,7 +1,7 @@
 <%inherit file="base.mako"/>
 <div class=grid_12>
 
-<h2 id="page-heading">Trackon Web API</h2>
+<h2 id="page-heading">Trackon Web API Description</h2>
 
 <p>Trackon has a minimalist and RESTful API, divided in two main parts:</p>
 
@@ -42,4 +42,4 @@ complain to me if something breaks ;) (But bug reports are of course very welcom
 
 </div>
 
-<%def name="title()">Trackon API documentation.</%def>
+<%def name="title()">Trackon's Web API documentation.</%def>
