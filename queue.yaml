@@ -5,5 +5,5 @@ queue:
 
 - name: update-trackers
   rate: 16/m
-  bucket_size: 5 # No races here
+  bucket_size: 8 # No races here
 
