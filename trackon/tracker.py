@@ -88,9 +88,9 @@ def update(t, info):
     the updated info dict.
     """
 
-    if t.startswith('https://') == 0:
-        old = MC.get(t, namespace="status") or {}
+    if t.startswith('https://'):
         t = t.replace('https://', 'http://')
+        old = MC.get(t, namespace="status") or {}
         # If ssl worked, try it five times before giving it up.
         if 'error' in info:
             if old.get('ssl', 0) > 0:
