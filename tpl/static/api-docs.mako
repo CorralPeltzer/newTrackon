@@ -41,3 +41,5 @@ complain to me if something breaks ;) (But bug reports are of course very welcom
 <p><i>Note: I hate legalese, and this notice is only here to make chelz happy ;P</i></p>
 
 </div>
+
+<%def name="title()">Trackon API documentation.</%def>

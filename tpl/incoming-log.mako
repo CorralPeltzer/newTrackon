@@ -18,4 +18,5 @@
 % endif
 </div>
 
+<%def name="title()">Log of incoming trackers.</%def>
 
