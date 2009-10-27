@@ -110,8 +110,11 @@ def update(t, info):
 
     if 'home' in r:
         info['home'] = r['home']
-    else:
-        info['home'] = '/'.join(t.replace('//tracker.','//www.').split('/')[:-1])
+    # Don't try to guess homepage, it doesn't work most of the time
+    #else:
+    #    info['home'] = '/'.join(t.replace('//tracker.','//www.').split('/')[:-1])
+    if 'name' in r:
+        info['name'] = r['name']
 
     tim = int(time())
     info['updated'] = tim
@@ -225,4 +228,24 @@ def schedule_update(t):
     params = {'tracker-address': t}
     task = TQ.Task(params=params)
     update_queue.add(task)
+
+
+def gettrk(name):
+    d = allinfo() # XXX allinfo is not reliable and might miss trackers.
+    a = [t for t in d if ('name' in d[t] and d[t]['name'] == name)]
+    if len(a) == 1:
+        return (a[0], d[a[0]])
+    elif len(a) == 0:
+        return (None, None)
+    else:
+        return "Error: More than one tracker with same name!"
+        
+
+def getlogs(t):
+
+    l = MC.get(t, namespace='logs') or []
+    if not l:
+        return []
+
+    return sorted(MC.get_multi(["%s!%d" % (t, tm) for tm in l], namespace='logs').values(), key=(lambda x: x['updated'] or ''), reverse=True)
 

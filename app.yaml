@@ -1,5 +1,5 @@
 application: track-on
-version: 2
+version: 3
 runtime: python
 api_version: 1
 
@@ -17,6 +17,9 @@ handlers:
 - url: /admin
   script: trackon/admin.py
   login: admin
+
+- url: /trk/.*
+  script: trackon/trk.py
 
 # Api
 - url: /api/live

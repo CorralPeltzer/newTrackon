@@ -31,7 +31,11 @@
             <% continue %>
         % endif
         <tr>
-            <td>${t.get('title', a.split('/')[2])}</td>
+            %if 'name' in t:
+                <td><a href="/trk/${t['name']|u}">${t.get('title', a.split('/')[2])}</a></td>
+            %else:
+                <td>${t.get('title', a.split('/')[2])}</td>
+            %endif
             <td>${a}</td>
             <td>
                 % if t.get('ssl', False):

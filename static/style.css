@@ -24,6 +24,10 @@ a {
     text-decoration: underline;
     xtext-decoration: none;
 }
+td a {
+    color: black;
+    text-decoration: none;
+}
 
 dt {
     font-weight: bold;
