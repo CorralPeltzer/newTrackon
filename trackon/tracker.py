@@ -100,6 +100,8 @@ def update(t, info):
                 info['next-check'] = 0 # Force imediate (non-ssl) re-check
         else:
             info['ssl'] = 5
+    else:
+        info['ssl'] = 0
 
     r = getentity('Tracker', t) or {}
 
