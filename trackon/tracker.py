@@ -52,7 +52,7 @@ def check(addr):
     except DownloadError, e:
         d['error'] = "Could not reach tracker." # XXX Should find out why!
     except FetchError, e:
-        d['error'] = "Fetchurl error: %s" % repr(e)
+        d['error'] = unicode("Fetchurl error: %s" % repr(e), errors='replace')
     
     if 'error' in d:
         d['latency'] = time() - t1
@@ -69,7 +69,7 @@ def check(addr):
         try:
             d['response'] = bdecode(r.content)
         except:
-            d['error'] = "Couldn't bdecode response: %s." % r.content[:128]
+            d['error'] = unicode("Couldn't bdecode response: %s." % r.content[:128], errors='replace')
 
     if 'response' in d:
         if 'failure reason' in d['response']:
