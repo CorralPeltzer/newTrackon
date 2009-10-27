@@ -20,9 +20,10 @@ and capabilities of open/public BitTorrent trackers.</p>
 <ul>
 <li>Medecau in #bittorrent for ideas, feedback and beta-testing.
 <li>Moraes and nickjohnson in #appengine for excellent technical help while dealing with App Engine.
+<li>20h and other folks in #cat-v for feedback and suggestions on how to improve the style and design of the site.
 <li>The authors of the sorttable JS script
 <li>Stephen Bau for creating fluid960gs, which seems to be the only decent CSS 'framework' that can actually scale up and down gracefully to arbitrary font sizes.
-<li>Grozdan, for reporting errors and adding many trackers.
+<li>Grozdan, for many great suggestions, reporting many errors and adding many trackers.
 </ul>
 
 <div class="center">
