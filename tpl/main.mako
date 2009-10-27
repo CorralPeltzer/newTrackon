@@ -45,7 +45,8 @@
             <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
         % if 'error' in t:
             <% dt += 1 %>
-            <td sorttable_customkey="3" class=error><b title="${t['error']|h}">Error!</b></td>
+            ##<td sorttable_customkey="3" class=error><b title="${t['error']|h}">Error!</b></td>
+            <td sorttable_customkey="3" class=error><b>Error!</b></td>
             <td class=right>- / -</td>
         % else:
             <% lt += 1 %>
