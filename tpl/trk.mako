@@ -1,4 +1,5 @@
 <%inherit file="base.mako"/>
+<% from time import ctime, time %>
 
 <div class=grid_12>
 <h2 id=page-heading>${trk['title']} Info</h2>
@@ -20,6 +21,11 @@
     <dt>Error
     <dd>${trk['error']|h}
 %endif
+
+%if trk.get('next-check', False):
+    <dt>Next check scheduled in...
+    <dd>${(trk['next-check']-int(time()))/60|h} minutes.
+%endif
 </dl>
 
 <table>
@@ -29,13 +35,15 @@
         <th>Error
     </tr></thead>
 %for l in logs:
-<% from time import ctime %>
     <tr>
-    <td>${ctime(l['updated'])}
-    <td>${l['latency']}
+    <td class=center>${ctime(l['updated'])}
+    <td class=right>${"%.6f"%l['latency']}
     <td>${l.get('error','Just fine!')}
     </tr>
 %endfor
 </table>
 
 </div>
+
+
+<%def name="title()">${trk['title']} - Tracker Info</%def>
