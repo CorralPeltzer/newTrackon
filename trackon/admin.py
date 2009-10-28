@@ -11,7 +11,7 @@ from trackon.gaeutils import logmsg, getentity
 
 from trackon import tracker
 
-tpl_lookup = TemplateLookup(directories=['../tpl/'])
+tpl_lookup = TemplateLookup(directories=['../tpl/'], input_encoding='utf-8', output_encoding='utf-8', encoding_errors='replace')
 
 class AdminPage(webapp.RequestHandler):
     def get(self):
