@@ -50,6 +50,10 @@ dd {
     font-size: 75%;
 }
 
+.cursive {
+font-family: Baskerville, "Palatino Linotype", Times, "Times New Roman", serif!important;
+}
+
 /* Specific layout elments */ 
 #branding a {
     text-decoration: none;

@@ -15,7 +15,7 @@ ${self.extraheaders()}
 <div class="container_12">
 
 <div class="grid_12">
-    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Beta 7</span></i></a></h1>
+    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Gamma 7<span class=cursive>γ</span></span></i></a></h1>
 </div>
 
 
