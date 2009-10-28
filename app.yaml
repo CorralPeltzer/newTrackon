@@ -1,5 +1,5 @@
 application: track-on
-version: 3
+version: 4
 runtime: python
 api_version: 1
 
@@ -24,6 +24,9 @@ handlers:
 # Api
 - url: /api/live
   script: trackon/api/live.py
+
+- url: /api/all
+  script: trackon/api/all.py
 
 
 # Static stuff

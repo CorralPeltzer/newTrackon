@@ -13,6 +13,9 @@
     <dd>Returns a new-line delimited list announce URLs of currenlty active and
     responding trackers.</dd>
 
+    <dt>GET /api/all</dt>
+    <dd>Returns a new-line delimited list announce URLs of all known trackers, dead or alive.</dd>
+
     <dt>GET /api/trackers.json (Not yet implemented!)</dt>
     <dd>Returns a JSON object with all the information associated with all
     known trackers, the specific infomration included is still subject to
