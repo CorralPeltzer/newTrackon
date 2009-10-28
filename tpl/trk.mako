@@ -3,6 +3,9 @@
 
 <div class=grid_12>
 <h2 id=page-heading>${trk['title']} Info</h2>
+%if 'descr' in trk:
+<p>${trk['descr']|h}</p>
+%endif
 <dl>
     <dt>Announce URL
     <dd>${trka|h}
@@ -15,6 +18,11 @@
 %if trk.get('home', False):
     <dt>Homepage
     <dd>${trk['home']|h}
+%endif
+
+%if trk.get('alias', False):
+    <dt>Announce URL aliases
+    <dd><ul><li>${'<li>'.join(trk['alias'])}</ul>
 %endif
 
 %if trk.get('error', False):

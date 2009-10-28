@@ -117,6 +117,10 @@ def update(t, info):
     #    info['home'] = '/'.join(t.replace('//tracker.','//www.').split('/')[:-1])
     if 'name' in r:
         info['name'] = r['name']
+    if 'descr' in r:
+        info['descr'] = r['descr']
+    if 'alias' in r:
+        info['alias'] = r['alias']
 
     tim = int(time())
     info['updated'] = tim
@@ -179,26 +183,36 @@ UCHARS = re.compile('^[a-zA-Z0-9_\-\./:]+$')
 # This two are *implicity*, so to avoid duplicate urls we don't allow them: 80, 443.
 GAE_ALLOWED_PORTS = frozenset([4443, 8080, 8081, 8082, 8083, 8084, 8085,
                                8086, 8087, 8088, 8089, 8188, 8444, 8990])
-def incoming(t):
-    """Add a tracker to the list to check before adding to the proper tracker list"""
-
-    # We trat https urls as plain http, will check if https is supported as part of
-    # standard tracker testing process.
-    u = urlparse(url_unquote(t).replace('https://', 'http://'))
+    
+def validateurl(u):
+    u = urlparse(u)
     if u.scheme != 'http':
-        return "Unsupported URL scheme."
+        return (None, "Unsupported URL scheme.")
     
     if UCHARS.match(u.netloc) and  UCHARS.match(u.path):
         if u.port and u.port not in GAE_ALLOWED_PORTS:
-            return "Tracker on unsuported port, see FAQ for details."
+            return (None, "Tracker on unsuported port, see FAQ for details.")
         else:
-            t = "%s://%s%s" % (u.scheme, u.netloc.lower(), u.path)
+            return ("%s://%s%s" % (u.scheme, u.netloc.lower(), u.path), None)
     else:
-        return "Invalid announce URL!"
+        return (None, "Invalid announce URL!")
 
-    # This is not 100% reliable but should keep dupes most of the time.
+def incoming(t):
+    """Add a tracker to the list to check before adding to the proper tracker list"""
+
+    # We treat https urls as plain http, will check if https is supported as part of
+    # standard tracker testing process.
+    (t, err) = validateurl(url_unquote(t).replace('https://', 'http://'))
+    if err:
+        return err
+
+    # This is not 100% reliable but should prevent dupes most of the time.
     if MC.get(t, namespace='status'):
         return "Tracker already being tracked!"
+    a = allinfo()
+    for i in a:
+        if a[i].get('alias', None) and t in a[i]['alias']:
+            return "Tracker is already an alias of %s!"%i
 
     # XXX Need some kind of rate-limiting to avoid abuse / DoS
 

@@ -19,10 +19,13 @@ class AdminPage(webapp.RequestHandler):
         write = self.response.out.write
 
         tpl = tpl_lookup.get_template('admin.mako')
-        write(tpl.render(trackers_info=tracker.allinfo()))
+        write(tpl.render(trackers_info=tracker.allinfo(), errors={}))
 
     def post(self):
         req = self.request
+        write = self.response.out.write
+        tpl = tpl_lookup.get_template('admin.mako')
+        errs = {} # t -> error list
 
         act = req.get('action')
         t = req.get('address')
@@ -44,14 +47,35 @@ class AdminPage(webapp.RequestHandler):
                 if req.get('name') is not None: # We allow '' to mean 'no home'.
                     e['name'] = req.get('name')
                     s['name'] = req.get('name')
+                if req.get('descr') is not None: # We allow '' to mean 'no home'.
+                    e['descr'] = req.get('descr')
+                    s['descr'] = req.get('descr')
+                if req.get('alias') is not None: # We allow '' to mean 'no home'.
+                    (alias, err) = validatealias(req.get('alias'))
+                    if err: 
+                        errs[t] = err
+                    else:
+                        e['alias'] = alias or None
+                        s['alias'] = alias
+
                 MC.set(t, s, namespace='status') # XXX Race with update()
                 DS.Put(e)
         
-        elif act == 'Delete':
+        elif act == 'X':
             if t:
                 tracker.delete(t)
 
-        self.redirect('/admin')
+        if errs:
+            write(tpl.render(trackers_info=tracker.allinfo(), errors=errs))
+        else:
+            self.redirect('/admin')
+
+def validatealias(s):
+    al = s.split()
+    al = [a.strip() for a in al if a.strip()]
+    al = [tracker.validateurl(a) for a in al]
+    # Return (Good alias, Errors)
+    return ([a[0] for a in al if a[0]], [a[1] for a in al if a[1]])
 
 
 application = webapp.WSGIApplication([('/admin', AdminPage)], debug=True)
