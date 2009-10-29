@@ -19,6 +19,9 @@ td, th {
     padding: 0.3em;
     margin: 0;
 }
+
+tr:nth-child(even) td { background-color: #FAFAFA; }
+
 a {
     color: #c1b89b;
     text-decoration: underline;
@@ -64,19 +67,19 @@ font-family: Baskerville, "Palatino Linotype", Times, "Times New Roman", serif!i
     background-color: #FFD700!important; /* Gold */
 }
 
-.container_12 {
-    width: 94%;
-    margin-left: 3%;
-    margin-right: 3%;
+.container_12, .headfoot  {
+    width: 100%!important;
+    margin-left: 0%;
+    margin-right: 0%;
 }
 
 /* Status classes */
 
 td.excellent {
-    background-color: #CCFF9F;
+    background-color: #CCFF9F!important;
 }
 td.error {
-    background-color: #FF9F9F;
+    background-color: #FF9F9F!important;
 }
 
 

@@ -13,6 +13,7 @@
 <div class=grid_12>
 <table cellspacing=0 cellpadding=0 class=sortable>
     <thead><tr>
+        <th>#</th>
         <th>Tracker</th>
         <th>Announce URL</th>
         <th>SSL</th>
@@ -23,15 +24,17 @@
         <th class="sorttable_numeric">Uptime</th>
     </tr></thead>
 
-<% lt = dt = 0 %>
+<% lt = dt = i = 0 %>
 % if trackers:
     % for a in trackers:
         <% t = trackers[a] %>
         % if not t:
             <% continue %>
         % endif
-        <tr>
-            %if 'name' in t:
+
+        <% i += 1 %>
+            <td class=right>${i}</td>
+            %if 'name' in t and t['name']:
                 <td><a href="/trk/${t['name']|u}">${t.get('title', a.split('/')[2])}</a></td>
             %else:
                 <td>${t.get('title', a.split('/')[2])}</td>
@@ -86,22 +89,17 @@ Possible status values:
 
 
 <div class=grid_12>
-
-<form method="POST" class=grid_12>
-    <fieldset class="login center">
+<hr>
+<form method="POST" class="grid_12 center">
 
 % if new_tracker_error:
         <p><b>Could not add tracker: ${new_tracker_error | h}</b></p>
 % endif 
         <input type="text" name="tracker-address" value="" size=64>
         <input type="submit" value="Add Tracker">
-<hr style="margin: 0.8em">
-If you post a new tracker, please allow for a few minutes while we gather
-statistics before it is added to the list.
-    </fieldset>
+<p>If you post a new tracker, please allow for a few minutes while we gather
+statistics before it is added to the list.</p>
 </form>
-
 </div>
-
 
 <%def name="extraheaders()"><script type="text/javascript" src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script></%def>
