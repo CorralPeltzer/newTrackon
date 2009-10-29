@@ -25,6 +25,9 @@ handlers:
 - url: /api/live
   script: trackon/api/live.py
 
+- url: /api/fail
+  script: trackon/api/fail.py
+
 - url: /api/all
   script: trackon/api/all.py
 

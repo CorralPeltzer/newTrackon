@@ -13,6 +13,9 @@
     <dd>Returns a new-line delimited list announce URLs of currenlty active and
     responding trackers.</dd>
 
+    <dt>GET /api/fail</dt>
+    <dd>Returns a new-line delimited list announce URLs of trackers that failed their last check.</dd>
+
     <dt>GET /api/all</dt>
     <dd>Returns a new-line delimited list announce URLs of all known trackers, dead or alive.</dd>
 
