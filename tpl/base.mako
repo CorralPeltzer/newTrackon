@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta charset="utf-8">
 <title>${self.title()}</title>
 <link rel="stylesheet" type="text/css" href="/static/fluid960gs/all.css" media="screen">
 <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
