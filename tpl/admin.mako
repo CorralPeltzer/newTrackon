@@ -17,8 +17,9 @@
         <label>Title:<input type="text" name="title" value="${ti.get('title', '')}"></label>
         <label>Home:<input type="text" name="home" value="${ti.get('home', '')}"></label>
         <label>Name:<input type="text" name="name" value="${ti.get('name', '')}"></label>
+        <br>
         <label style="float:left;">Description:<br><textarea name="descr" cols=42 rows=5>${ti.get('descr', '')}</textarea></label>
-        <label style="float:left;">Aliases:<br><textarea name="alias" cols=42 rows=5>${'\n'.join(ti.get('alias', []))|h}</textarea></label>
+        <label style="float:left;">Aliases:<br><textarea name="alias" cols=60 rows=5>${'\n'.join(ti.get('alias', []) or [])|h}</textarea></label>
         <div style="float:left;">
         <input type="submit" name="action" value="X"><b>Delete!</b>
         <hr><br>
