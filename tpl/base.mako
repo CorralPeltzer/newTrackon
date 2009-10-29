@@ -14,12 +14,12 @@ ${self.extraheaders()}
 
 <div class="container_12">
 
-<div class="grid_12">
+<div class="grid_12 headfoot">
     <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Gamma 7<span class=cursive>γ</span></span></i></a></h1>
 </div>
 
 
-<div class="grid_12">
+<div class="grid_12 headfoot">
     <ul class="nav main">
         <li><a href="/">main</a></li>
         <li><a href="/api-docs">api</a></li>
@@ -37,14 +37,11 @@ ${self.extraheaders()}
     </ul>
 </div>
 
-<div class="grid_12" style="text-align: right; padding-top: 1px;"><script type="text/javascript">var addthis_disable_flash = true; var addthis_pub="uriell";</script> <a href="http://www.addthis.com/bookmark.php?v=20" onmouseover="return addthis_open(this, '', '[URL]', '[TITLE]')" onmouseout="addthis_close()" onclick="return addthis_sendto()"><img src="http://s7.addthis.com/static/btn/lg-share-en.gif" width="125" height="16" alt="Bookmark and Share" style="border:0"/></a><script type="text/javascript" src="http://s7.addthis.com/js/200/addthis_widget.js"></script></div>
+<div class="grid_12 headfoot" style="text-align: right; padding-top: 1px;"><script type="text/javascript">var addthis_disable_flash = true; var addthis_pub="uriell";</script> <a href="http://www.addthis.com/bookmark.php?v=20" onmouseover="return addthis_open(this, '', '[URL]', '[TITLE]')" onmouseout="addthis_close()" onclick="return addthis_sendto()"><img src="http://s7.addthis.com/static/btn/lg-share-en.gif" width="125" height="16" alt="Bookmark and Share" style="border:0"/></a><script type="text/javascript" src="http://s7.addthis.com/js/200/addthis_widget.js"></script></div>
 
-<div class="grid_12">
 ${self.body()}
-</div>
 
-
-<div class="grid_12" id="site_info">
+<div class="grid_12 headfoot" id="site_info">
     <div class="box center">
         <p><a href="http://cat-v.org">A cat-v.org production</a> - <i>Because sharing is caring.</i></p>
     </div>
