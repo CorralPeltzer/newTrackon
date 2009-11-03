@@ -90,7 +90,8 @@ Possible status values:
 
 <div class=grid_12>
 <hr>
-<form method="POST" class="grid_12 center">
+<a name="new"></a>
+<form method="POST" action="/#new" class="grid_12 center">
 
 % if new_tracker_error:
         <p><b>Could not add tracker: ${new_tracker_error | h}</b></p>
