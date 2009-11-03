@@ -150,8 +150,10 @@ def add(t, info):
     info = update(t, info)
 
     tl = DS.Entity('Tracker', name=t)
-    tl['home'] = info['home']
-    tl['title'] = info['title']
+    if 'home' in info:
+        tl['home'] = info['home']
+    if 'title' in info:
+        tl['title'] = info['title']
     DS.Put(tl)
 
     # Add t to cache list
