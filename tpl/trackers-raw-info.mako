@@ -37,3 +37,5 @@
 % endif
 
 </table></div>
+
+<%def name="title()">Raw tracker responses.</%def>
