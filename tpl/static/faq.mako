@@ -4,6 +4,9 @@
 <h2 id="page-heading">Trackon FAQ</h2>
 
 <dl>
+    <dt>How do I add a tracker to my torrents?</dt>
+    <dd>This will depend on your BitTorrent client, please consult its documentation for details. In the future we might provide instructions for the most popular BT clients, stay tunned.</dd>
+
     <dt>How is the uptime calculated?
     <dd>Uptime is calculated based on the percentage of valid responses to the last 64 attempts to contact the tracker. Because the interval between attempts will depend on the '<i>min interval</i>' for that tracker and other factors, comparing the uptime values of different trackers is not completely 'fair'.
 
