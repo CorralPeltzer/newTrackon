@@ -1,3 +1,5 @@
+* Geolocation of trackers (plus little flag?), plus map of all tracker locations?
+* More metadata: "First seen", "Last seen alive", "Added by".
 * More complete api
 * Check our competition:
     - http://thebeehive.info/
