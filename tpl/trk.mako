@@ -17,7 +17,7 @@
 
 %if trk.get('home', False):
     <dt>Homepage
-    <dd>${trk['home']|h}
+    <dd><a href="${trk['home']|h}">${trk['home']|h}</a>
 %endif
 
 %if trk.get('alias', False):
