@@ -26,9 +26,9 @@
             <td>${a}</td>
             <td>${t.get('query-string', '')}</td>
         % if 'error' in t:
-            <td><b>Error:</b> ${t['error']}</td>
+            <td><b>Error:</b> ${t['error']|h}</td>
         % else:
-            <td>${repr(t['response'])}</td>
+            <td>${repr(t['response'])|h}</td>
         % endif
 
         </tr>
