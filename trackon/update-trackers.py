@@ -31,8 +31,8 @@ def main():
         ti = tracker.allinfo() or {}
         for t in ti:
             if 'next-check' not in ti[t] or ti[t]['next-check'] < now: 
-                # Gross hack: 1% of the time we try over https
-                if ti[t].get('ssl', True) or (now%100 == 0):
+                # Gross hack: 0.2% of the time we try over https
+                if ti[t].get('ssl', True) or (now%500 == 0):
                     t = t.replace('http://', 'https://')
 
                 tracker.schedule_update(t)
