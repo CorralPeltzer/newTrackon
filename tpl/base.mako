@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>${self.title()}</title>
-<link rel="stylesheet" type="text/css" href="/static/fluid960gs/all.css" media="screen">
+<link rel="stylesheet" href="/static/fluid960gs/all.css" media="screen">
 <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
 <!--[if IE 7]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie.css" media="screen" /><![endif]-->
 
