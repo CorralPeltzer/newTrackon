@@ -102,4 +102,4 @@ statistics before it is added to the list.</p>
 </form>
 </div>
 
-<%def name="extraheaders()"><script type="text/javascript" src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script></%def>
+<%def name="extraheaders()"><script type="text/javascript" src="/static/js/sorttable.js"></script></%def>
