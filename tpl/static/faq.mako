@@ -13,7 +13,7 @@
     <dt>On what port numbers should trackers accept connections?</dt>
     <dd>Due to Google's limits to App Engine's fetchurl API it is only officially possible to make requests to ports 80 and 443. In practice it seems to be possible to contact trackers listening on any of the following ports: 80, 443, 4443, 8080, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8089, 8188, 8444, 8990. (Thanks to Medecau for alerting me to this list found in the pubsubhubbub source.) If you would like trackers on other ports to be accessible please star <a href="http://code.google.com/p/googleappengine/issues/detail?id=418">issue 418</a> on the official App Engine issue tracker.</dd>
 
-    <dt>Does trackon respect the trackers *min interval*?</dt>
+    <dt>Does Trackon respect the trackers *min interval*?</dt>
     <dd>Yes, if a tracker sets it, it will only be checked every *min interval*.</dd>
 
     <dt>What is the correct pronunciation of '<i>Trackon</i>'?</dt>
@@ -23,6 +23,9 @@
     <dd>It is <i>Trago the dragon</i>, the mascot of tracko.org. It was originally
     part of "<i>The Nine Dragons</i>" handscroll (九龍圖卷) by Chen Rong (陳容), a painter of the Southern Song Dynasty during the first half of the 13th century in China. It is dated to 1244. Or anyway this is what Wikipedia claims.</dd>
 
+    <dt>How can I help Trackon.org?</dt>
+    <dd>If you can program in Python, I'm sure there are many improvements that could be made to the code ;) many new features are planned, but they will take time. If you can draw, it would be great to have a cool logo or mascot. And finally, if you find Trackon useful, tell your friends about it, the more the merrier!
+    </dd>
 </dl>
 
 </div>
