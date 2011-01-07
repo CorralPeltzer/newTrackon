@@ -20,7 +20,7 @@
     <dd>As in <i>dragon</i> but starting with <b>t</b>.</dd>
 
     <dt>What is the picture in the about page?</dt>
-    <dd>It is <i>Trago the dragon</i>, the mascot of tracko.org. It was originally
+    <dd>It is <i>Trago the dragon</i>, the mascot of trackon.org. It was originally
     part of "<i>The Nine Dragons</i>" handscroll (九龍圖卷) by Chen Rong (陳容), a painter of the Southern Song Dynasty during the first half of the 13th century in China. It is dated to 1244. Or anyway this is what Wikipedia claims.</dd>
 
     <dt>How can I help Trackon.org?</dt>
