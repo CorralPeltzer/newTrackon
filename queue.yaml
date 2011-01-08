@@ -4,6 +4,6 @@ queue:
   bucket_size: 1 # Try to avoid races
 
 - name: update-trackers
-  rate: 16/m
+  rate: 64/m
   bucket_size: 8 # No races here
 
