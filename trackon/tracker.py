@@ -190,6 +190,7 @@ def validateurl(u):
     if UCHARS.match(u.netloc) and  UCHARS.match(u.path):
         # GAE blocks some ports < 1024
 	# Ports 80 and 443 are *implicity*, so to avoid duplicate urls we don't allow them: 80, 443.
+        port = u.port
         if port and ((port >= 81 and port <= 90) or 
                      (port >= 440 and port <= 450 and port != 443) or
                      (port >= 1024 and port <= 65535)):
