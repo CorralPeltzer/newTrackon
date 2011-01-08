@@ -181,21 +181,21 @@ def delete(t):
 
 import re
 UCHARS = re.compile('^[a-zA-Z0-9_\-\./:]+$')
-# http://code.google.com/p/pubsubhubbub/source/browse/trunk/hub/main.py?r=256#198
-# This two are *implicity*, so to avoid duplicate urls we don't allow them: 80, 443.
-GAE_ALLOWED_PORTS = frozenset([4443, 8080, 8081, 8082, 8083, 8084, 8085,
-                               8086, 8087, 8088, 8089, 8188, 8444, 8990])
     
 def validateurl(u):
     u = urlparse(u)
     if u.scheme != 'http':
         return (None, "Unsupported URL scheme.")
-    
+
     if UCHARS.match(u.netloc) and  UCHARS.match(u.path):
-        if u.port and u.port not in GAE_ALLOWED_PORTS:
-            return (None, "Tracker on unsuported port, see FAQ for details.")
-        else:
+        # GAE blocks some ports < 1024
+	# Ports 80 and 443 are *implicity*, so to avoid duplicate urls we don't allow them: 80, 443.
+        if port and ((port >= 81 and port <= 90) or 
+                     (port >= 440 and port <= 450 and port != 443) or
+                     (port >= 1024 and port <= 65535)):
             return ("%s://%s%s" % (u.scheme, u.netloc.lower(), u.path), None)
+        else:
+            return (None, "Tracker on unsuported port, see FAQ for details.")
     else:
         return (None, "Invalid announce URL!")
 
