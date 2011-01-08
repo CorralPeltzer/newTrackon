@@ -25,6 +25,7 @@ and capabilities of open/public BitTorrent trackers.</p>
 <li>The authors of the sorttable JS script
 <li>Stephen Bau for creating fluid960gs, which seems to be the only decent CSS 'framework' that can actually scale up and down gracefully to arbitrary font sizes.
 <li>Grozdan, for many great suggestions, reporting many errors and adding many trackers.
+<li>Incant, for providing a patch to remove some of the restrictions on tracker port numbers.
 <li>And many others!
 </ul>
 
