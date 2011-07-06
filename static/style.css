@@ -67,6 +67,7 @@ font-family: Baskerville, "Palatino Linotype", Times, "Times New Roman", serif!i
     background-color: #FFD700!important; /* Gold */
 }
 
+/* XXX .headfoot is what seems to be causing trouble hidding parts of the page in Chrome, no idea why */
 .container_12, .headfoot  {
     width: 100%!important;
     margin-left: 0%;
