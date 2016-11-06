@@ -1,3 +1,9 @@
+# ext/autohandler.py
+# Copyright (C) 2006-2016 the Mako authors and contributors <see AUTHORS file>
+#
+# This module is part of Mako and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
 """adds autohandler functionality to Mako templates.
 
 requires that the TemplateLookup class is used with templates.
@@ -5,7 +11,7 @@ requires that the TemplateLookup class is used with templates.
 usage:
 
 <%!
-	from mako.ext.autohandler import autohandler
+    from mako.ext.autohandler import autohandler
 %>
 <%inherit file="${autohandler(template, context)}"/>
 
@@ -13,13 +19,16 @@ usage:
 or with custom autohandler filename:
 
 <%!
-	from mako.ext.autohandler import autohandler
+    from mako.ext.autohandler import autohandler
 %>
 <%inherit file="${autohandler(template, context, name='somefilename')}"/>
 
 """
 
-import posixpath, os, re
+import posixpath
+import os
+import re
+
 
 def autohandler(template, context, name='autohandler'):
     lookup = context.lookup
@@ -35,23 +44,25 @@ def autohandler(template, context, name='autohandler'):
         path = '/' + '/'.join(tokens)
         if path != _template_uri and _file_exists(lookup, path):
             if not lookup.filesystem_checks:
-                return lookup._uri_cache.setdefault((autohandler, _template_uri, name), path)
+                return lookup._uri_cache.setdefault(
+                    (autohandler, _template_uri, name), path)
             else:
                 return path
         if len(tokens) == 1:
             break
         tokens[-2:] = [name]
-        
+
     if not lookup.filesystem_checks:
-        return lookup._uri_cache.setdefault((autohandler, _template_uri, name), None)
+        return lookup._uri_cache.setdefault(
+            (autohandler, _template_uri, name), None)
     else:
         return None
 
+
 def _file_exists(lookup, path):
-    psub = re.sub(r'^/', '',path)
+    psub = re.sub(r'^/', '', path)
     for d in lookup.directories:
         if os.path.exists(d + '/' + psub):
             return True
     else:
         return False
-    
