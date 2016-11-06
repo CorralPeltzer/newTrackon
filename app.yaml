@@ -1,6 +1,6 @@
-application: track-on
 version: 4
-runtime: python
+runtime: python27
+threadsafe: false
 api_version: 1
 
 handlers:
@@ -66,5 +66,3 @@ handlers:
 
 #- url: /.*
 #  script: 404.py
-
-

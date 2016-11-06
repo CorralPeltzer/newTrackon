@@ -2,7 +2,7 @@ from mako.template import Template
 from mako.lookup import TemplateLookup
 from mako.exceptions import html_error_template
 
-tpl_lookup = TemplateLookup(directories=['../tpl/'], input_encoding='utf-8', output_encoding='utf-8', encoding_errors='replace')
+tpl_lookup = TemplateLookup(directories=['tpl'], input_encoding='utf-8', output_encoding='utf-8', encoding_errors='replace')
 
 def render(tpl, **d):
     """Render ../tpl/${tpl}.mako template."""
@@ -25,6 +25,3 @@ def postredir(addr):
 def permredir(addr):
     print "Status: 301 Permanent Redirect"
     print "Location: %s\n" % addr
-
-
-
