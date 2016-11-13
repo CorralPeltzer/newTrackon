@@ -1,7 +1,7 @@
 from logging import debug, error, info
 from hashlib import md5
 from time import time
-from urlparse import urlparse 
+from urlparse import urlparse
 from urllib import unquote as url_unquote
 from google.appengine.api.urlfetch import fetch, Error as FetchError, DownloadError
 from google.appengine.api import memcache as MC
@@ -42,9 +42,9 @@ def check_ssl(addr):
 
 def check(addr):
     """Check if a tracker is up."""
-    thash = trackerhash(addr) # The info_hash we will use for this tracker 
+    thash = trackerhash(addr) # The info_hash we will use for this tracker
     d = {}
-    d['query-string'] = genqstr(thash) 
+    d['query-string'] = genqstr(thash)
     try:
         t1 = time()
         r = fetch(addr+d['query-string'], deadline=10)
@@ -53,7 +53,7 @@ def check(addr):
         d['error'] = "Could not reach tracker." # XXX Should find out why!
     except FetchError, e:
         d['error'] = unicode("Fetchurl error: %s" % repr(e), errors='replace')
-    
+
     if 'error' in d:
         d['latency'] = time() - t1
         return d
@@ -61,7 +61,7 @@ def check(addr):
 
     if r.status_code != 200:
         d['error'] = "Unexpected HTTP status: %d" % r.status_code
-    
+
     elif not r.content:
         d['error'] = "Got empty HTTP response."
 
@@ -84,7 +84,7 @@ def check(addr):
 
 def update(t, info):
     """
-    Refresh memcache with new info, log status, calculate uptime, ...; Returns 
+    Refresh memcache with new info, log status, calculate uptime, ...; Returns
     the updated info dict.
     """
 
@@ -181,31 +181,27 @@ def delete(t):
 
 import re
 UCHARS = re.compile('^[a-zA-Z0-9_\-\./:]+$')
-    
+
 def validateurl(u):
     u = urlparse(u)
-    if u.scheme != 'http':
-        return (None, "Unsupported URL scheme.")
+    if u.scheme not in ('udp', 'http', 'https'):
+        return (None, "Tracker URLs have to start with 'udp://', 'http://' or 'https://'.")
 
     if UCHARS.match(u.netloc) and  UCHARS.match(u.path):
-        # GAE blocks some ports < 1024
-	# Ports 80 and 443 are *implicity*, so to avoid duplicate urls we don't allow them: 80, 443.
-        port = u.port
-        if port and ((port >= 81 and port <= 90) or 
-                     (port >= 440 and port <= 450 and port != 443) or
-                     (port >= 1024 and port <= 65535)):
-            return ("%s://%s%s" % (u.scheme, u.netloc.lower(), u.path), None)
-        else:
-            return (None, "Tracker on unsuported port, see FAQ for details.")
+        
+        if u.port is None and u.scheme == 'http':
+            u = u._replace(netloc = u.netloc + ":80")
+        if u.port is None and u.scheme == 'https':
+            u = u._replace(netloc = u.netloc + ":443")
+        return ("%s" % u.geturl(), None)
+        
     else:
         return (None, "Invalid announce URL!")
 
 def incoming(t):
     """Add a tracker to the list to check before adding to the proper tracker list"""
 
-    # We treat https urls as plain http, will check if https is supported as part of
-    # standard tracker testing process.
-    (t, err) = validateurl(url_unquote(t).replace('https://', 'http://'))
+    (t, err) = validateurl(t)
     if err:
         return err
 
@@ -221,7 +217,7 @@ def incoming(t):
 
     task = TQ.Task(params={'tracker-address': t, 'attempts': 0})
     incoming_queue.add(task)
-    logmsg("Added %s to the incoming queue of trackers to check." % t, 'incoming') 
+    logmsg("Added %s to the incoming queue of trackers to check." % t, 'incoming')
 
 
 def allinfo():
@@ -258,7 +254,7 @@ def gettrk(name):
         return (None, None)
     else:
         return "Error: More than one tracker with same name!"
-        
+
 
 def getlogs(t):
 
@@ -267,4 +263,3 @@ def getlogs(t):
         return []
 
     return sorted(MC.get_multi(["%s!%d" % (t, tm) for tm in l], namespace='logs').values(), key=(lambda x: x['updated'] or ''), reverse=True)
-
