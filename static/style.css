@@ -3,7 +3,7 @@ table.sortable thead {
     cursor: default;
 }
 body {
-    font-size: 0.75em; 
+    font-size: 0.75em;
     background-color: #edb;
     background-color: white;
     border-top: none;
@@ -41,7 +41,7 @@ dd {
 }
 
 .main {
-    font-size: 140%; 
+    font-size: 140%;
 }
 
 /* Generic classes */
@@ -57,14 +57,14 @@ dd {
 font-family: Baskerville, "Palatino Linotype", Times, "Times New Roman", serif!important;
 }
 
-/* Specific layout elments */ 
+/* Specific layout elments */
 #branding a {
     text-decoration: none;
     color: #333;
 }
 
 #branding {
-    background-color: #FFD700!important; /* Gold */
+    background-color: #A2CE68!important; /* Gold */
 }
 
 /* XXX .headfoot is what seems to be causing trouble hidding parts of the page in Chrome, no idea why */

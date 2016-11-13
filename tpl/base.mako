@@ -15,7 +15,7 @@ ${self.extraheaders()}
 <div class="container_12">
 
 <div class="grid_12 headfoot">
-    <h1 id=branding><a href="/"><i><b>Trackon</b> <span class=small>Gamma 7<span class=cursive>γ</span></span></i></a></h1>
+    <h1 id=branding><a href="/"><i><b>Trackon</b></i></a></h1>
 </div>
 
 
@@ -26,13 +26,7 @@ ${self.extraheaders()}
         <li><a href="/incoming-log">incoming</a></li>
         <li><a href="/trackers-raw-info">raw</a></li>
         <li><a href="/faq">faq</a></li>
-        <li><a href="http://repo.cat-v.org/trackon/">source</a></li>
-        <li><a>links</a>
-            <ul>
-            <li><a href="http://repo.cat-v.org/atrack/">Atrack</a></li>
-            <li><a href="http://bittrk.appspot.com/">Bittrk</a></li>
-            </ul>
-        </li>
+        <li><a href="https://github.com/CorralPeltzer/newTrackon">source <img src="../static/imgs/GitHub.png" height="30px" width="30px" style="vertical-align:middle"></a></li>
         <li class=secondary><a href="/about">about</a></li>
     </ul>
 </div>
@@ -43,7 +37,7 @@ ${self.body()}
 
 <div class="grid_12 headfoot" id="site_info">
     <div class="box center">
-        <p><a href="http://cat-v.org">A cat-v.org production</a> - <i>Because sharing is caring.</i></p>
+        <p>A <a href="https://github.com/CorralPeltzer">CorralPeltzer</a> and <a href="http://cat-v.org">cat-v.org</a> creation - <i>Because sharing is caring.</i></p>
     </div>
 </div>
 

@@ -1,4 +1,4 @@
-<%! from time import time %>
+col<%! from time import time %>
 <%inherit file="base.mako"/>
 
 <div class=grid_12>
@@ -12,10 +12,8 @@
 <div class=grid_12>
 <table cellspacing=0 cellpadding=0 class=sortable>
     <thead><tr>
-        <th>#</th>
         <th>Tracker</th>
         <th>Announce URL</th>
-        <th>SSL</th>
         <th class="sorttable_numeric">Latency <span class=units></span></th>
         <th class="sorttable_numeric">Checked <span class=units></span></th>
         <th>Status</th>
@@ -32,21 +30,12 @@
         % endif
 
         <% i += 1 %>
-            <td class=right>${i}</td>
             %if 'name' in t and t['name']:
                 <td><a href="/trk/${t['name']|u}">${t.get('title', a.split('/')[2])}</a></td>
             %else:
                 <td>${t.get('title', a.split('/')[2])}</td>
             %endif
             <td>${a}</td>
-            <td>
-                % if t.get('ssl', False):
-                    Yes
-                % else:
-                    No
-                % endif
-                ##(${t.get('ssl', '-')})
-            </td>
             <td class=right>${"%.3f" % t['latency']} sec</td>
             <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
         % if 'error' in t:
@@ -94,12 +83,11 @@ Possible status values:
 
 % if new_tracker_error:
         <p><b>Could not add tracker: ${new_tracker_error | h}</b></p>
-% endif 
+% endif
         <input type="text" name="tracker-address" value="" size=64>
         <input type="submit" value="Add Tracker">
 <p>If you post a new tracker, please allow for a few minutes while we gather
 statistics before it is added to the list.</p>
 </form>
 </div>
-
 <%def name="extraheaders()"><script type="text/javascript" src="/static/js/sorttable.js"></script></%def>
