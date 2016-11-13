@@ -1,4 +1,4 @@
-col<%! from time import time %>
+<%! from time import time %>
 <%inherit file="base.mako"/>
 
 <div class=grid_12>
