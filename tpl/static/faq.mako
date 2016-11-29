@@ -1,20 +1,20 @@
-<%inherit file="base.mako"/>
+<%inherit file="../base.mako"/>
 <%def name="title()">Trackon Frequently, Infrequently and Randomly Asked Questions</%def>
 <div class=grid_12>
 <h2 id="page-heading">Trackon FAQ</h2>
 
 <dl>
+    <dt>I am the maintainer of a tracker and I want to change the URL of it.</dt>
+    <dd>Contact me as stated in 'about' section.
+
     <dt>How do I add a tracker to my torrents?</dt>
-    <dd>This will depend on your BitTorrent client, please consult its documentation for details. In the future we might provide instructions for the most popular BT clients, stay tunned.</dd>
+    <dd>Just go to the list section, copy the trackers and paste them in your BitTorrent client.</dd>
 
     <dt>How is the uptime calculated?
-    <dd>Uptime is calculated based on the percentage of valid responses to the last 64 attempts to contact the tracker. Because the interval between attempts will depend on the '<i>min interval</i>' for that tracker and other factors, comparing the uptime values of different trackers is not completely 'fair'.
+    <dd>Uptime is calculated based on the percentage of valid responses to the last 1000 attempts to contact the tracker. Because the interval between attempts will depend on the interval for that tracker and other factors, comparing the uptime values of different trackers is not completely 'fair'.
 
-    <dt>On what port numbers should trackers accept connections?</dt>
-    <dd>Due to Google's limits to App Engine's fetchurl API it is only possible to make requests to ports 80-90, 440-450, and 1024-65535.</dd>
-
-    <dt>Does Trackon respect the trackers *min interval*?</dt>
-    <dd>Yes, if a tracker sets it, it will only be checked every *min interval*.</dd>
+    <dt>Does Trackon respect the trackers interval?</dt>
+    <dd>Yes.</dd>
 
     <dt>What is the correct pronunciation of '<i>Trackon</i>'?</dt>
     <dd>As in <i>dragon</i> but starting with <b>t</b>.</dd>

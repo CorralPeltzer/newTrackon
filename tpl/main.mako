@@ -1,3 +1,4 @@
+<!DOCTYPE HTML>
 <%! from time import time %>
 <%inherit file="base.mako"/>
 
@@ -6,87 +7,69 @@
 <h2 id=page-heading>Tracking the Trackers</h2>
 
 <p>Trackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
-
+<p>To download a torrent client ready list of all trackers with more than 90% of uptime, go to the <a href="/list">List</a> section.
 </div>
 
 <div class=grid_12>
 <table cellspacing=0 cellpadding=0 class=sortable>
     <thead><tr>
-        <th>Tracker</th>
-        <th>Announce URL</th>
-        <th class="sorttable_numeric">Latency <span class=units></span></th>
-        <th class="sorttable_numeric">Checked <span class=units></span></th>
-        <th>Status</th>
-        <th class="sorttable_numeric">Interval / Min</th>
-        <th class="sorttable_numeric">Uptime</th>
+      <th>Tracker URL</th>
+      <th>IP address</th>
+      <th class="sortable">Country</th>
+      <th class="sortable">Network</th>
+      <th class="sorttable_numeric">Latency <span class=units></span></th>
+      <th class="sorttable_numeric">Last checked <span class=units></span></th>
+      <th class="sorttable_numeric">Update interval <span class=units></span></th>
+      <th>Status</th>
+      <th class="sortable">Added </th>
+      <th class="sorttable_numeric">Uptime *</th>
     </tr></thead>
 
-<% lt = dt = i = 0 %>
-% if trackers:
-    % for a in trackers:
-        <% t = trackers[a] %>
-        % if not t:
-            <% continue %>
-        % endif
-
-        <% i += 1 %>
-            %if 'name' in t and t['name']:
-                <td><a href="/trk/${t['name']|u}">${t.get('title', a.split('/')[2])}</a></td>
-            %else:
-                <td>${t.get('title', a.split('/')[2])}</td>
-            %endif
-            <td>${a}</td>
-            <td class=right>${"%.3f" % t['latency']} sec</td>
-            <td class=right>${(int(time()) - t['updated']) / 60} min ago</td>
-        % if 'error' in t:
-            <% dt += 1 %>
-            ##<td sorttable_customkey="3" class=error><b title="${t['error']|h}">Error!</b></td>
-            <td sorttable_customkey="3" class=error><b>Error!</b></td>
-            <td class=right>- / -</td>
-        % else:
-            <% lt += 1 %>
-            <% r = t['response'] %>
-            % if r['peers']:
-                <td sorttable_customkey="1" class=excellent><b>Excellent!</b></td>
-            % else:
-                <td sorttable_customkey="2" class=ok><b>Ok</b></td>
+    <% lt = dt = 0 %>
+    % if trackers:
+        % for t in trackers:
+            % if not t:
+                <% continue %>
             % endif
-            <td class=right>${r.get('interval', '-')} / ${r.get('min interval', '-')}</td>
-        % endif
-            <td class=right>${t.get('uptime', '-')}%</td>
+                <td>${t['url']}</td>
+                <td>${t['ip']}</td>
+                <td>${t.get('country', 'Unknown')}</td>
+                <td>${t.get('network', 'Unknown')}</td>
+                <td class=right>${"%.3f" % t['latency']} sec</td>
+                <td class=right>${(int(time()) - t.get('updated', 'Unknown')) / 60} min ago</td>
+                <td class=center>~${t['interval']/60} min (${t['interval']} sec)</td>
+                % if t['status'] == 1:
+                    <td sorttable_customkey="1" class=up><b>Working</b></td>
+                    <% lt += 1 %>
+                % else:
+                    <td sorttable_customkey="2" class=down><b>Down</b></td>
+                    <% dt += 1 %>
+                % endif
+                <td class=right>${t['added']}</td>
+                <td class=right>${"%.2f" % t['uptime']}%</td>
+            </tr>
+        % endfor
 
-        </tr>
-    % endfor
+        <caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
 
-    <caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
-
-% endif
+    % endif
 
 </table>
-
-Possible status values:
-<ul>
-    <li><b>Excellent</b>: The tracker was reachable, returned a valid response <i>that included peers</i>.
-
-    <li><b>Ok</b>: The tracker was reachable, and while it returned a valid response, it didn't include any peers.
-
-    <li><b>Error</b>:The tracker was either unreachable or returned some kind of error. For a detailed error message see tooltip.
-</ul>
-
+<caption style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</caption>
 </div>
 
 
 <div class=grid_12>
 <hr>
 <a name="new"></a>
-<form method="POST" action="/#new" class="grid_12 center">
+<form method="POST" action="/" class="grid_12 center">
 
 % if new_tracker_error:
         <p><b>Could not add tracker: ${new_tracker_error | h}</b></p>
 % endif
         <input type="text" name="tracker-address" value="" size=64>
         <input type="submit" value="Add Tracker">
-<p>If you post a new tracker, please allow for a few minutes while we gather
+<p>If you post a new tracker, please allow for a few seconds while we gather
 statistics before it is added to the list.</p>
 </form>
 </div>

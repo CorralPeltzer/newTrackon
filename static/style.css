@@ -23,7 +23,7 @@ td, th {
 tr:nth-child(even) td { background-color: #FAFAFA; }
 
 a {
-    color: #c1b89b;
+    color: #607a3d;
     text-decoration: underline;
     xtext-decoration: none;
 }
@@ -64,7 +64,7 @@ font-family: Baskerville, "Palatino Linotype", Times, "Times New Roman", serif!i
 }
 
 #branding {
-    background-color: #A2CE68!important; /* Gold */
+    background-color: #A2CE68!important;
 }
 
 /* XXX .headfoot is what seems to be causing trouble hidding parts of the page in Chrome, no idea why */
@@ -76,14 +76,16 @@ font-family: Baskerville, "Palatino Linotype", Times, "Times New Roman", serif!i
 
 /* Status classes */
 
-td.excellent {
+td.up {
     background-color: #CCFF9F!important;
 }
-td.error {
+td.down {
     background-color: #FF9F9F!important;
 }
 
 
 td.right { text-align: right; }
+td.center { text-align: center; }
+
 th { text-align: center; }
 th span.units { font-size: 70%; }

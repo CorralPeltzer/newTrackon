@@ -1,9 +1,2 @@
-* Geolocation of trackers (plus little flag?), plus map of all tracker locations?
-* More metadata: "First seen", "Last seen alive", "Added by".
-* More complete api
-* A way for a tracker to signal it doesn't want to be included in trackong, ala robots.txt
-* Check our competition:
-    - http://thebeehive.info/
-    - http://bitreactor.to/trackerlist
-    - http://www.torrentking.org/
-    - http://gcachescan.jonatkins.com/ (Gnutella, maybe should do a gnutella version?)
+* Map of all tracker locations?
+*IPv6 support

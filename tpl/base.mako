@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <title>${self.title()}</title>
 <link rel="stylesheet" href="/static/fluid960gs/all.css" media="screen">
+<link rel='shortcut icon' type='image/x-icon' href='/static/imgs/favicon.ico' />
+<!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
 <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
 <!--[if IE 7]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie.css" media="screen" /><![endif]-->
 
@@ -21,17 +23,15 @@ ${self.extraheaders()}
 
 <div class="grid_12 headfoot">
     <ul class="nav main">
-        <li><a href="/">main</a></li>
-        <li><a href="/api-docs">api</a></li>
-        <li><a href="/incoming-log">incoming</a></li>
-        <li><a href="/trackers-raw-info">raw</a></li>
-        <li><a href="/faq">faq</a></li>
-        <li><a href="https://github.com/CorralPeltzer/newTrackon">source <img src="../static/imgs/GitHub.png" height="30px" width="30px" style="vertical-align:middle"></a></li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/list">List</a></li>
+        <li><a href="/incoming-log">Incoming</a></li>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="https://github.com/CorralPeltzer/newTrackon">Source <img src="/static/imgs/GitHub.png" height="30px" width="30px" style="vertical-align:middle"></a></li>
         <li class=secondary><a href="/about">about</a></li>
     </ul>
 </div>
 
-<div class="grid_12 headfoot" style="text-align: right; padding-top: 1px;"><script type="text/javascript">var addthis_disable_flash = true; var addthis_pub="uriell";</script> <a href="http://www.addthis.com/bookmark.php?v=20" onmouseover="return addthis_open(this, '', '[URL]', '[TITLE]')" onmouseout="addthis_close()" onclick="return addthis_sendto()"><img src="http://s7.addthis.com/static/btn/lg-share-en.gif" width="125" height="16" alt="Bookmark and Share" style="border:0"/></a><script type="text/javascript" src="http://s7.addthis.com/js/200/addthis_widget.js"></script></div>
 
 ${self.body()}
 
@@ -45,10 +45,6 @@ ${self.body()}
 
 </div>
 
-<script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
 <script type="text/javascript">
 try {
 var pageTracker = _gat._getTracker("UA-1220719-11");

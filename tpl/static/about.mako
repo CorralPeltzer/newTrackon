@@ -1,4 +1,4 @@
-<%inherit file="base.mako"/>
+<%inherit file="../base.mako"/>
 <div class=grid_12>
 
 <h2 id="page-heading">About Trackon.org</h2>
@@ -9,7 +9,7 @@ and capabilities of open/public BitTorrent trackers.</p>
 
 <h3>Contact</h3>
 
-<p>For suggestions, bug reports, or any other feedback <a href="http://uriel.cat-v.org/contact">see my contact page</a> or join #cat-v in irc.freenode.org or #suckless in irc.oftc.net.</p>
+<p>For suggestions, bug reports, or any other feedback, contact me on <a href="https://twitter.com/CorralPeltzer">twitter</a> or on <a href="mailto:corral.miguelangel@gmail.com">corral.miguelangel@gmail.com</a></p>
 
 
 <h3>Thanks</h3>
@@ -18,6 +18,7 @@ and capabilities of open/public BitTorrent trackers.</p>
 
 <p>Here is a list of some of the people that have helped make trackon possible:
 <ul>
+<li>Uriel †, the creator of this program
 <li>Medecau in #bittorrent for ideas, feedback and beta-testing.
 <li>Moraes and nickjohnson in #appengine for excellent technical help while dealing with App Engine.
 <li>20h and other folks in #cat-v for feedback and suggestions on how to improve the style and design of the site.
