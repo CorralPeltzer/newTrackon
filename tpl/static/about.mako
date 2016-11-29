@@ -1,10 +1,9 @@
 <%inherit file="../base.mako"/>
 <div class=grid_12>
 
-<h2 id="page-heading">About Trackon.org</h2>
+<h2 id="page-heading">About newTrackon.com</h2>
 
-<p>Trackon is a site dedicated to gather and display information about the status
-and capabilities of open/public BitTorrent trackers.</p>
+<p>newTrackon is a service based on the abandoned <a href="http://repo.cat-v.org/trackon/">Trackon</a> project, and is dedicated to gather and display information about the status of open/public BitTorrent trackers.</p>
 
 
 <h3>Contact</h3>
@@ -16,9 +15,9 @@ and capabilities of open/public BitTorrent trackers.</p>
 
 <p>Thanks to everyone that has provided feedback and input about the project.
 
-<p>Here is a list of some of the people that have helped make trackon possible:
+<p>Here is a list of some of the people that have helped make newTrackon possible:
 <ul>
-<li>Uriel †, the creator of this program
+<li>Uriel †, the creator of Trackon.
 <li>Medecau in #bittorrent for ideas, feedback and beta-testing.
 <li>Moraes and nickjohnson in #appengine for excellent technical help while dealing with App Engine.
 <li>20h and other folks in #cat-v for feedback and suggestions on how to improve the style and design of the site.
@@ -31,9 +30,9 @@ and capabilities of open/public BitTorrent trackers.</p>
 </ul>
 
 <div class="center">
-<img style="border: solid black 0.4em" src='https://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='Trago is the mascot dragon of Trackon.org' alt='Trago the dragon' />
+<img style="border: solid black 0.4em" src='https://upload.wikimedia.org/wikipedia/commons/3/3e/Nine-Dragons1.jpg' title='Trago is the mascot dragon of newTrackon.com' alt='Trago the dragon' />
 </div>
 
 </div>
 
-<%def name="title()">About Trackon.org</%def>
+<%def name="title()">About newTrackon.com</%def>

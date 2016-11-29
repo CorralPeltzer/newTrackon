@@ -17,7 +17,7 @@ ${self.extraheaders()}
 <div class="container_12">
 
 <div class="grid_12 headfoot">
-    <h1 id=branding><a href="/"><i><b>Trackon</b></i></a></h1>
+    <h1 id=branding><a href="/"><i><b>newTrackon</b></i></a></h1>
 </div>
 
 
@@ -58,5 +58,5 @@ pageTracker2._trackPageview();
 </body></html>
 
 
-<%def name="title()">Trackon: Tracking the trackers.</%def>
+<%def name="title()">newTrackon: Tracking the trackers.</%def>
 <%def name="extraheaders()"></%def>

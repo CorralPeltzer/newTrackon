@@ -6,7 +6,7 @@
 
 <h2 id=page-heading>Tracking the Trackers</h2>
 
-<p>Trackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
+<p>newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
 <p>To download a torrent client ready list of all trackers with more than 90% of uptime, go to the <a href="/list">List</a> section.
 </div>
 
