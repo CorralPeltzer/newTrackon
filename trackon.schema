@@ -1,0 +1,12 @@
+CREATE TABLE status (
+	url TEXT PRIMARY KEY NOT NULL,
+	host TEXT NOT NULL, ip TEXT NOT NULL,
+	latency REAL NOT NULL,
+	last_checked INT NOT NULL,
+	interval INT NOT NULL,
+	status INT NOT NULL,
+	uptime INT NOT NULL,
+	country TEXT NOT NULL,
+	historic TEXT NOT NULL,
+	added TEXT NOT NULL,
+	network TEXT NOT NULL);
