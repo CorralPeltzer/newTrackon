@@ -14,7 +14,7 @@
 <form method="POST" action="/">
     <input type="text" name="tracker-address" value="" size=64>
     <input type="submit" value="Add Tracker">
-</form></p>
+</form>
 <p>You can submit multiple trackers separated by whitespaces. If you post new trackers, please allow for a few seconds while we gather statistics before it is added to the list,
  or check the <a href="/incoming-log">Incoming</a> section.</p>
 
@@ -50,10 +50,10 @@
                 <td class="right">${(int(time()) - t.get('updated', 'Unknown')) / 60} min ago</td>
                 <td class="center">~${t['interval']/60} min (${t['interval']} sec)</td>
                 % if t['status'] == 1:
-                    <td sorttable_customkey="1" class="up"><b>Working</b></td>
+                    <td class="up"><b>Working</b></td>
                     <% lt += 1 %>
                 % else:
-                    <td sorttable_customkey="2" class="down"><b>Down</b></td>
+                    <td class="down"><b>Down</b></td>
                     <% dt += 1 %>
                 % endif
                 <td class="right">${t['added']}</td>

@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -33,7 +33,9 @@
                 </li>
                 <li><a href="/faq">FAQ</a>
                 </li>
-                <li><a href="https://github.com/CorralPeltzer/newTrackon">Source <img src="/static/imgs/GitHub.png" height="30px" width="30px" style="vertical-align:middle"></a>
+                <li><a href="https://github.com/CorralPeltzer/newTrackon">Source
+                    <img src="/static/imgs/GitHub.png" alt="GitHub repo" height="30" width="30" style="vertical-align:middle;">
+                    </a>
                 </li>
                 <li class="secondary"><a href="/about">about</a>
                 </li>
