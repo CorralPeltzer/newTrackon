@@ -14,8 +14,8 @@
 <form method="POST" action="/">
     <input type="text" name="tracker-address" value="" size=64>
     <input type="submit" value="Add Tracker">
-</form>
-<p>You can submit multiple trackers separated by whitespaces. If you post new trackers, please allow for a few seconds while we gather statistics before it is added to the list,
+</form></p>
+<p>You can submit multiple trackers separated by whitespaces. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
  or check the <a href="/incoming-log">Incoming</a> section.</p>
 
 </div>
