@@ -14,40 +14,46 @@ processing_trackers = False
 
 
 def enqueue_new_trackers(input_string):
-    trackers_list = input_string.split()
-    for url in trackers_list:
-        try:
-            url = validate_url(url)
-            print 'URL is ', url
-            hostname = urlparse(url).hostname
-            print 'hostname is ', hostname
-        except RuntimeError:
-            continue
-        conn = sqlite3.connect('trackon.db')
-        c = conn.cursor()
-        if c.execute("SELECT host FROM status WHERE host=?", (hostname,)).fetchone():
-            print "Tracker already being tracked."
-            continue
-        present = False
-        for tracker_in_deque in incoming_trackers:
-            if urlparse(tracker_in_deque).netloc == urlparse(url).netloc:
-                print "Tracker already in the queue."
-                present = True
-                break
-        if present is True:
-            continue
-        all_ips_tracked = get_all_ips_tracked()
-        try:
-            ip_addresses = get_all_ips(hostname)
-        except RuntimeError:
-            continue
-        exists_ip = set(ip_addresses).intersection(all_ips_tracked)
-        if exists_ip:
-            print "IP of the tracker already in the list."
-            continue
-        incoming_trackers.append(url)
-    if processing_trackers is False:
-        process_new_trackers()
+    if len(input_string) <= 40000:
+        trackers_list = input_string.split()
+        for url in trackers_list:
+            try:
+                url = validate_url(url)
+                print 'URL is ', url
+                hostname = urlparse(url).hostname
+                print 'hostname is ', hostname
+            except RuntimeError:
+                continue
+            conn = sqlite3.connect('trackon.db')
+            c = conn.cursor()
+            if c.execute("SELECT host FROM status WHERE host=?", (hostname,)).fetchone():
+                print "Tracker already being tracked."
+                continue
+            present = False
+            try:    # If during the iteration the deque is changed by another thread (in this case the process_new_trackers thread), a RuntimeError is thrown
+                for tracker_in_deque in incoming_trackers:
+                    if urlparse(tracker_in_deque).netloc == urlparse(url).netloc:
+                        print "Tracker already in the queue."
+                        present = True
+                        break
+            except RuntimeError:
+                pass
+            if present is True:
+                continue
+            all_ips_tracked = get_all_ips_tracked()
+            try:
+                ip_addresses = get_all_ips(hostname)
+            except RuntimeError:
+                continue
+            exists_ip = set(ip_addresses).intersection(all_ips_tracked)
+            if exists_ip:
+                print "IP of the tracker already in the list."
+                continue
+            incoming_trackers.append(url)
+            print "Tracker added to the incoming queue"
+        print "Finished processing input"
+        if processing_trackers is False:
+            process_new_trackers()
 
 
 def process_new_trackers():
@@ -58,7 +64,7 @@ def process_new_trackers():
         size = len(incoming_trackers)
         print "Size of deque: ", size
         process_new_tracker(tracker)
-
+    print "Deque is empty"
     processing_trackers = False
 
 
@@ -105,7 +111,6 @@ def process_new_tracker(url):
 
     all_ips_tracked = get_all_ips_tracked()
     exists_ip = set(ip_addresses).intersection(all_ips_tracked)
-    print "INTERSECTION:", exists_ip
     if exists_ip:
         return url + ": IP already being tracked!"
 
@@ -113,8 +118,6 @@ def process_new_tracker(url):
     c = conn.cursor()
     exists_name = c.execute("SELECT host FROM status WHERE host=?", (url,)).fetchone()
     print 'Hostname: ' + url
-    print exists_ip
-    print exists_name
     if exists_name:
         print "Tracker in the list"
         return url + ": Tracker already being tracked!"
@@ -137,13 +140,12 @@ def process_new_tracker(url):
     conn.commit()
     conn.close()
 
-    # incoming_queue.add(task)
     return tracker + ": Tracker up!"
 
 
 def update_status():
     while True:
-        print "30 SECONDS LOOP"
+        print "UPDATE STATUS LOOP"
         now = int(time())
         conn = sqlite3.connect('trackon.db')
         conn.row_factory = dict_factory
@@ -162,6 +164,7 @@ def update_status():
                  str(t['historic']), str(t['country']), str(t['network']), t['url'])).fetchone()
         conn.commit()
         conn.close()
+        print "Finished updating tracker status"
         sleep(30)
 
 
@@ -169,9 +172,12 @@ def get_150_incoming():
     global incoming_trackers
     string = ''
     if incoming_trackers:
-        for tracker in islice(incoming_trackers, 150):
-            string += tracker + '<br>'
-        return len(incoming_trackers), string
+        try:
+            for tracker in islice(incoming_trackers, 150):
+                string += tracker + '<br>'
+            return len(incoming_trackers), string
+        except RuntimeError:    # If during the iteration the deque is changed by another thread (in this case the process_new_trackers thread), a RuntimeError is thrown
+            pass
     else: return 0, "None"
 
 
@@ -208,7 +214,7 @@ def ip_api(ip, type):
     try:
         response = urllib.urlopen('http://ip-api.com/line/' + ip + '?fields=' + type)
         tracker_country = response.read()
-        sleep(1)
+        sleep(1)    # This wait is to respect the public API of IP-API and not get banned
     except IOError:
         tracker_country = 'Error'
     return tracker_country

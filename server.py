@@ -6,7 +6,6 @@ import threading
 @route('/')
 def main():
     trackers_list = tracker.get_trackers_status()
-
     return template('tpl/main.mako', trackers=trackers_list)
 
 @route('/', method='POST')

@@ -86,8 +86,7 @@ def scrape_http(tracker):
             raise RuntimeError("Invalid response, 'peers' field is missing")
 
     # TODO Do a more extensive check of what was returned
-    print "AAAAAAAAAAAAAAAAAAAAAinterval:"
-    print info['response']['interval']
+    print "interval: ", info['response']['interval']
     return info['response']['interval']
 
 
@@ -184,7 +183,6 @@ def udp_create_announce_request(connection_id, thash):
 
 
 def udp_parse_announce_response(buf, sent_transaction_id):
-    # print "Response is:"+str(buf)
     if len(buf) < 20:
         raise RuntimeError("Wrong response length while announcing: %s" % len(buf))
     action = struct.unpack_from("!i", buf)[0] #first 4 bytes is action
@@ -192,38 +190,32 @@ def udp_parse_announce_response(buf, sent_transaction_id):
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError("Transaction ID doesnt match in announce response! Expected %s, got %s"
             % (sent_transaction_id, res_transaction_id))
-    print "Reading Response"
     if action == 0x1:
-        print "Action is 3"
         ret = dict()
         offset = 8; #next 4 bytes after action is transaction_id, so data doesnt start till byte 8
         ret['interval'] = struct.unpack_from("!i", buf, offset)[0]
         print "Interval:"+str(ret['interval'])
         offset += 4
         ret['leeches'] = struct.unpack_from("!i", buf, offset)[0]
-        print "Leeches:"+str(ret['leeches'])
         offset += 4
         ret['seeds'] = struct.unpack_from("!i", buf, offset)[0]
-        print "Seeds:"+str(ret['seeds'])
         offset += 4
         peers = list()
         x = 0
         while offset != len(buf):
             peers.append(dict())
             peers[x]['IP'] = struct.unpack_from("!i",buf,offset)[0]
-            print "IP: "+socket.inet_ntoa(struct.pack("!i",peers[x]['IP']))
+            # print "IP: "+socket.inet_ntoa(struct.pack("!i",peers[x]['IP']))
             offset += 4
             if offset >= len(buf):
                 raise RuntimeError("Error while reading peer port")
             peers[x]['port'] = struct.unpack_from("!H",buf,offset)[0]
-            print "Port: "+str(peers[x]['port'])
             offset += 2
             x += 1
         return ret['interval']
     else:
         #an error occured, try and extract the error string
         error = struct.unpack_from("!s", buf, 8)
-        print "Action="+str(action)
         raise RuntimeError("Error while annoucing: %s" % error)
 
 
