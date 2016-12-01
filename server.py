@@ -30,7 +30,7 @@ def list():
     trackers_list = tracker.get_trackers_status()
     list = ''
     for t in trackers_list:
-        if t['uptime'] >= 90:
+        if t['uptime'] >= 95:
             list += t['url'] + '\n' + '\n'
     return template('tpl/list.mako', list=list)
 

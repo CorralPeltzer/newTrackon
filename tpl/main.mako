@@ -5,7 +5,7 @@
 
 <h2 id=page-heading>Tracking the Trackers</h2>
 <p>newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
-<p>To download a client-ready list of all trackers with more than 90% of uptime, go to the <a href="/list">List</a> section.
+<p>To download a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a> section.
 </div>
 
 <div class="grid_12">
@@ -21,7 +21,8 @@
 </div>
 
 <div class="grid_12">
-<table cellspacing=0 cellpadding=0 class=sortable>
+<table class=sortable>
+<caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
     <thead><tr>
       <th>Tracker URL</th>
       <th>IP address</th>
@@ -60,13 +61,10 @@
                 <td class="right">${"%.2f" % t['uptime']}%</td>
             </tr>
         % endfor
-
-        <caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
-
     % endif
 
 </table>
-<caption style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</caption>
+<p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
 
 <%def name="extraheaders()"><script type="text/javascript" src="/static/js/sorttable.js"></script></%def>
