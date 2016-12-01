@@ -22,7 +22,6 @@
 
 <div class="grid_12">
 <table class=sortable>
-<caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
     <thead><tr>
       <th>Tracker URL</th>
       <th>IP address</th>
@@ -62,7 +61,7 @@
             </tr>
         % endfor
     % endif
-
+<caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
 </table>
 <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
