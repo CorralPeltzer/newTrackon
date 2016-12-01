@@ -1,13 +1,23 @@
-<!DOCTYPE HTML>
 <%! from time import time %>
 <%inherit file="base.mako"/>
 
 <div class=grid_12>
 
 <h2 id=page-heading>Tracking the Trackers</h2>
-
 <p>newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
-<p>To download a torrent client ready list of all trackers with more than 90% of uptime, go to the <a href="/list">List</a> section.
+<p>To download a client-ready list of all trackers with more than 90% of uptime, go to the <a href="/list">List</a> section.
+</div>
+
+<div class=grid_12>
+<hr>
+<p><a name="new"></a>
+<form method="POST" action="/">
+    <input type="text" name="tracker-address" value="" size=64>
+    <input type="submit" value="Add Tracker">
+</form></p>
+<p>You can submit multiple trackers separated by whitespaces. If you post new trackers, please allow for a few seconds while we gather statistics before it is added to the list,
+ or check the <a href="/incoming-log">Incoming</a> section.</p>
+
 </div>
 
 <div class=grid_12>
@@ -58,19 +68,4 @@
 <caption style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</caption>
 </div>
 
-
-<div class=grid_12>
-<hr>
-<a name="new"></a>
-<form method="POST" action="/" class="grid_12 center">
-
-% if new_tracker_error:
-        <p><b>Could not add tracker: ${new_tracker_error | h}</b></p>
-% endif
-        <input type="text" name="tracker-address" value="" size=64>
-        <input type="submit" value="Add Tracker">
-<p>If you post a new tracker, please allow for a few seconds while we gather
-statistics before it is added to the list.</p>
-</form>
-</div>
 <%def name="extraheaders()"><script type="text/javascript" src="/static/js/sorttable.js"></script></%def>
