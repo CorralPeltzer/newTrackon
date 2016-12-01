@@ -1,6 +1,6 @@
 <%inherit file="../base.mako"/>
 <%def name="title()">newTrackon Frequently, Infrequently and Randomly Asked Questions</%def>
-<div class=grid_12>
+<div class="grid_12">
 <h2 id="page-heading">newTrackon FAQ</h2>
 
 <dl>

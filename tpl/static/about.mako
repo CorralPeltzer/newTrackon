@@ -1,5 +1,5 @@
 <%inherit file="../base.mako"/>
-<div class=grid_12>
+<div class="grid_12">
 
 <h2 id="page-heading">About newTrackon.com</h2>
 
