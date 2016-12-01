@@ -11,20 +11,10 @@ from hashlib import md5
 
 def scrape(t):
     """
-    Returns the list of seeds, peers and downloads a torrent info_hash has, according to the specified tracker
+    Returns the update interval, time taken for the announcement and the first URL version correctly contacted
 
     Args:
-        tracker (str): The announce url for a tracker, usually taken directly from the torrent metadata
-        hashes (list): A list of torrent info_hash's to query the tracker for
-
-    Returns:
-        A dict of dicts. The key is the torrent info_hash's from the 'hashes' parameter,
-        and the value is a dict containing "seeds", "peers" and "complete".
-        Eg:
-        {
-            "2d88e693eda7edf3c1fd0c48e8b99b8fd5a820b2" : { "seeds" : "34", "peers" : "189", "complete" : "10" },
-            "8929b29b83736ae650ee8152789559355275bd5c" : { "seeds" : "12", "peers" : "0", "complete" : "290" }
-        }
+        tracker (str): The announce url for a tracker
     """
 
     tnetloc = urlparse(t).netloc
