@@ -1,4 +1,3 @@
 * IPv6 support
-* Restore API
 * Ability to create a list based on certain country, uptime...
 * Map of all tracker locations?

@@ -24,14 +24,21 @@ def incoming():
         incoming150 = ''
     return template('tpl/incoming-log.mako', incoming=incoming150, size=size)
 
-@route('/list')
-def list():
+def _list():
     trackers_list = tracker.get_trackers_status()
     list = ''
     for t in trackers_list:
         if t['uptime'] >= 95:
             list += t['url'] + '\n' + '\n'
-    return template('tpl/list.mako', list=list)
+    return list
+
+@route('/list')
+def list():
+    return template('tpl/list.mako', list=_list())
+
+@route('/api/live')
+def listAPI():
+    return _list()
 
 @route('/faq')
 def faq():
