@@ -1,5 +1,5 @@
 import tracker
-from bottle import Bottle, run, static_file, request, mako_template as template
+from bottle import Bottle, run, static_file, request, response, mako_template as template
 import threading
 import logging
 from requestlogger import WSGILogger, ApacheFormatter
@@ -41,14 +41,24 @@ def incoming():
     return template('tpl/incoming-log.mako', incoming=incoming150, size=size)
 
 
-@app.route('/list')
-def get_list():
+def _list():
     trackers_list = tracker.get_trackers_status()
     list = ''
     for t in trackers_list:
         if t['uptime'] >= 95:
             list += t['url'] + '\n' + '\n'
-    return template('tpl/list.mako', list=list)
+    return list
+
+
+@app.route('/list')
+def list():
+    return template('tpl/list.mako', list=_list())
+
+
+@app.route('/api/live')
+def listAPI():
+    response.content_type = 'text/plain'
+    return _list()
 
 
 @app.route('/faq')
