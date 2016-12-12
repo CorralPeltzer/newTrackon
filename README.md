@@ -3,6 +3,8 @@
 newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use.
 It also allows to submit new trackers to add them to the list.
 
+newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) by [Uriel †](https://github.com/uriel).
+
 ## Installation
 
 After cloning the repo, make sure you have python2.7, pip and sqlite3 installed (default in all major distributions).
