@@ -59,7 +59,7 @@ def scrape(t):
         interval = scrape_http(http_version)
         latency = time() - t1
         return latency, interval, http_version
-    except RuntimeError:
+    except RuntimeError, e:
         logger.info("Error: " + str(e))
 
         raise RuntimeError
