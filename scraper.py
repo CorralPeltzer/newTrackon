@@ -7,7 +7,9 @@ from urlparse import urlparse
 from time import time
 import requests
 from hashlib import md5
+import logging
 
+logger = logging.getLogger('trackon_logger')
 
 def scrape(t):
     """
@@ -18,40 +20,49 @@ def scrape(t):
     """
 
     tnetloc = urlparse(t).netloc
-    print "URL to scrape: " + tnetloc + '/announce'
+    # UDP scrape
     if urlparse(t).port:      # If the tracker netloc has a port, try with udp
         udp_version = 'udp://' + tnetloc + '/announce'
+        logger.info('Request ' + udp_version)
         try:
             t1 = time()
             interval = scrape_udp(udp_version)
             latency = time() - t1
             return latency, interval, udp_version
         except RuntimeError, e:
-            print "Error: " + str(e)
+            logger.info("Error: " + str(e))
             print "UDP not working, trying HTTPS"
+
+    # HTTPS scrape
     if not urlparse(t).port:
         https_version = 'https://' + tnetloc + ':443/announce'
     else:
         https_version = 'https://' + tnetloc + '/announce'
     try:
+        logger.info('Request ' + https_version)
         t1 = time()
         interval = scrape_http(https_version)
         latency = time() - t1
         return latency, interval, https_version
     except RuntimeError, e:
-        print "Error: " + str(e)
+        logger.info("Error: " + str(e))
         "HTTPS not working, trying HTTP"
-        if not urlparse(t).port:
-            http_version = 'http://' + tnetloc + ':80/announce'
-        else:
-            http_version = 'http://' + tnetloc + '/announce'
-        try:
-            t1 = time()
-            interval = scrape_http(http_version)
-            latency = time() - t1
-            return latency, interval, http_version
-        except RuntimeError:
-            raise
+
+    # HTTP scrape
+    if not urlparse(t).port:
+        http_version = 'http://' + tnetloc + ':80/announce'
+    else:
+        http_version = 'http://' + tnetloc + '/announce'
+    try:
+        logger.info('Request ' + http_version)
+        t1 = time()
+        interval = scrape_http(http_version)
+        latency = time() - t1
+        return latency, interval, http_version
+    except RuntimeError:
+        logger.info("Error: " + str(e))
+
+        raise RuntimeError
 
 
 def scrape_http(tracker):
@@ -63,8 +74,12 @@ def scrape_http(tracker):
     print url
     try:
         response = requests.get(url, timeout=10)
-    except requests.exceptions.RequestException:
-        raise RuntimeError("Error connecting with http tracker")
+    except requests.Timeout:
+        raise RuntimeError("HTTP timeout")
+    except requests.HTTPError:
+        raise RuntimeError("HTTP response error code")
+    except requests.exceptions.RequestException, e:
+        raise RuntimeError("HTTP error: " + str(e))
 
     info = {}
     if response.status_code is not 200:
@@ -119,7 +134,7 @@ def scrape_udp(udp_version):
     try:
         buf = sock.recvfrom(2048)[0]
     except socket.timeout:
-        raise RuntimeError("Tracker timeout")
+        raise RuntimeError("UDP timeout")
     connection_id = udp_parse_connection_response(buf, transaction_id)
 
     # Scrape away
@@ -128,7 +143,7 @@ def scrape_udp(udp_version):
     try:
         buf = sock.recvfrom(2048)[0]
     except socket.timeout:
-        raise RuntimeError("Tracker timeout")
+        raise RuntimeError("UDP timeout")
     return udp_parse_announce_response(buf, transaction_id)
 
 
