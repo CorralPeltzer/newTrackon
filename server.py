@@ -1,4 +1,5 @@
 import tracker
+import trackerlist_project
 from bottle import Bottle, run, static_file, request, response, mako_template as template
 import threading
 import logging
@@ -80,6 +81,9 @@ update_status = threading.Thread(target=tracker.update_status)
 update_status.daemon = True
 update_status.start()
 
+get_trackerlist_project_list = threading.Thread(target=trackerlist_project.main)
+get_trackerlist_project_list.daemon = True
+get_trackerlist_project_list.start()
 
 handlers = [FileHandler('access.log'), ]
 app = WSGILogger(app, handlers, ApacheFormatter())
