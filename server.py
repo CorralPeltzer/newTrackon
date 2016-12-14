@@ -27,11 +27,10 @@ def main():
 @app.route('/', method='POST')
 def new_tracker():
     new_ts = request.forms.get('tracker-address')
-    trackers_list = tracker.get_trackers_status()
     check_all_trackers = threading.Thread(target=tracker.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
-    return template('tpl/main.mako', trackers=trackers_list)
+    return main()
 
 
 @app.route('/incoming-log')
@@ -42,7 +41,12 @@ def incoming():
     return template('tpl/incoming-log.mako', incoming=incoming150, size=size)
 
 
-def _list(uptime):
+@app.route('/faq')
+def faq():
+    return template('tpl/static/faq.mako')
+
+
+def list_uptime(uptime):
     trackers_list = tracker.get_trackers_status()
     list = ''
     for t in trackers_list:
@@ -51,16 +55,30 @@ def _list(uptime):
     return list
 
 
+def list_live():
+    trackers_list = tracker.get_trackers_status()
+    list = ''
+    for t in trackers_list:
+        if t['status'] == 1:
+            list += t['url'] + '\n' + '\n'
+    return list
+
+
 @app.route('/list')
 def list():
-    return template('tpl/list.mako', list=_list(95))
+    return template('tpl/list.mako', list=list_uptime(95))
+
+
+@app.route('/api')
+def api():
+    return template('tpl/static/api-docs.mako')
 
 
 @app.route('/api/<percentage:int>')
 def api_percentage(percentage):
     if 0 <= percentage <= 100:
         response.content_type = 'text/plain'
-        return _list(percentage)
+        return list_uptime(percentage)
     else:
         abort(400, "The percentage has to be between 0 an 100")
 
@@ -75,9 +93,10 @@ def api_all():
     return api_percentage(0)
 
 
-@app.route('/faq')
-def faq():
-    return template('tpl/static/faq.mako')
+@app.route('/api/live')
+def api_live():
+    response.content_type = 'text/plain'
+    return list_live()
 
 
 @app.route('/about')
@@ -103,4 +122,3 @@ app = WSGILogger(app, handlers, ApacheFormatter())
 
 if __name__ == '__main__':
     run(app, host='0.0.0.0', port=8080, server='paste')
-

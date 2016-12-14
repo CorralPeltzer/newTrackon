@@ -33,6 +33,8 @@
                 </li>
                 <li><a href="/faq">FAQ</a>
                 </li>
+                <li><a href="/api">API</a>
+                </li>
                 <li><a href="https://github.com/CorralPeltzer/newTrackon">Source
                     <img src="/static/imgs/GitHub.svg" alt="GitHub repo" height="30" width="30" style="vertical-align:middle;">
                     </a>
