@@ -1,6 +1,6 @@
 import tracker
 import trackerlist_project
-from bottle import Bottle, run, static_file, request, response, mako_template as template
+from bottle import Bottle, run, static_file, request, response, abort, mako_template as template
 import threading
 import logging
 from requestlogger import WSGILogger, ApacheFormatter
@@ -42,24 +42,37 @@ def incoming():
     return template('tpl/incoming-log.mako', incoming=incoming150, size=size)
 
 
-def _list():
+def _list(uptime):
     trackers_list = tracker.get_trackers_status()
     list = ''
     for t in trackers_list:
-        if t['uptime'] >= 95:
+        if t['uptime'] >= uptime:
             list += t['url'] + '\n' + '\n'
     return list
 
 
 @app.route('/list')
 def list():
-    return template('tpl/list.mako', list=_list())
+    return template('tpl/list.mako', list=_list(95))
 
 
-@app.route('/api/live')
-def listAPI():
-    response.content_type = 'text/plain'
-    return _list()
+@app.route('/api/<percentage:int>')
+def api_percentage(percentage):
+    if 0 <= percentage <= 100:
+        response.content_type = 'text/plain'
+        return _list(percentage)
+    else:
+        abort(400, "The percentage has to be between 0 an 100")
+
+
+@app.route('/api/best')
+def api_best():
+    return api_percentage(95)
+
+
+@app.route('/api/all')
+def api_all():
+    return api_percentage(0)
 
 
 @app.route('/faq')
