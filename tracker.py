@@ -153,24 +153,16 @@ def process_new_tracker(url):
 def update_status():
     while True:
         print "UPDATE STATUS LOOP"
-        now = int(time())
         conn = sqlite3.connect('trackon.db')
         conn.row_factory = dict_factory
         c = conn.cursor()
+        now = int(time())
         trackers_outdated = c.execute(
             "SELECT url, host, ip, latency, last_checked, status, interval, uptime, "
             "historic, country, network FROM status WHERE (? - last_checked) > interval", (now,)).fetchall()
 
-        trackers_outdated = recheck_trackers(trackers_outdated)
+        recheck_trackers(trackers_outdated)
 
-        for t in trackers_outdated:
-            c.execute(
-                "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-                " historic=?, country=?, network=? WHERE url=?",
-                (str(t['ip']), t['latency'], now, t['status'], t['interval'], t['uptime'],
-                 str(t['historic']), str(t['country']), str(t['network']), t['url'])).fetchone()
-        conn.commit()
-        conn.close()
         print "Finished updating tracker status"
         sleep(30)
 
@@ -198,6 +190,7 @@ def recheck_trackers(trackers_outdated):
         t['country'], t['network'] = update_ipapi_data(t['ip'])
         historic = eval(t['historic'])
         print "TRACKER TO CHECK: " + t['url']
+        now = int(time())
         try:
             t1 = time()
             if urlparse(t['url']).scheme == 'udp':
@@ -216,7 +209,22 @@ def recheck_trackers(trackers_outdated):
         t['historic'] = historic
         t['uptime'] = uptime_calculator(historic)
 
+        update_db(t, now)
+
     return trackers_outdated
+
+
+def update_db(t, now):
+    conn = sqlite3.connect('trackon.db')
+    conn.row_factory = dict_factory
+    c = conn.cursor()
+    c.execute(
+        "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
+        " historic=?, country=?, network=? WHERE url=?",
+        (str(t['ip']), t['latency'], now, t['status'], t['interval'], t['uptime'],
+            str(t['historic']), str(t['country']), str(t['network']), t['url'])).fetchone()
+    conn.commit()
+    conn.close()
 
 
 def ip_api(ip, type):

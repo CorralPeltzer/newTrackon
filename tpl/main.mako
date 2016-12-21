@@ -24,15 +24,15 @@
 <table class=sortable>
     <thead><tr>
       <th>Tracker URL</th>
+      <th class="sorttable_numeric">Uptime *</th>
+      <th>Status</th>
+      <th class="sorttable_numeric">Checked <span class="units"></span></th>
+      <th class="sorttable_numeric">Update interval <span class="units"></span></th>
       <th>IP address</th>
       <th class="sortable">Country</th>
       <th class="sortable">Network</th>
       <th class="sorttable_numeric">Announce time <span class="units"></span></th>
-      <th class="sorttable_numeric">Last checked <span class="units"></span></th>
-      <th class="sorttable_numeric">Update interval <span class="units"></span></th>
-      <th>Status</th>
       <th class="sortable">Added </th>
-      <th class="sorttable_numeric">Uptime *</th>
     </tr></thead>
 
     <% lt = dt = 0 %>
@@ -43,12 +43,7 @@
                 <% continue %>
             % endif
                 <td>${t['url']}</td>
-                <td>${t['ip']}</td>
-                <td>${t.get('country', 'Unknown')}</td>
-                <td>${t.get('network', 'Unknown')}</td>
-                <td class="right">${t['latency']} ms</td>
-                <td class="right">${(int(time()) - t.get('updated', 'Unknown')) / 60} min ago</td>
-                <td class="center">~${t['interval']/60} min (${t['interval']} sec)</td>
+                <td>${"%.2f" % t['uptime']}%</td>
                 % if t['status'] == 1:
                     <td class="up"><b>Working</b></td>
                     <% lt += 1 %>
@@ -56,8 +51,13 @@
                     <td class="down"><b>Down</b></td>
                     <% dt += 1 %>
                 % endif
-                <td class="right">${t['added']}</td>
-                <td class="right">${"%.2f" % t['uptime']}%</td>
+                <td>${(int(time()) - t.get('updated', 'Unknown')) / 60} min ago</td>
+                <td>~${t['interval']/60} min (${t['interval']} sec)</td>
+                <td>${t['ip']}</td>
+                <td>${t.get('country', 'Unknown')}</td>
+                <td>${t.get('network', 'Unknown')}</td>
+                <td>${t['latency']} ms</td>
+                <td>${t['added']}</td>
             </tr>
         % endfor
     % endif
