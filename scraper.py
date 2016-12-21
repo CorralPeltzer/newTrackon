@@ -27,7 +27,7 @@ def scrape(t):
         try:
             t1 = time()
             interval = scrape_udp(udp_version)
-            latency = time() - t1
+            latency = int((time() - t1) * 1000)
             return latency, interval, udp_version
         except RuntimeError, e:
             logger.info("Error: " + str(e))
@@ -42,7 +42,7 @@ def scrape(t):
         logger.info('Request ' + https_version)
         t1 = time()
         interval = scrape_http(https_version)
-        latency = time() - t1
+        latency = int((time() - t1) * 1000)
         return latency, interval, https_version
     except RuntimeError, e:
         logger.info("Error: " + str(e))

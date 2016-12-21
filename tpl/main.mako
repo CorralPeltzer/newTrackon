@@ -27,7 +27,7 @@
       <th>IP address</th>
       <th class="sortable">Country</th>
       <th class="sortable">Network</th>
-      <th class="sorttable_numeric">Latency <span class="units"></span></th>
+      <th class="sorttable_numeric">Announce time <span class="units"></span></th>
       <th class="sorttable_numeric">Last checked <span class="units"></span></th>
       <th class="sorttable_numeric">Update interval <span class="units"></span></th>
       <th>Status</th>
@@ -46,7 +46,7 @@
                 <td>${t['ip']}</td>
                 <td>${t.get('country', 'Unknown')}</td>
                 <td>${t.get('network', 'Unknown')}</td>
-                <td class="right">${"%.3f" % t['latency']} sec</td>
+                <td class="right">${t['latency']} ms</td>
                 <td class="right">${(int(time()) - t.get('updated', 'Unknown')) / 60} min ago</td>
                 <td class="center">~${t['interval']/60} min (${t['interval']} sec)</td>
                 % if t['status'] == 1:

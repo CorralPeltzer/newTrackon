@@ -1,7 +1,7 @@
 CREATE TABLE status (
 	url TEXT PRIMARY KEY NOT NULL,
 	host TEXT NOT NULL, ip TEXT NOT NULL,
-	latency REAL NOT NULL,
+	latency INT NOT NULL,
 	last_checked INT NOT NULL,
 	interval INT NOT NULL,
 	status INT NOT NULL,

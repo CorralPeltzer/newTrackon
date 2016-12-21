@@ -204,7 +204,7 @@ def recheck_trackers(trackers_outdated):
                 t['interval'] = scraper.scrape_udp(t['url'])
             else:
                 t['interval'] = scraper.scrape_http(t['url'])
-            t['latency'] = time() - t1
+            t['latency'] = int((time() - t1) * 1000)
             t['status'] = 1
             print "TRACKER UP"
 
