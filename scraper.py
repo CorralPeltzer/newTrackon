@@ -1,15 +1,18 @@
 import binascii
-import socket
-import random
-import struct
-from bencode import bdecode
-from urlparse import urlparse
-from time import time
-import requests
-from hashlib import md5
 import logging
+import random
+import socket
+import struct
+from hashlib import md5
+from time import time
+from urlparse import urlparse
+
+import requests
+
+from bencode import bdecode
 
 logger = logging.getLogger('trackon_logger')
+
 
 def scrape(t):
     """
@@ -21,7 +24,7 @@ def scrape(t):
 
     tnetloc = urlparse(t).netloc
     # UDP scrape
-    if urlparse(t).port:      # If the tracker netloc has a port, try with udp
+    if urlparse(t).port:  # If the tracker netloc has a port, try with udp
         udp_version = 'udp://' + tnetloc + '/announce'
         logger.info('Request ' + udp_version)
         try:
@@ -111,7 +114,7 @@ def trackerhash(t):
 
 
 def genqstr(h):
-    pid = "-TO0001-XX"+str(int(time())) # 'random' peer id
+    pid = "-TO0001-XX" + str(int(time()))  # 'random' peer id
     return "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0&downloaded=0&left=0" % (h, pid)
 
 
@@ -185,31 +188,31 @@ def udp_create_announce_request(connection_id, thash):
     hex_repr = binascii.a2b_hex(thash)
     buf += struct.pack("!20s", hex_repr)  # hash
     buf += struct.pack("!20s", hex_repr)  # peer id, should be random
-    buf += struct.pack("!q", 0x0)    # number of bytes downloaded
-    buf += struct.pack("!q", 0x0)          # number of bytes left
-    buf += struct.pack("!q", 0x0)      # number of bytes uploaded
-    buf += struct.pack("!i", 0x2)           # event 0 denotes start of downloading
-    buf += struct.pack("!i", 0x0)         # IP address set to 0. Response received to the sender of this packet
-    key = udp_get_transaction_id()               # Unique key randomized by client
+    buf += struct.pack("!q", 0x0)  # number of bytes downloaded
+    buf += struct.pack("!q", 0x0)  # number of bytes left
+    buf += struct.pack("!q", 0x0)  # number of bytes uploaded
+    buf += struct.pack("!i", 0x2)  # event 0 denotes start of downloading
+    buf += struct.pack("!i", 0x0)  # IP address set to 0. Response received to the sender of this packet
+    key = udp_get_transaction_id()  # Unique key randomized by client
     buf += struct.pack("!i", key)
-    buf += struct.pack("!i", -1)                # Number of peers required. Set to -1 for default
-    buf += struct.pack("!i", 0x3E7)            # port on which response will be sent
+    buf += struct.pack("!i", -1)  # Number of peers required. Set to -1 for default
+    buf += struct.pack("!i", 0x3E7)  # port on which response will be sent
     return buf, transaction_id
 
 
 def udp_parse_announce_response(buf, sent_transaction_id):
     if len(buf) < 20:
         raise RuntimeError("Wrong response length while announcing: %s" % len(buf))
-    action = struct.unpack_from("!i", buf)[0] #first 4 bytes is action
-    res_transaction_id = struct.unpack_from("!i", buf, 4)[0] #next 4 bytes is transaction id
+    action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
+    res_transaction_id = struct.unpack_from("!i", buf, 4)[0]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError("Transaction ID doesnt match in announce response! Expected %s, got %s"
-            % (sent_transaction_id, res_transaction_id))
+                           % (sent_transaction_id, res_transaction_id))
     if action == 0x1:
         ret = dict()
-        offset = 8; #next 4 bytes after action is transaction_id, so data doesnt start till byte 8
+        offset = 8;  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
         ret['interval'] = struct.unpack_from("!i", buf, offset)[0]
-        print "Interval:"+str(ret['interval'])
+        print "Interval:" + str(ret['interval'])
         offset += 4
         ret['leeches'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
@@ -219,17 +222,17 @@ def udp_parse_announce_response(buf, sent_transaction_id):
         x = 0
         while offset != len(buf):
             peers.append(dict())
-            peers[x]['IP'] = struct.unpack_from("!i",buf,offset)[0]
+            peers[x]['IP'] = struct.unpack_from("!i", buf, offset)[0]
             # print "IP: "+socket.inet_ntoa(struct.pack("!i",peers[x]['IP']))
             offset += 4
             if offset >= len(buf):
                 raise RuntimeError("Error while reading peer port")
-            peers[x]['port'] = struct.unpack_from("!H",buf,offset)[0]
+            peers[x]['port'] = struct.unpack_from("!H", buf, offset)[0]
             offset += 2
             x += 1
         return ret['interval']
     else:
-        #an error occured, try and extract the error string
+        # an error occured, try and extract the error string
         error = struct.unpack_from("!s", buf, 8)
         raise RuntimeError("Error while annoucing: %s" % error)
 

@@ -1,10 +1,12 @@
+import logging
+import threading
+from logging import FileHandler
+
+from bottle import Bottle, run, static_file, request, response, abort, mako_template as template
+from requestlogger import WSGILogger, ApacheFormatter
+
 import tracker
 import trackerlist_project
-from bottle import Bottle, run, static_file, request, response, abort, mako_template as template
-import threading
-import logging
-from requestlogger import WSGILogger, ApacheFormatter
-from logging import FileHandler
 
 app = Bottle()
 

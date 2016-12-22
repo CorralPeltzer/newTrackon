@@ -1,13 +1,14 @@
-import sqlite3
-import scraper
-import socket
-from time import time, sleep
-from urlparse import urlparse
-import urllib
 import datetime
+import logging
+import socket
+import sqlite3
+import urllib
 from collections import deque
 from itertools import islice
-import logging
+from time import time, sleep
+from urlparse import urlparse
+
+import scraper
 
 max_input_length = 40000
 incoming_trackers = deque(maxlen=10000)
@@ -112,7 +113,7 @@ def process_new_tracker(url):
         hostname = urlparse(url).hostname
         ip_addresses = get_all_A_records(hostname)
         print 'NEW IPs', ip_addresses
-    except RuntimeError, e:
+    except RuntimeError:
         return
 
     all_ips_tracked = get_all_ips_tracked()
@@ -175,9 +176,10 @@ def get_150_incoming():
             for tracker in islice(incoming_trackers, 150):
                 string += tracker + '<br>'
             return len(incoming_trackers), string
-        except RuntimeError:    # If during the iteration the deque is changed by another thread (in this case the process_new_trackers thread), a RuntimeError is thrown
+        except RuntimeError:  # If during the iteration the deque is changed by another thread (in this case the process_new_trackers thread), a RuntimeError is thrown
             pass
-    else: return 0, "None"
+    else:
+        return 0, "None"
 
 
 def recheck_trackers(trackers_outdated):
@@ -222,7 +224,7 @@ def update_db(t, now):
         "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
         " historic=?, country=?, network=? WHERE url=?",
         (str(t['ip']), t['latency'], now, t['status'], t['interval'], t['uptime'],
-            str(t['historic']), str(t['country']), str(t['network']), t['url'])).fetchone()
+         str(t['historic']), str(t['country']), str(t['network']), t['url'])).fetchone()
     conn.commit()
     conn.close()
 
@@ -231,7 +233,7 @@ def ip_api(ip, type):
     try:
         response = urllib.urlopen('http://ip-api.com/line/' + ip + '?fields=' + type)
         tracker_country = response.read()
-        sleep(1)    # This wait is to respect the public API of IP-API and not get banned
+        sleep(1)  # This wait is to respect the public API of IP-API and not get banned
     except IOError:
         tracker_country = 'Error'
     return tracker_country
@@ -260,6 +262,7 @@ def update_ipapi_data(ip_list):
         tracker_network.append(ip_api(ip, 'org'))
     return tracker_country, tracker_network
 
+
 import re
 
 UCHARS = re.compile('^[a-zA-Z0-9_\-\./:]+$')
@@ -285,7 +288,6 @@ def validate_url(u):
 
     else:
         raise RuntimeError("Invalid announce URL")
-
 
 
 def get_all_A_records(hostname):
