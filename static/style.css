@@ -83,19 +83,15 @@ td.down {
 td {
     vertical-align: middle
 }
-td.right {
+td.right, th.right {
     text-align: right;
 }
 td.center {
     text-align: center;
 }
-th {
-    text-align: center;
+.sortable {
+white-space: nowrap;
 }
-th span.units {
-    font-size: 70%;
-}
-
 table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after {
     content: " \25B4\25BE"
 }

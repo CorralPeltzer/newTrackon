@@ -26,13 +26,13 @@
       <th>Tracker URL</th>
       <th class="sorttable_numeric">Uptime *</th>
       <th>Status</th>
-      <th class="sorttable_numeric">Checked <span class="units"></span></th>
-      <th class="sorttable_numeric">Update interval <span class="units"></span></th>
+      <th class="sorttable_numeric">Checked</th>
+      <th class="sorttable_numeric">Update interval</th>
       <th>IP address</th>
       <th class="sortable">Country</th>
       <th class="sortable">Network</th>
-      <th class="sorttable_numeric">Announce time <span class="units"></span></th>
-      <th class="sortable">Added </th>
+      <th class="sorttable_numeric"><span title="Announce time">Time</span></th>
+      <th class="right">Added </th>
     </tr></thead>
 
     <% lt = dt = 0 %>
@@ -57,7 +57,7 @@
                 <td>${t.get('country', 'Unknown')}</td>
                 <td>${t.get('network', 'Unknown')}</td>
                 <td>${t['latency']} ms</td>
-                <td>${t['added']}</td>
+                <td class="right">${t['added']}</td>
             </tr>
         % endfor
     % endif
