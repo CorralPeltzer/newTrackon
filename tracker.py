@@ -187,8 +187,8 @@ def recheck_trackers(trackers_outdated):
         try:
             t['ip'] = get_all_A_records(t['host'])
         except RuntimeError:
-            logger.info('IP-API not working')
-            pass
+            logger.info('Hostname not found')
+            t['ip'] = 'DNS error'
         t['country'], t['network'] = update_ipapi_data(t['ip'])
         historic = eval(t['historic'])
         print "TRACKER TO CHECK: " + t['url']
@@ -209,11 +209,9 @@ def recheck_trackers(trackers_outdated):
             print "TRACKER DOWN"
         historic.append(t['status'])
         t['historic'] = historic
-        t['uptime'] = uptime_calculator(historic)
+        t['uptime'] = calculate_uptime(historic)
 
         update_db(t, now)
-
-    return trackers_outdated
 
 
 def update_db(t, now):
@@ -246,7 +244,7 @@ def dict_factory(cursor, row):
     return d
 
 
-def uptime_calculator(historic):
+def calculate_uptime(historic):
     uptime = float(0)
     for s in historic:
         uptime += s
