@@ -47,8 +47,8 @@ def scrape(t):
         interval = scrape_http(https_version)
         latency = int((time() - t1) * 1000)
         return latency, interval, https_version
-    except RuntimeError, e:
-        logger.info("Error: " + str(e))
+    except RuntimeError as e:
+        logger.info("Error: " + e.message.encode('utf-8'))
         "HTTPS not working, trying HTTP"
 
     # HTTP scrape
@@ -62,8 +62,8 @@ def scrape(t):
         interval = scrape_http(http_version)
         latency = time() - t1
         return latency, interval, http_version
-    except RuntimeError, e:
-        logger.info("Error: " + str(e))
+    except RuntimeError as e:
+        logger.info("Error: " + e.message.encode('utf-8'))
 
         raise RuntimeError
 

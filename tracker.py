@@ -188,7 +188,6 @@ def recheck_trackers(trackers_outdated):
             t['ip'] = get_all_A_records(t['host'])
         except RuntimeError:
             logger.info('Hostname not found')
-            t['ip'] = 'DNS error'
         t['country'], t['network'] = update_ipapi_data(t['ip'])
         historic = eval(t['historic'])
         print "TRACKER TO CHECK: " + t['url']
