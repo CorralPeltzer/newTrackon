@@ -6,15 +6,16 @@
   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
   crossorigin="anonymous"></script>
 
-<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.13/css/jquery.dataTables.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.css"/>
 
-<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.13/js/jquery.dataTables.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.js"></script>
 
 <script type="text/javascript">
 $(document).ready( function () {
     $('#table_id').DataTable( {
     "pageLength": 25,
-    "order": [[ 1, 'desc' ], [ 9, 'asc' ]]
+    "order": [[ 1, 'desc' ], [ 9, 'asc' ]],
+    responsive: true
     } );
 } );
 </script>

@@ -592,7 +592,7 @@ body {
 	border-top: 5px solid #000;
 	color: #333;
 	font-size: 11px;
-	padding: 0 0 40px;
+	padding: 0 0 0px;
 }
 
 
@@ -976,7 +976,7 @@ input.search.button {
 #site_info .box {
 	color:#ccc;
 	background:#666;
-	margin-bottom:10px;
+	margin-bottom:0px;
 }
 #site_info a {
 	color:#fff;
