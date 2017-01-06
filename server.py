@@ -110,6 +110,9 @@ def about():
 def static(path):
     return static_file(path, root='static')
 
+@app.route('/favicon.ico')
+def favicon():
+    return static_file('favicon.ico', root='static/imgs')
 
 update_status = threading.Thread(target=tracker.update_status)
 update_status.daemon = True
