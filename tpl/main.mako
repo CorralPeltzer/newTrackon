@@ -1,6 +1,24 @@
 <%! from time import time %>
 <%inherit file="base.mako"/>
 
+<script
+  src="https://code.jquery.com/jquery-3.1.1.min.js"
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  crossorigin="anonymous"></script>
+
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.13/css/jquery.dataTables.css">
+
+<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.13/js/jquery.dataTables.js"></script>
+
+<script type="text/javascript">
+$(document).ready( function () {
+    $('#table_id').DataTable( {
+    "pageLength": 25,
+    "order": [[ 1, 'desc' ], [ 9, 'asc' ]]
+    } );
+} );
+</script>
+
 <div class="grid_12">
 
 <h2 id=page-heading>Tracking the Trackers</h2>
@@ -21,7 +39,7 @@
 </div>
 
 <div class="grid_12">
-<table class=sortable>
+<table id="table_id" class="display">
     <thead><tr>
       <th>Tracker URL</th>
       <th class="sorttable_numeric">Uptime *</th>
@@ -66,4 +84,4 @@
 <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
 
-<%def name="extraheaders()"><script type="text/javascript" src="/static/js/sorttable.js"></script></%def>
+<%def name="extraheaders()"></%def>
