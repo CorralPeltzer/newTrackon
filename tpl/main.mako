@@ -1,21 +1,25 @@
 <%! from time import time %>
 <%inherit file="base.mako"/>
 
-<script
-  src="https://code.jquery.com/jquery-3.1.1.min.js"
-  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
-  crossorigin="anonymous"></script>
-
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.css"/>
 
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.js"></script>
 
+<script type="text/javascript" src="//cdn.datatables.net/plug-ins/1.10.13/sorting/natural.js"></script>
+
+<script type="text/javascript" src="//cdn.datatables.net/plug-ins/1.10.13/sorting/date-eu.js"></script>
+
+
 <script type="text/javascript">
 $(document).ready( function () {
-    $('#table_id').DataTable( {
+    $('#trackon_table').DataTable( {
     "pageLength": 25,
     "order": [[ 1, 'desc' ], [ 9, 'asc' ]],
-    responsive: true
+    responsive: true,
+    "columnDefs": [
+        { "type": "natural", targets: [3, 4, 5, 8] },
+        { "type": "date-eu", targets: 9 }
+    ]
     } );
 } );
 </script>
@@ -40,7 +44,7 @@ $(document).ready( function () {
 </div>
 
 <div class="grid_12">
-<table id="table_id" class="display">
+<table id="trackon_table" class="display">
     <thead><tr>
       <th>Tracker URL</th>
       <th class="sorttable_numeric">Uptime *</th>

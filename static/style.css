@@ -13,6 +13,7 @@ th,
 table {
     font-family: Arial, sans-serif;
     border: 1px solid #888;
+    white-space: nowrap;
 }
 thead th {
     padding: 0.2em;
@@ -88,10 +89,4 @@ td.right, th.right {
 }
 td.center {
     text-align: center;
-}
-.sortable {
-white-space: nowrap;
-}
-table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after {
-    content: " \25B4\25BE"
 }
