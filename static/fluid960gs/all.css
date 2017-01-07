@@ -834,11 +834,6 @@ tbody th,
 tbody td {
 	border-top:1px solid #bbb;
 	border-bottom:1px solid #bbb;
-	background:#eee;
-}
-tbody tr.odd th,
-tbody tr.odd td {
-	background:#fff;
 }
 tfoot th,
 tfoot td {

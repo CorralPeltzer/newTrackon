@@ -23,9 +23,6 @@ th {
     padding: 0.3em;
     margin: 0;
 }
-tr:nth-child(even) td {
-    background-color: #FAFAFA;
-}
 a {
     color: #607a3d;
     text-decoration: underline;
