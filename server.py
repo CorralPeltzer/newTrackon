@@ -50,11 +50,13 @@ def faq():
 
 def list_uptime(uptime):
     trackers_list = tracker.get_trackers_status()
-    list = ''
+    formatted_list = ''
+    length = 0
     for t in trackers_list:
         if t['uptime'] >= uptime:
-            list += t['url'] + '\n' + '\n'
-    return list
+            length += 1
+            formatted_list += t['url'] + '\n' + '\n'
+    return formatted_list, length
 
 
 def list_live():
@@ -67,8 +69,9 @@ def list_live():
 
 
 @app.route('/list')
-def list():
-    return template('tpl/list.mako', list=list_uptime(95))
+def list_stable():
+    stable_list, size = list_uptime(95)
+    return template('tpl/list.mako', stable=stable_list, size=size)
 
 
 @app.route('/api')
@@ -80,7 +83,8 @@ def api():
 def api_percentage(percentage):
     if 0 <= percentage <= 100:
         response.content_type = 'text/plain'
-        return list_uptime(percentage)
+        formatted_list, not_needed_length = list_uptime(percentage)
+        return formatted_list
     else:
         abort(400, "The percentage has to be between 0 an 100")
 
