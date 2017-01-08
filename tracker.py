@@ -3,6 +3,7 @@ import logging
 import socket
 import sqlite3
 import urllib
+from threading import Lock
 from collections import deque
 from itertools import islice
 from time import time, sleep
@@ -10,8 +11,10 @@ from urlparse import urlparse
 
 import scraper
 
-max_input_length = 40000
+max_input_length = 20000
 incoming_trackers = deque(maxlen=10000)
+deque_lock = Lock()
+
 processing_trackers = False
 logger = logging.getLogger('trackon_logger')
 
@@ -40,14 +43,12 @@ def enqueue_one_tracker(url):
         print "Tracker already being tracked."
         return
     present = False
-    try:  # If during the iteration the deque is changed by another thread (in this case the process_new_trackers thread), a RuntimeError is thrown
+    with deque_lock:
         for tracker_in_deque in incoming_trackers:
             if urlparse(tracker_in_deque).netloc == urlparse(url).netloc:
                 print "Tracker already in the queue."
                 present = True
                 break
-    except RuntimeError:
-        pass
     if present is True:
         return
     all_ips_tracked = get_all_ips_tracked()
@@ -59,7 +60,8 @@ def enqueue_one_tracker(url):
     if exists_ip:
         print "IP of the tracker already in the list."
         return
-    incoming_trackers.append(url)
+    with deque_lock:
+        incoming_trackers.append(url)
     print "Tracker added to the incoming queue"
 
 
@@ -67,7 +69,8 @@ def process_new_trackers():
     global processing_trackers
     processing_trackers = True
     while incoming_trackers:
-        tracker = incoming_trackers.popleft()
+        with deque_lock:
+            tracker = incoming_trackers.popleft()
         size = len(incoming_trackers)
         print "Size of deque: ", size
         process_new_tracker(tracker)
@@ -169,15 +172,12 @@ def update_status():
 
 
 def get_150_incoming():
-    global incoming_trackers
     string = ''
     if incoming_trackers:
-        try:
+        with deque_lock:
             for tracker in islice(incoming_trackers, 150):
                 string += tracker + '<br>'
-            return len(incoming_trackers), string
-        except RuntimeError:  # If during the iteration the deque is changed by another thread (in this case the process_new_trackers thread), a RuntimeError is thrown
-            pass
+        return len(incoming_trackers), string
     else:
         return 0, "None"
 
