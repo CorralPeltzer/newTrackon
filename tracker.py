@@ -136,7 +136,7 @@ def process_new_tracker(url):
 
     try:
         latency, interval, tracker = scraper.scrape(url)
-    except RuntimeError:
+    except (RuntimeError, ValueError):
         return
 
     tracker_country, tracker_network = update_ipapi_data(ip_addresses)
