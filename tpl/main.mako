@@ -15,12 +15,12 @@ $(document).ready( function () {
     $('#trackon_table').DataTable( {
     "pageLength": 25,
     "order": [[ 1, 'desc' ], [ 9, 'asc' ]],
-    responsive: true,
     "columnDefs": [
         { "type": "natural", targets: [3, 4, 5, 8] },
         { "type": "date-eu", targets: 9 }
     ]
     } );
+    document.getElementById('trackon_table').style.visibility = 'visible';
 } );
 </script>
 
@@ -44,7 +44,7 @@ $(document).ready( function () {
 </div>
 
 <div class="grid_12">
-<table id="trackon_table" class="display">
+<table id="trackon_table" class="display responsive">
     <thead><tr>
       <th>Tracker URL</th>
       <th class="sorttable_numeric">Uptime *</th>
@@ -86,6 +86,9 @@ $(document).ready( function () {
     % endif
 <caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total trackers</b>: ${len(trackers)}</caption>
 </table>
+<noscript>
+    <style>#trackon_table{visibility:visible}</style>
+</noscript>
 <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
 

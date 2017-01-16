@@ -18,6 +18,9 @@ table {
 thead th {
     padding: 0.2em;
 }
+#trackon_table {
+visibility: hidden;
+}
 td,
 th {
     padding: 0.3em;
