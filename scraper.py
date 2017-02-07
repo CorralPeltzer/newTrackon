@@ -3,9 +3,9 @@ import logging
 import random
 import socket
 import struct
-from hashlib import md5
 from time import time
-from urlparse import urlparse
+from urllib.parse import urlparse
+from os import urandom
 
 import requests
 
@@ -32,9 +32,9 @@ def scrape(t):
             interval = scrape_udp(udp_version)
             latency = int((time() - t1) * 1000)
             return latency, interval, udp_version
-        except RuntimeError, e:
+        except RuntimeError as e:
             logger.info("Error: " + str(e))
-            print "UDP not working, trying HTTPS"
+            print("UDP not working, trying HTTPS")
 
     # HTTPS scrape
     if not urlparse(t).port:
@@ -48,7 +48,7 @@ def scrape(t):
         latency = int((time() - t1) * 1000)
         return latency, interval, https_version
     except RuntimeError as e:
-        logger.info("Error: " + e.message.encode('utf-8'))
+        logger.info("Error: " + str(e))
         "HTTPS not working, trying HTTP"
 
     # HTTP scrape
@@ -63,25 +63,24 @@ def scrape(t):
         latency = int((time() - t1) * 1000)
         return latency, interval, http_version
     except RuntimeError as e:
-        logger.info("Error: " + e.message.encode('utf-8'))
-
+        logger.info("Error: " + str(e))
         raise RuntimeError
 
 
 def scrape_http(tracker):
-    print "Scraping HTTP: %s" % tracker
+    print("Scraping HTTP: %s" % tracker)
     thash = trackerhash(tracker)
     pid = "-TO0001-XX" + str(int(time()))
     request = "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0&downloaded=0&left=0" % (thash, pid)
     url = tracker + request
-    print url
+    print(url)
     try:
         response = requests.get(url, timeout=10)
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
     except requests.HTTPError:
         raise RuntimeError("HTTP response error code")
-    except requests.exceptions.RequestException, e:
+    except requests.exceptions.RequestException as e:
         raise RuntimeError("HTTP error: " + str(e))
 
     info = {}
@@ -104,13 +103,13 @@ def scrape_http(tracker):
             raise RuntimeError("Invalid response, 'peers' field is missing")
 
     # TODO Do a more extensive check of what was returned
-    print "interval: ", info['response']['interval']
+    print("interval: ", info['response']['interval'])
     return info['response']['interval']
 
 
 def trackerhash(t):
     """Generate a 'fake' info_hash to be used with this tracker."""
-    return md5(t).hexdigest()[:20]
+    return binascii.b2a_hex(urandom(10)).decode("utf-8")
 
 
 def genqstr(h):
@@ -121,9 +120,9 @@ def genqstr(h):
 def scrape_udp(udp_version):
     thash = trackerhash(udp_version)
     parsed_tracker = urlparse(udp_version)
-    print "Scraping UDP: %s " % udp_version
-    transaction_id = "\x00\x00\x04\x12\x27\x10\x19\x70";
-    connection_id = "\x00\x00\x04\x17\x27\x10\x19\x80";
+    print("Scraping UDP: %s " % udp_version)
+    transaction_id = "\x00\x00\x04\x12\x27\x10\x19\x70"
+    connection_id = "\x00\x00\x04\x17\x27\x10\x19\x80"
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(10)
     try:
@@ -212,7 +211,7 @@ def udp_parse_announce_response(buf, sent_transaction_id):
         ret = dict()
         offset = 8;  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
         ret['interval'] = struct.unpack_from("!i", buf, offset)[0]
-        print "Interval:" + str(ret['interval'])
+        print("Interval:" + str(ret['interval']))
         offset += 4
         ret['leeches'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4

@@ -5,7 +5,7 @@ from logging import FileHandler
 from bottle import Bottle, run, static_file, request, response, abort, mako_template as template
 from requestlogger import WSGILogger, ApacheFormatter
 
-import tracker
+import trackon
 import trackerlist_project
 
 app = Bottle()
@@ -22,14 +22,14 @@ logger.info('Server started')
 
 @app.route('/')
 def main():
-    trackers_list = tracker.get_trackers_status()
+    trackers_list = trackon.get_main()
     return template('tpl/main.mako', trackers=trackers_list)
 
 
 @app.route('/', method='POST')
 def new_tracker():
     new_ts = request.forms.get('tracker-address')
-    check_all_trackers = threading.Thread(target=tracker.enqueue_new_trackers, args=(new_ts,))
+    check_all_trackers = threading.Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
     return main()
@@ -37,7 +37,7 @@ def new_tracker():
 
 @app.route('/incoming-log')
 def incoming():
-    size, incoming150 = tracker.get_150_incoming()
+    size, incoming150 = trackon.get_150_incoming()
     if size == 0:
         incoming150 = ''
     return template('tpl/incoming-log.mako', incoming=incoming150, size=size)
@@ -49,18 +49,18 @@ def faq():
 
 
 def list_uptime(uptime):
-    trackers_list = tracker.get_trackers_status()
+    trackers_list = trackon.get_main()
     formatted_list = ''
     length = 0
     for t in trackers_list:
-        if t['uptime'] >= uptime:
+        if t.uptime >= uptime:
             length += 1
-            formatted_list += t['url'] + '\n' + '\n'
+            formatted_list += t.url + '\n' + '\n'
     return formatted_list, length
 
 
 def list_live():
-    trackers_list = tracker.get_trackers_status()
+    trackers_list = trackon.get_main()
     list = ''
     for t in trackers_list:
         if t['status'] == 1:
@@ -118,7 +118,7 @@ def static(path):
 def favicon():
     return static_file('favicon.ico', root='static/imgs')
 
-update_status = threading.Thread(target=tracker.update_status)
+update_status = threading.Thread(target=trackon.update_status)
 update_status.daemon = True
 update_status.start()
 

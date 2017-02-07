@@ -65,22 +65,22 @@ $(document).ready( function () {
             % if not t:
                 <% continue %>
             % endif
-                <td>${t['url']}</td>
-                <td>${"%.2f" % t['uptime']}%</td>
-                % if t['status'] == 1:
+                <td>${t.url}</td>
+                <td>${"%.2f" % t.uptime}%</td>
+                % if t.status == 1:
                     <td class="up"><b>Working</b></td>
                     <% lt += 1 %>
                 % else:
                     <td class="down"><b>Down</b></td>
                     <% dt += 1 %>
                 % endif
-                <td>${(int(time()) - t.get('updated', 'Unknown')) / 60} min ago</td>
-                <td>~${t['interval']/60} min (${t['interval']} sec)</td>
-                <td>${t['ip']}</td>
-                <td>${t.get('country', 'Unknown')}</td>
-                <td>${t.get('network', 'Unknown')}</td>
-                <td>${t['latency']} ms</td>
-                <td class="right">${t['added']}</td>
+                <td>${(int(time()) - t.last_checked) // 60} min ago</td>
+                <td>~${t.interval//60} min (${t.interval} sec)</td>
+                <td>${t.ip}</td>
+                <td>${t.country}</td>
+                <td>${t.network}</td>
+                <td>${t.latency} ms</td>
+                <td class="right">${t.added}</td>
             </tr>
         % endfor
     % endif
@@ -92,4 +92,4 @@ $(document).ready( function () {
 <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
 
-<%def name="extraheaders()"></%def>
+#<%def name="extraheaders()"></%def>

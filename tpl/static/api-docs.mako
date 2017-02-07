@@ -30,4 +30,4 @@
 </dl>
 </div>
 
-<%def name="title()">Trackon's Web API documentation.</%def>
+<%def name="title()">newTrackon's Web API documentation.</%def>
