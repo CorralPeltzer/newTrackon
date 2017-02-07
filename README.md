@@ -7,7 +7,7 @@ newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) b
 
 ## Installation
 
-After cloning the repo, make sure you have python2.7, pip and sqlite3 installed (default in all major distributions).
+After cloning the repo, make sure you have python 3, pip and sqlite3 installed (default in all major distributions).
 
 To install python dependencies, just run
 ```
