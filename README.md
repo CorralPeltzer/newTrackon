@@ -7,7 +7,7 @@ newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) b
 
 ## Installation
 
-After cloning the repo, make sure you have python2.7, pip and sqlite3 installed (default in all major distributions).
+After cloning the repo, make sure you have python 3, pip and sqlite3 installed (default in all major distributions).
 
 To install python dependencies, just run
 ```
@@ -22,7 +22,7 @@ sqlite3 trackon.db < trackon.schema
 
 Finally, run 
 ```
-python server.py
+python3 server.py
 ```
 This will start the web server in all interfaces at port 8080, you can access to the main page opening in your browser `localhost:8080`.
 You can change the IP and port of the server editing the last line of server.py.
