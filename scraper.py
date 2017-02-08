@@ -1,15 +1,16 @@
 import binascii
 import logging
-import random
 import socket
 import struct
 from time import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_from_bytes
 from os import urandom
+import random
+import string
 
 import requests
 
-from bencode import bdecode
+import bencode
 
 logger = logging.getLogger('trackon_logger')
 
@@ -69,9 +70,9 @@ def scrape(t):
 
 def scrape_http(tracker):
     print("Scraping HTTP: %s" % tracker)
-    thash = trackerhash(tracker)
-    pid = "-TO0001-XX" + str(int(time()))
-    request = "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0&downloaded=0&left=0" % (thash, pid)
+    thash = trackerhash(type='http')
+    pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
+    request = "?info_hash=%s&peer_id=%s&port=6881&uploaded=0&downloaded=0&left=0&compact=1" % (thash, pid)
     url = tracker + request
     print(url)
     try:
@@ -92,9 +93,9 @@ def scrape_http(tracker):
 
     else:
         try:
-            info['response'] = bdecode(response.text)
+            info['response'] = bencode.bdecode(response.text)
         except:
-            raise RuntimeError("Can't decode the tracker binary response")
+            raise RuntimeError("Can't decode the tracker binary response. Reason")
 
     if 'response' in info:
         if 'failure reason' in info['response']:
@@ -107,18 +108,22 @@ def scrape_http(tracker):
     return info['response']['interval']
 
 
-def trackerhash(t):
-    """Generate a 'fake' info_hash to be used with this tracker."""
-    return binascii.b2a_hex(urandom(10)).decode("utf-8")
+def trackerhash(type):
+    """Generate a random info_hash to be used with this tracker."""
+    t_hash = urandom(20)
+    if type == 'udp':
+        return t_hash.hex()
+    if type == 'http':
+        return quote_from_bytes(t_hash)
 
 
 def genqstr(h):
-    pid = "-TO0001-XX" + str(int(time()))  # 'random' peer id
-    return "?info_hash=%s&port=999&peer_id=%s&compact=1&uploaded=0&downloaded=0&left=0" % (h, pid)
+    pid = "-qB3360-" + str(int(time()))  # random peer id
+    return "?info_hash=%s&peer_id=%s&port=999&compact=1&uploaded=0&downloaded=0&left=0" % (h, pid)
 
 
 def scrape_udp(udp_version):
-    thash = trackerhash(udp_version)
+    thash = trackerhash(type='udp')
     parsed_tracker = urlparse(udp_version)
     print("Scraping UDP: %s " % udp_version)
     transaction_id = "\x00\x00\x04\x12\x27\x10\x19\x70"
