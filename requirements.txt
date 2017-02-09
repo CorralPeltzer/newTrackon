@@ -3,3 +3,4 @@ bottle
 paste
 mako
 wsgi-request-logger
+dnspython
