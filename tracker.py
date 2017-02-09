@@ -8,6 +8,8 @@ import logging
 import trackon
 from collections import deque
 from datetime import datetime
+
+from dns import resolver, exception
 logger = logging.getLogger('trackon_logger')
 
 class Tracker:
@@ -33,7 +35,7 @@ class Tracker:
         tracker.validate_url()
         print('URL is ', url)
         tracker.host = urlparse(tracker.url).hostname
-        tracker.get_all_a_records()
+        tracker.get_all_ips()
         tracker.historic = deque(maxlen=1000)
         date = datetime.now()
         tracker.added = "{}-{}-{}".format(date.day, date.month, date.year)
@@ -42,7 +44,7 @@ class Tracker:
 
     def update_status(self):
         try:
-            self.get_all_a_records()
+            self.get_all_ips()
         except RuntimeError:
             logger.info('Hostname not found')
             return
@@ -83,11 +85,25 @@ class Tracker:
             uptime += s
         self.uptime = (uptime / len(self.historic)) * 100
 
-    def get_all_a_records(self):
+    def get_all_ips(self):
+        previous_ip = self.ip
+        self.ip = []
         try:
-            self.ip = socket.gethostbyname_ex(self.host)[2]
-        except socket.error:
-            raise RuntimeError("Can't get IP of the tracker")
+            ipv4 = resolver.query(self.host, 'A')
+            for rdata in ipv4:
+                self.ip.append(str(rdata))
+                print(rdata)
+        except Exception:
+            pass
+        try:
+            ipv6 = resolver.query(self.host, 'AAAA')
+            for rdata in ipv6:
+                self.ip.append(str(rdata))
+                print(rdata)
+        except Exception:
+            pass
+        if not self.ip: # If DNS query fails, just preserve the previous IPs. Considering showing "Not found" instead.
+            self.ip = previous_ip
 
     def update_ipapi_data(self):
         self.country = []

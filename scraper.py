@@ -7,6 +7,7 @@ from urllib.parse import urlparse, quote_from_bytes
 from os import urandom
 import random
 import string
+import pprint
 
 import requests
 
@@ -105,14 +106,17 @@ def scrape_http(tracker):
 
     # TODO Do a more extensive check of what was returned
     print("interval: ", info['response']['interval'])
+    pp = pprint.PrettyPrinter()
+    pp.pprint(info)
     return info['response']['interval']
+
 
 
 def trackerhash(type):
     """Generate a random info_hash to be used with this tracker."""
     t_hash = urandom(20)
     if type == 'udp':
-        return t_hash.hex()
+        return t_hash
     if type == 'http':
         return quote_from_bytes(t_hash)
 
@@ -189,9 +193,8 @@ def udp_create_announce_request(connection_id, thash):
     buf = struct.pack("!q", connection_id)  # first 8 bytes is connection id
     buf += struct.pack("!i", action)  # next 4 bytes is action
     buf += struct.pack("!i", transaction_id)  # followed by 4 byte transaction id
-    hex_repr = binascii.a2b_hex(thash)
-    buf += struct.pack("!20s", hex_repr)  # hash
-    buf += struct.pack("!20s", hex_repr)  # peer id, should be random
+    buf += struct.pack("!20s", thash)  # hash
+    buf += struct.pack("!20s", thash)  # peer id, should be random
     buf += struct.pack("!q", 0x0)  # number of bytes downloaded
     buf += struct.pack("!q", 0x0)  # number of bytes left
     buf += struct.pack("!q", 0x0)  # number of bytes uploaded
@@ -214,7 +217,7 @@ def udp_parse_announce_response(buf, sent_transaction_id):
                            % (sent_transaction_id, res_transaction_id))
     if action == 0x1:
         ret = dict()
-        offset = 8;  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
+        offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
         ret['interval'] = struct.unpack_from("!i", buf, offset)[0]
         print("Interval:" + str(ret['interval']))
         offset += 4
@@ -234,6 +237,8 @@ def udp_parse_announce_response(buf, sent_transaction_id):
             peers[x]['port'] = struct.unpack_from("!H", buf, offset)[0]
             offset += 2
             x += 1
+        pp = pprint.PrettyPrinter()
+        pp.pprint(ret)
         return ret['interval']
     else:
         # an error occured, try and extract the error string
