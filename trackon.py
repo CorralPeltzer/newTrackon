@@ -200,15 +200,6 @@ def update_db(tracker):
     conn.close()
 
 
-def validate_ipv4(s):
-    pieces = s.split('.')
-    if len(pieces) != 4: return False
-    try:
-        return all(0 <= int(p) < 256 for p in pieces)
-    except ValueError:
-        return False
-
-
 def get_all_ips_tracked():
     all_ips_of_all_trackers = []
     with list_lock:

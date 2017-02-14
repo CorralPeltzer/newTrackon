@@ -8,8 +8,9 @@ import logging
 import trackon
 from collections import deque
 from datetime import datetime
+from ipaddress import ip_address
 
-from dns import resolver, exception
+from dns import resolver
 logger = logging.getLogger('trackon_logger')
 
 class Tracker:
@@ -35,7 +36,7 @@ class Tracker:
         tracker.validate_url()
         print('URL is ', url)
         tracker.host = urlparse(tracker.url).hostname
-        tracker.get_all_ips()
+        tracker.update_ips()
         tracker.historic = deque(maxlen=1000)
         date = datetime.now()
         tracker.added = "{}-{}-{}".format(date.day, date.month, date.year)
@@ -44,7 +45,7 @@ class Tracker:
 
     def update_status(self):
         try:
-            self.get_all_ips()
+            self.update_ips()
         except RuntimeError:
             logger.info('Hostname not found')
             return
@@ -85,9 +86,16 @@ class Tracker:
             uptime += s
         self.uptime = (uptime / len(self.historic)) * 100
 
-    def get_all_ips(self):
-        previous_ip = self.ip
+    def update_ips(self):
         self.ip = []
+        try:
+            ip_address(self.host)
+            print("ADDRESS IS IP")
+            self.ip = self.host
+            return
+        except ValueError:
+            pass
+        previous_ip = self.ip
         try:
             ipv4 = resolver.query(self.host, 'A')
             for rdata in ipv4:
