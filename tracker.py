@@ -91,7 +91,7 @@ class Tracker:
         try:
             ip_address(self.host)
             print("ADDRESS IS IP")
-            self.ip = self.host
+            self.ip.append(self.host)
             return
         except ValueError:
             pass
