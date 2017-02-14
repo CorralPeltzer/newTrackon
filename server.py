@@ -63,8 +63,8 @@ def list_live():
     trackers_list = trackon.get_main()
     list = ''
     for t in trackers_list:
-        if t['status'] == 1:
-            list += t['url'] + '\n' + '\n'
+        if t.status == 1:
+            list += t.url + '\n' + '\n'
     return list
 
 

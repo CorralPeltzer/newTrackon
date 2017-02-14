@@ -92,4 +92,4 @@ $(document).ready( function () {
 <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
 
-#<%def name="extraheaders()"></%def>
+<%def name="extraheaders()"></%def>

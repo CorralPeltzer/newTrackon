@@ -10,16 +10,16 @@
 
 <p>This set of APIs allows you retrive informatin about known trackers.</p>
 <dl>
-    <dt>GET https://newtrackon.com/api/best</dt>
+    <dt>GET <a href="/api/best">https://newtrackon.com/api/best</a></dt>
     <dd>Returns a two line delimited list announce URLs of trackers that have an uptime of equal or more than 95%.</dd>
 
-    <dt>GET https://newtrackon.com/api/:percentage</dt>
+    <dt>GET <a href="/api/70">https://newtrackon.com/api/:percentage</a></dt>
     <dd>Returns a two line delimited list announce URLs of trackers that have an uptime of equal or more than the given percentage.</dd>
 
-    <dt>GET https://newtrackon.com/api/all</dt>
+    <dt>GET <a href="/api/all">https://newtrackon.com/api/all</a></dt>
     <dd>Returns a two line delimited list announce URLs of all known trackers, dead or alive.</dd>
 
-    <dt>GET https://newtrackon.com/api/live</dt>
+    <dt>GET <a href="/api/live">https://newtrackon.com/api/live</a></dt>
     <dd>Returns a two line delimited list announce URLs of currently active and responding trackers.</dd>
 </dl>
 
