@@ -17,6 +17,7 @@ incoming_trackers = deque(maxlen=10000)
 deque_lock = Lock()
 list_lock = Lock()
 
+
 processing_trackers = False
 logger = logging.getLogger('trackon_logger')
 
@@ -27,26 +28,32 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
-# When the program is started, create all tracker objects from sqlite table
-conn = sqlite3.connect('trackon.db')
-conn.row_factory = dict_factory
-c = conn.cursor()
-trackers_list = []
-for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
-    tracker_in_db = Tracker(url=row['url'],
-                            host=row['host'],
-                            ip=eval(row['ip']),
-                            latency=row['latency'],
-                            last_checked=row['last_checked'],
-                            interval=row['interval'],
-                            status=row['status'],
-                            uptime=row['uptime'],
-                            country=eval(row['country']),
-                            historic=eval(row['historic']),
-                            added=row['added'],
-                            network=eval(row['network']))
-    trackers_list.append(tracker_in_db)
-#closing database cursor?
+
+def get_tracker_list_from_db():
+    # When the program is started,
+    conn = sqlite3.connect('trackon.db')
+    conn.row_factory = dict_factory
+    c = conn.cursor()
+    trackers_from_db = []
+    for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
+        tracker_in_db = Tracker(url=row['url'],
+                                host=row['host'],
+                                ip=eval(row['ip']),
+                                latency=row['latency'],
+                                last_checked=row['last_checked'],
+                                interval=row['interval'],
+                                status=row['status'],
+                                uptime=row['uptime'],
+                                country=eval(row['country']),
+                                historic=eval(row['historic']),
+                                added=row['added'],
+                                network=eval(row['network']))
+        trackers_from_db.append(tracker_in_db)
+    conn.close()
+    return trackers_from_db
+
+
+trackers_list = get_tracker_list_from_db()  # runs at initialization time and creates all tracker objects from the db
 
 
 def enqueue_new_trackers(input_string):
@@ -54,12 +61,12 @@ def enqueue_new_trackers(input_string):
         return
     new_trackers_list = input_string.split()
     for url in new_trackers_list:
-        enqueue_one_tracker(url)
+        add_one_tracker_to_incoming_deque(url)
     if processing_trackers is False:
-        process_new_trackers()
+        process_incoming_deque()
 
 
-def enqueue_one_tracker(url):
+def add_one_tracker_to_incoming_deque(url):
     with deque_lock:
         for tracker_in_deque in incoming_trackers:
             if urlparse(tracker_in_deque.url).netloc == urlparse(url).netloc:
@@ -85,7 +92,7 @@ def enqueue_one_tracker(url):
     print("Tracker added to the incoming queue")
 
 
-def process_new_trackers():
+def process_incoming_deque():
     global processing_trackers
     processing_trackers = True
     while incoming_trackers:
@@ -97,9 +104,8 @@ def process_new_trackers():
     processing_trackers = False
 
 
-def get_main():
-    with list_lock:
-        html_list = deepcopy(trackers_list)
+def get_main_from_db():
+    html_list = get_tracker_list_from_db()
     for tracker in html_list:
         string = ''
         for ip in tracker.ip:
@@ -140,6 +146,8 @@ def process_new_tracker(tracker_candidate):
         tracker_candidate.latency, tracker_candidate.interval, tracker_candidate.url = tracker_candidate.scrape()
     except (RuntimeError, ValueError):
         return
+    if tracker_candidate.interval > 200:
+        return
     tracker_candidate.update_ipapi_data()
     tracker_candidate.is_up()
     tracker_candidate.update_uptime()
@@ -151,7 +159,7 @@ def process_new_tracker(tracker_candidate):
     return
 
 
-def update_status():
+def update_outdated_trackers():
     while True:
         print("UPDATE STATUS LOOP")
         now = int(time())

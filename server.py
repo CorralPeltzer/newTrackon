@@ -22,7 +22,7 @@ logger.info('Server started')
 
 @app.route('/')
 def main():
-    trackers_list = trackon.get_main()
+    trackers_list = trackon.get_main_from_db()
     return template('tpl/main.mako', trackers=trackers_list)
 
 
@@ -49,7 +49,7 @@ def faq():
 
 
 def list_uptime(uptime):
-    trackers_list = trackon.get_main()
+    trackers_list = trackon.get_main_from_db()
     formatted_list = ''
     length = 0
     for t in trackers_list:
@@ -60,7 +60,7 @@ def list_uptime(uptime):
 
 
 def list_live():
-    trackers_list = trackon.get_main()
+    trackers_list = trackon.get_main_from_db()
     list = ''
     for t in trackers_list:
         if t.status == 1:
@@ -118,7 +118,7 @@ def static(path):
 def favicon():
     return static_file('favicon.ico', root='static/imgs')
 
-update_status = threading.Thread(target=trackon.update_status)
+update_status = threading.Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True
 update_status.start()
 

@@ -13,6 +13,7 @@ from ipaddress import ip_address
 from dns import resolver
 logger = logging.getLogger('trackon_logger')
 
+
 class Tracker:
 
     def __init__(self, url, host, ip, latency, last_checked, interval, status, uptime, country, historic, added,
