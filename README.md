@@ -13,7 +13,7 @@ To install python dependencies, just run
 ```
 pip install -r requirements.txt
 ```
-This will install requests, bottle, paste and mako.
+This will install requests, bottle, waitress, mako, wsgi-requests-logger, and dnspython.
 
 Then, create the database with
 ```
