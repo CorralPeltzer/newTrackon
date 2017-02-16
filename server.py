@@ -130,4 +130,4 @@ handlers = [FileHandler('access.log'), ]
 app = WSGILogger(app, handlers, ApacheFormatter())
 
 if __name__ == '__main__':
-    run(app, host='0.0.0.0', port=8080, server='paste')
+    run(app, host='0.0.0.0', port=8080, server='waitress')

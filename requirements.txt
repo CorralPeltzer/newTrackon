@@ -1,6 +1,6 @@
 requests
 bottle
-paste
+waitress
 mako
 wsgi-request-logger
 dnspython
