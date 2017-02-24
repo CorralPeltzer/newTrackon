@@ -1,4 +1,3 @@
-import binascii
 import logging
 import socket
 import struct
@@ -31,9 +30,9 @@ def scrape(t):
         logger.info('Request ' + udp_version)
         try:
             t1 = time()
-            interval = scrape_udp(udp_version)
+            response, raw = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
-            return latency, interval, udp_version
+            return latency, response['interval'], udp_version
         except RuntimeError as e:
             logger.info("Error: " + str(e))
             print("UDP not working, trying HTTPS")
@@ -46,9 +45,9 @@ def scrape(t):
     try:
         logger.info('Request ' + https_version)
         t1 = time()
-        interval = scrape_http(https_version)
+        response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
-        return latency, interval, https_version
+        return latency, response['interval'], https_version
     except RuntimeError as e:
         logger.info("Error: " + str(e))
         "HTTPS not working, trying HTTP"
@@ -61,15 +60,15 @@ def scrape(t):
     try:
         logger.info('Request ' + http_version)
         t1 = time()
-        interval = scrape_http(http_version)
+        response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
-        return latency, interval, http_version
+        return latency, response['interval'], http_version
     except RuntimeError as e:
         logger.info("Error: " + str(e))
         raise RuntimeError
 
 
-def scrape_http(tracker):
+def announce_http(tracker):
     print("Scraping HTTP: %s" % tracker)
     thash = trackerhash(type='http')
     pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
@@ -81,35 +80,48 @@ def scrape_http(tracker):
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
     except requests.HTTPError:
-        raise RuntimeError("HTTP response error code")
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError("HTTP error: " + str(e))
-
-    info = {}
+        raise RuntimeError("HTTP error")
+    except requests.ConnectionError:
+        raise RuntimeError("HTTP connection error")
+    except requests.RequestException:
+        raise RuntimeError("Ambiguous HTTP error")
     if response.status_code is not 200:
-        raise RuntimeError("%s status code returned" % response.status_code)
+        raise RuntimeError("HTTP %s status code returned" % response.status_code)
 
     elif not response.content:
         raise RuntimeError("Got empty HTTP response")
 
     else:
         try:
-            info['response'] = bencode.bdecode(response.text)
+            tracker_response = bencode.bdecode(response.text)
         except:
-            raise RuntimeError("Can't decode the tracker binary response. Reason")
+            raise RuntimeError("Can't bdecode the tracker response")
 
-    if 'response' in info:
-        if 'failure reason' in info['response']:
-            raise RuntimeError("Tracker failure reason: \"%s\"." % (info['response']['failure reason']))
-        elif 'peers' not in info['response']:
-            raise RuntimeError("Invalid response, 'peers' field is missing")
+    if 'failure reason' in tracker_response:
+        raise RuntimeError("Tracker failure reason: \"%s\"." % (tracker_response['failure reason']))
+    elif 'peers' not in tracker_response:
+        raise RuntimeError("Invalid response, 'peers' field is missing")
+    # elif 'peers' == "":
+    #    raise RuntimeError("Invalid response, 'peers' field is empty")     Not sure about the standard
+    pp = pprint.PrettyPrinter(width=999999, compact=True)
+    pp.pprint(tracker_response)
+    # if type(tracker_response['peers']) == str:
+    # decode_binary_peers(tracker_response['peers']) TODO: decode binary peers response
 
-    # TODO Do a more extensive check of what was returned
-    print("interval: ", info['response']['interval'])
-    pp = pprint.PrettyPrinter()
-    pp.pprint(info)
-    return info['response']['interval']
+    return tracker_response
 
+
+def decode_binary_peers(peers):
+    """ Return a list of IPs and ports, given a binary list of peers,
+    from a tracker response. """
+    peer_ips = list()
+    presponse = [ord(i) for i in peers]
+    while presponse:
+        peer_ip = (('.'.join(str(x) for x in presponse[0:4]),
+                    256 * presponse[4] + presponse[5]))
+        peer_ips.append(peer_ip)
+        presponse = presponse[6:]
+    print(peer_ips)
 
 
 def trackerhash(type):
@@ -121,17 +133,10 @@ def trackerhash(type):
         return quote_from_bytes(t_hash)
 
 
-def genqstr(h):
-    pid = "-qB3360-" + str(int(time()))  # random peer id
-    return "?info_hash=%s&peer_id=%s&port=999&compact=1&uploaded=0&downloaded=0&left=0" % (h, pid)
-
-
-def scrape_udp(udp_version):
+def announce_udp(udp_version):
     thash = trackerhash(type='udp')
     parsed_tracker = urlparse(udp_version)
     print("Scraping UDP: %s " % udp_version)
-    transaction_id = "\x00\x00\x04\x12\x27\x10\x19\x70"
-    connection_id = "\x00\x00\x04\x17\x27\x10\x19\x80"
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(10)
     try:
@@ -175,7 +180,7 @@ def udp_parse_connection_response(buf, sent_transaction_id):
 
     res_transaction_id = struct.unpack_from("!i", buf, 4)[0]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
-        raise RuntimeError("Transaction ID doesnt match in connection response! Expected %s, got %s"
+        raise RuntimeError("Transaction ID doesnt match in connection response. Expected %s, got %s"
                            % (sent_transaction_id, res_transaction_id))
 
     if action == 0x0:
@@ -203,7 +208,7 @@ def udp_create_announce_request(connection_id, thash):
     key = udp_get_transaction_id()  # Unique key randomized by client
     buf += struct.pack("!i", key)
     buf += struct.pack("!i", -1)  # Number of peers required. Set to -1 for default
-    buf += struct.pack("!i", 0x3E7)  # port on which response will be sent
+    buf += struct.pack("!i", 0x76FD)  # port on which response will be sent
     return buf, transaction_id
 
 
@@ -215,13 +220,13 @@ def udp_parse_announce_response(buf, sent_transaction_id):
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError("Transaction ID doesnt match in announce response! Expected %s, got %s"
                            % (sent_transaction_id, res_transaction_id))
+    print("Raw response: " + buf.hex())
     if action == 0x1:
         ret = dict()
         offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
         ret['interval'] = struct.unpack_from("!i", buf, offset)[0]
-        print("Interval:" + str(ret['interval']))
         offset += 4
-        ret['leeches'] = struct.unpack_from("!i", buf, offset)[0]
+        ret['leechers'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
         ret['seeds'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
@@ -230,16 +235,17 @@ def udp_parse_announce_response(buf, sent_transaction_id):
         while offset != len(buf):
             peers.append(dict())
             peers[x]['IP'] = struct.unpack_from("!i", buf, offset)[0]
-            # print "IP: "+socket.inet_ntoa(struct.pack("!i",peers[x]['IP']))
+            peers[x]['IP'] = socket.inet_ntoa(struct.pack("!i", peers[x]['IP']))
             offset += 4
             if offset >= len(buf):
                 raise RuntimeError("Error while reading peer port")
             peers[x]['port'] = struct.unpack_from("!H", buf, offset)[0]
             offset += 2
             x += 1
-        pp = pprint.PrettyPrinter()
+        ret['peers'] = peers
+        pp = pprint.PrettyPrinter(width=999999, compact=True)
         pp.pprint(ret)
-        return ret['interval']
+        return ret, buf.hex()
     else:
         # an error occured, try and extract the error string
         error = struct.unpack_from("!s", buf, 8)

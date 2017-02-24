@@ -1,6 +1,5 @@
-import socket
 import urllib.request, urllib.parse, urllib.error
-from time import time, sleep
+from time import time, sleep, gmtime, strftime
 from urllib.parse import urlparse
 import re
 import scraper
@@ -9,7 +8,7 @@ import trackon
 from collections import deque
 from datetime import datetime
 from ipaddress import ip_address
-
+import pprint
 from dns import resolver
 logger = logging.getLogger('trackon_logger')
 
@@ -53,17 +52,30 @@ class Tracker:
         self.update_ipapi_data()
         print("TRACKER TO CHECK: " + self.url)
         self.last_checked = int(time())
+        pp = pprint.PrettyPrinter(width=999999, compact=True)
+        t1 = time()
+        debug = {'url': self.url, 'ip': self.ip[0], 'time': strftime("%H:%M:%S UTC", gmtime(t1))}
         try:
-            t1 = time()
             if urlparse(self.url).scheme == 'udp':
-                self.interval = scraper.scrape_udp(self.url)
+                parsed, raw = scraper.announce_udp(self.url)
+                self.interval = parsed['interval']
+                pretty_data = pp.pformat(parsed)
+                debug['info'] = "Hex response: " + raw + '<br>' + "Parsed: " + pretty_data
+                trackon.raw_data.appendleft(debug)
             else:
-                self.interval = scraper.scrape_http(self.url)
+                response = scraper.announce_http(self.url)
+                self.interval = response['interval']
+                pretty_data = pp.pformat(response)
+                debug['info'] = pretty_data
+                trackon.raw_data.appendleft(debug)
             self.latency = int((time() - t1) * 1000)
             self.is_up()
+            debug['status'] = 1
             print("TRACKER UP")
         except RuntimeError as e:
             logger.info('Tracker down: ' + self.url + ' Cause: ' + str(e))
+            debug.update({'info': str(e), 'status': 0})
+            trackon.raw_data.appendleft(debug)
             print("TRACKER DOWN")
             self.is_down()
         self.update_uptime()

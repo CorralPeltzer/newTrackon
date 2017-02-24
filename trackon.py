@@ -1,7 +1,5 @@
-
 import logging
 import sqlite3
-from copy import deepcopy
 
 from threading import Lock
 from collections import deque
@@ -9,15 +7,13 @@ from itertools import islice
 from time import time, sleep
 from urllib.parse import urlparse
 
-import scraper
 from tracker import Tracker
 
 max_input_length = 20000
 incoming_trackers = deque(maxlen=10000)
+raw_data = deque(maxlen=300)
 deque_lock = Lock()
 list_lock = Lock()
-
-
 processing_trackers = False
 logger = logging.getLogger('trackon_logger')
 

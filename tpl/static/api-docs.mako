@@ -3,8 +3,6 @@
 
 <h2 id="page-heading">newTrackon Web API Description</h2>
 
-<p><b>Note: The API is still experimental and subject to change, let me know if you find it useful, or if you need any new features or changes. Thanks!</b></p>
-
 
 <h3>Read API</h3>
 

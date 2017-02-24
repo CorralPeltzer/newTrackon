@@ -78,6 +78,9 @@ def list_stable():
 def api():
     return template('tpl/static/api-docs.mako')
 
+@app.route('/raw')
+def raw():
+    return template('tpl/raw.mako', data=trackon.raw_data)
 
 @app.route('/api/<percentage:int>')
 def api_percentage(percentage):

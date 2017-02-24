@@ -35,7 +35,7 @@ def _dechunk(chunks):
         item = chunks.pop()
         num = ''
         while item != 'e':
-            num  += item
+            num += item
             item = chunks.pop()
         return int(num)
     elif decimal_match.search(item):
