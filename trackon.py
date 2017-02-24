@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from tracker import Tracker
 
 max_input_length = 20000
-incoming_trackers = deque(maxlen=10000)
+submitted_trackers = deque(maxlen=10000)
 raw_data = deque(maxlen=300)
 deque_lock = Lock()
 list_lock = Lock()
@@ -57,14 +57,14 @@ def enqueue_new_trackers(input_string):
         return
     new_trackers_list = input_string.split()
     for url in new_trackers_list:
-        add_one_tracker_to_incoming_deque(url)
+        add_one_tracker_to_submitted_deque(url)
     if processing_trackers is False:
-        process_incoming_deque()
+        process_submitted_deque()
 
 
-def add_one_tracker_to_incoming_deque(url):
+def add_one_tracker_to_submitted_deque(url):
     with deque_lock:
-        for tracker_in_deque in incoming_trackers:
+        for tracker_in_deque in submitted_trackers:
             if urlparse(tracker_in_deque.url).netloc == urlparse(url).netloc:
                 print("Tracker already in the queue.")
                 return
@@ -84,17 +84,17 @@ def add_one_tracker_to_incoming_deque(url):
         print("IP of the tracker already in the list.")
         return
     with deque_lock:
-        incoming_trackers.append(tracker_candidate)
-    print("Tracker added to the incoming queue")
+        submitted_trackers.append(tracker_candidate)
+    print("Tracker added to the submitted queue")
 
 
-def process_incoming_deque():
+def process_submitted_deque():
     global processing_trackers
     processing_trackers = True
-    while incoming_trackers:
+    while submitted_trackers:
         with deque_lock:
-            tracker = incoming_trackers.popleft()
-        print("Size of deque: ", len(incoming_trackers))
+            tracker = submitted_trackers.popleft()
+        print("Size of deque: ", len(submitted_trackers))
         process_new_tracker(tracker)
     print("Finished processing  new trackers")
     processing_trackers = False
@@ -170,13 +170,13 @@ def update_outdated_trackers():
         sleep(10)
 
 
-def get_150_incoming():
+def get_150_submitted():
     string = ''
-    if incoming_trackers:
+    if submitted_trackers:
         with deque_lock:
-            for tracker in islice(incoming_trackers, 150):
+            for tracker in islice(submitted_trackers, 150):
                 string += tracker.url + '<br>'
-        return len(incoming_trackers), string
+        return len(submitted_trackers), string
     else:
         return 0, "None"
 

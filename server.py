@@ -35,12 +35,12 @@ def new_tracker():
     return main()
 
 
-@app.route('/incoming-log')
-def incoming():
-    size, incoming150 = trackon.get_150_incoming()
+@app.route('/submitted')
+def submitted():
+    size, submitted150 = trackon.get_150_submitted()
     if size == 0:
-        incoming150 = ''
-    return template('tpl/incoming-log.mako', incoming=incoming150, size=size)
+        submitted150 = ''
+    return template('tpl/submitted.mako', submitted=submitted150, size=size)
 
 
 @app.route('/faq')

@@ -16,22 +16,22 @@
     <thead>
     <tr>
         <th>Time</th>
-        <th>Result</th>
         <th>Tracker</th>
         <th>IP</th>
+        <th>Result</th>
         <th>Response/Error</th>
     </tr>
     </thead>
     % for response in data:
     <tr>
         <td>${response['time']}</td>
+        <td>${response['url']}</td>
+        <td>${response['ip']}</td>
         % if response['status'] == 1:
             <td class="up"><b>Working</b></td>
         % else:
             <td class="down"><b>Down</b></td>
         % endif
-        <td>${response['url']}</td>
-        <td>${response['ip']}</td>
         <td>${response['info']}</td>
     </tr>
     % endfor

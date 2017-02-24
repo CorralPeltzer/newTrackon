@@ -29,7 +29,7 @@
                 </li>
                 <li><a href="/list">List</a>
                 </li>
-                <li><a href="/incoming-log">Incoming</a>
+                <li><a href="/submitted">Submitted</a>
                 </li>
                 <li><a href="/faq">FAQ</a>
                 </li>

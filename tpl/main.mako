@@ -39,7 +39,7 @@ $(document).ready( function () {
     <input type="submit" value="Add Tracker">
 </form></p>
 <p>You can submit multiple trackers separated by whitespaces. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
- or check the <a href="/incoming-log">Incoming</a> section.</p>
+ or check the <a href="/submitted">Submitted</a> section.</p>
 
 </div>
 
