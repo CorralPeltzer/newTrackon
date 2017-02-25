@@ -6,5 +6,4 @@
 <h3> Number of trackers in the queue: ${size} </h3>
 ${submitted}
 </div>
-<%def name="title()">Log of submitted trackers.</%def>
-
+<%def name="title()">Log of submitted trackers</%def>

@@ -142,7 +142,9 @@ def process_new_tracker(tracker_candidate):
         tracker_candidate.latency, tracker_candidate.interval, tracker_candidate.url = tracker_candidate.scrape()
     except (RuntimeError, ValueError):
         return
-    if tracker_candidate.interval > 200:
+    print(tracker_candidate.interval)
+    if 300 > tracker_candidate.interval or tracker_candidate.interval > 10800:  # trackers with an update interval
+                                                                                # less than 5' and more than 3h
         return
     tracker_candidate.update_ipapi_data()
     tracker_candidate.is_up()
@@ -152,7 +154,6 @@ def process_new_tracker(tracker_candidate):
         trackers_list.append(tracker_candidate)
     insert_in_db(tracker_candidate)
     logger.info('TRACKER ADDED TO LIST: ' + tracker_candidate.url)
-    return
 
 
 def update_outdated_trackers():

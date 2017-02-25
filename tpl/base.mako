@@ -76,6 +76,6 @@
 </html>
 
 
-<%def name="title()">newTrackon: Tracking the trackers.</%def>
+<%def name="title()">newTrackon: Tracking the trackers</%def>
 <%def name="extraheaders()">
 </%def>
