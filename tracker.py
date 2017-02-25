@@ -36,10 +36,11 @@ class Tracker:
         print('URL is ', url)
         tracker.host = urlparse(tracker.url).hostname
         tracker.update_ips()
+        if not tracker.ip:
+            raise RuntimeError("Can't resolve IP")
         tracker.historic = deque(maxlen=1000)
         date = datetime.now()
         tracker.added = "{}-{}-{}".format(date.day, date.month, date.year)
-
         return tracker
 
     def update_status(self):
