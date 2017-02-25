@@ -6,6 +6,7 @@ from collections import deque
 from itertools import islice
 from time import time, sleep
 from urllib.parse import urlparse
+from ipaddress import ip_address
 
 from tracker import Tracker
 
@@ -63,6 +64,12 @@ def enqueue_new_trackers(input_string):
 
 
 def add_one_tracker_to_submitted_deque(url):
+    try:
+        ip_address(urlparse(url).hostname)
+        print("ADDRESS IS IP")
+        return
+    except ValueError:
+        pass
     with deque_lock:
         for tracker_in_deque in submitted_trackers:
             if urlparse(tracker_in_deque.url).netloc == urlparse(url).netloc:

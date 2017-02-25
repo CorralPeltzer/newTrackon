@@ -7,7 +7,6 @@ import logging
 import trackon
 from collections import deque
 from datetime import datetime
-from ipaddress import ip_address
 import pprint
 from dns import resolver
 logger = logging.getLogger('trackon_logger')
@@ -100,15 +99,8 @@ class Tracker:
         self.uptime = (uptime / len(self.historic)) * 100
 
     def update_ips(self):
+        previous_ips = self.ip
         self.ip = []
-        try:
-            ip_address(self.host)
-            print("ADDRESS IS IP")
-            self.ip.append(self.host)
-            return
-        except ValueError:
-            pass
-        previous_ip = self.ip
         try:
             ipv4 = resolver.query(self.host, 'A')
             for rdata in ipv4:
@@ -124,7 +116,7 @@ class Tracker:
         except Exception:
             pass
         if not self.ip: # If DNS query fails, just preserve the previous IPs. Considering showing "Not found" instead.
-            self.ip = previous_ip
+            self.ip = previous_ips
 
     def update_ipapi_data(self):
         self.country = []
