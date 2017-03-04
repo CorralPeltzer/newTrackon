@@ -15,6 +15,7 @@ submitted_trackers = deque(maxlen=10000)
 raw_data = deque(maxlen=300)
 deque_lock = Lock()
 list_lock = Lock()
+trackers_list = []
 processing_trackers = False
 logger = logging.getLogger('trackon_logger')
 
@@ -26,8 +27,7 @@ def dict_factory(cursor, row):
     return d
 
 
-def get_tracker_list_from_db():
-    # When the program is started,
+def get_all_data_from_db():
     conn = sqlite3.connect('trackon.db')
     conn.row_factory = dict_factory
     c = conn.cursor()
@@ -50,10 +50,9 @@ def get_tracker_list_from_db():
     return trackers_from_db
 
 
-trackers_list = get_tracker_list_from_db()  # runs at initialization time and creates all tracker objects from the db
-
-
 def enqueue_new_trackers(input_string):
+    global trackers_list
+    trackers_list = get_all_data_from_db()
     if len(input_string) > max_input_length:
         return
     new_trackers_list = input_string.split()
@@ -108,7 +107,7 @@ def process_submitted_deque():
 
 
 def get_main_from_db():
-    html_list = get_tracker_list_from_db()
+    html_list = get_all_data_from_db()
     for tracker in html_list:
         string = ''
         for ip in tracker.ip:
@@ -136,7 +135,6 @@ def process_new_tracker(tracker_candidate):
     if exists_ip:
         print("IP of the tracker already in the list.")
         return
-
     with list_lock:
         for tracker_in_list in trackers_list:
             if tracker_in_list.host == urlparse(tracker_candidate.url).hostname:
@@ -156,8 +154,6 @@ def process_new_tracker(tracker_candidate):
     tracker_candidate.is_up()
     tracker_candidate.update_uptime()
     print('Adding tracker to list')
-    with list_lock:
-        trackers_list.append(tracker_candidate)
     insert_in_db(tracker_candidate)
     logger.info('TRACKER ADDED TO LIST: ' + tracker_candidate.url)
 
@@ -167,10 +163,9 @@ def update_outdated_trackers():
         print("UPDATE STATUS LOOP")
         now = int(time())
         trackers_outdated = []
-        with list_lock:
-            for tracker in trackers_list:
-                if (now - tracker.last_checked) > tracker.interval:
-                    trackers_outdated.append(tracker)
+        for tracker in get_all_data_from_db():
+            if (now - tracker.last_checked) > tracker.interval:
+                trackers_outdated.append(tracker)
         for tracker in trackers_outdated:
             tracker.update_status()
         print("Finished updating tracker status")
@@ -199,7 +194,7 @@ def insert_in_db(tracker):
     conn.close()
 
 
-def update_db(tracker):
+def update_in_db(tracker):
     conn = sqlite3.connect('trackon.db')
     c = conn.cursor()
     c.execute(
@@ -213,8 +208,53 @@ def update_db(tracker):
 
 def get_all_ips_tracked():
     all_ips_of_all_trackers = []
-    with list_lock:
-        for tracker_in_list in trackers_list:
-            for ip in tracker_in_list.ip:
-                all_ips_of_all_trackers.append(ip)
+    all_data = get_all_data_from_db()
+    for tracker_in_list in all_data:
+        for ip in tracker_in_list.ip:
+            all_ips_of_all_trackers.append(ip)
     return all_ips_of_all_trackers
+
+
+def list_live():
+    all_data = get_all_data_from_db()
+    raw_list = []
+    for t in all_data:
+        if t.status == 1:
+            raw_list.append(t.url)
+    return format_list(raw_list)
+
+
+def list_uptime(uptime):
+    all_data = get_all_data_from_db()
+    raw_list = []
+    length = 0
+    for t in all_data:
+        if t.uptime >= uptime:
+            raw_list.append(t.url)
+            length += 1
+    return format_list(raw_list), length
+
+
+def list_udp():
+    all_data = get_all_data_from_db()
+    raw_list = []
+    for t in all_data:
+        if urlparse(t.url).scheme == 'udp' and t.uptime >= 95:
+            raw_list.append(t.url)
+    return format_list(raw_list)
+
+
+def list_http():
+    all_data = get_all_data_from_db()
+    raw_list = []
+    for t in all_data:
+        if urlparse(t.url).scheme in ['http', 'https'] and t.uptime >= 95:
+            raw_list.append(t.url)
+    return format_list(raw_list)
+
+
+def format_list(raw_list):
+    formatted_list = ''
+    for url in raw_list:
+        formatted_list += url + '\n' + '\n'
+    return formatted_list

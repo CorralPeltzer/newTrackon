@@ -8,7 +8,7 @@
 
 <p>This set of APIs allows you retrive informatin about known trackers.</p>
 <dl>
-    <dt>GET <a href="/api/best">https://newtrackon.com/api/best</a></dt>
+    <dt>GET <a href="/api/stable">https://newtrackon.com/api/stable</a></dt>
     <dd>Returns a two line delimited list announce URLs of trackers that have an uptime of equal or more than 95%.</dd>
 
     <dt>GET <a href="/api/70">https://newtrackon.com/api/:percentage</a></dt>
@@ -19,6 +19,12 @@
 
     <dt>GET <a href="/api/live">https://newtrackon.com/api/live</a></dt>
     <dd>Returns a two line delimited list announce URLs of currently active and responding trackers.</dd>
+
+    <dt>GET <a href="/api/udp">https://newtrackon.com/api/udp</a></dt>
+    <dd>Returns a two line delimited list announce URLs of stable and UDP trackers.</dd>
+
+    <dt>GET <a href="/api/http">https://newtrackon.com/api/http</a></dt>
+    <dd>Returns a two line delimited list announce URLs of stable and HTTP/HTTPS trackers.</dd>
 </dl>
 
 <h3>Write API</h3>

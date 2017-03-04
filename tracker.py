@@ -80,7 +80,7 @@ class Tracker:
             self.is_down()
         self.update_uptime()
 
-        trackon.update_db(self)
+        trackon.update_in_db(self)
 
     def validate_url(self):
         UCHARS = re.compile('^[a-zA-Z0-9_\-\./:]+$')

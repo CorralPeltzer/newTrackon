@@ -48,29 +48,9 @@ def faq():
     return template('tpl/static/faq.mako')
 
 
-def list_uptime(uptime):
-    trackers_list = trackon.get_main_from_db()
-    formatted_list = ''
-    length = 0
-    for t in trackers_list:
-        if t.uptime >= uptime:
-            length += 1
-            formatted_list += t.url + '\n' + '\n'
-    return formatted_list, length
-
-
-def list_live():
-    trackers_list = trackon.get_main_from_db()
-    list = ''
-    for t in trackers_list:
-        if t.status == 1:
-            list += t.url + '\n' + '\n'
-    return list
-
-
 @app.route('/list')
 def list_stable():
-    stable_list, size = list_uptime(95)
+    stable_list, size = trackon.list_uptime(95)
     return template('tpl/list.mako', stable=stable_list, size=size)
 
 
@@ -78,22 +58,24 @@ def list_stable():
 def api():
     return template('tpl/static/api-docs.mako')
 
+
 @app.route('/raw')
 def raw():
     return template('tpl/raw.mako', data=trackon.raw_data)
+
 
 @app.route('/api/<percentage:int>')
 def api_percentage(percentage):
     if 0 <= percentage <= 100:
         response.content_type = 'text/plain'
-        formatted_list, not_needed_length = list_uptime(percentage)
+        formatted_list, not_needed_length = trackon.list_uptime(percentage)
         return formatted_list
     else:
         abort(400, "The percentage has to be between 0 an 100")
 
 
-@app.route('/api/best')
-def api_best():
+@app.route('/api/stable')
+def api_stable():
     return api_percentage(95)
 
 
@@ -105,7 +87,19 @@ def api_all():
 @app.route('/api/live')
 def api_live():
     response.content_type = 'text/plain'
-    return list_live()
+    return trackon.list_live()
+
+
+@app.route('/api/udp')
+def api_udp():
+    response.content_type = 'text/plain'
+    return trackon.list_udp()
+
+
+@app.route('/api/http')
+def api_http():
+    response.content_type = 'text/plain'
+    return trackon.list_http()
 
 
 @app.route('/about')
@@ -116,6 +110,7 @@ def about():
 @app.route('/static/:path#.+#', name='static')
 def static(path):
     return static_file(path, root='static')
+
 
 @app.route('/favicon.ico')
 def favicon():
