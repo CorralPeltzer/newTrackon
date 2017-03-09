@@ -1,15 +1,10 @@
 <%! from time import time %>
 <%inherit file="base.mako"/>
-
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.css"/>
-
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.8.0/css/flag-icon.min.css">
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.js"></script>
-
-<script type="text/javascript" src="//cdn.datatables.net/plug-ins/1.10.13/sorting/natural.js"></script>
-
-<script type="text/javascript" src="//cdn.datatables.net/plug-ins/1.10.13/sorting/date-eu.js"></script>
-
-
+<script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.13/sorting/natural.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.13/sorting/date-eu.js"></script>
 <script type="text/javascript">
 $(document).ready( function () {
     $('#trackon_table').DataTable( {
@@ -76,9 +71,23 @@ $(document).ready( function () {
                 % endif
                 <td>${(int(time()) - t.last_checked) // 60} min ago</td>
                 <td>~${t.interval//60} min (${t.interval} sec)</td>
-                <td>${t.ip}</td>
-                <td>${t.country}</td>
-                <td>${t.network}</td>
+                <td>
+                    % for ip in t.ip:
+                        ${ip}<br>
+                    % endfor
+                </td>
+                <td>
+                    <% index = 0 %>
+                    % for country in t.country:
+                        <span class="flag-icon flag-icon-${t.country_code[index]}"></span> ${country}<br>
+                        <%index += 1 %>
+                    % endfor
+                </td>
+                <td>
+                    % for network in t.network:
+                        ${network}<br>
+                    % endfor
+                </td>
                 <td>${t.latency} ms</td>
                 <td class="right">${t.added}</td>
             </tr>

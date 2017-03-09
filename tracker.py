@@ -14,8 +14,8 @@ logger = logging.getLogger('trackon_logger')
 
 class Tracker:
 
-    def __init__(self, url, host, ip, latency, last_checked, interval, status, uptime, country, historic, added,
-                 network):
+    def __init__(self, url, host, ip, latency, last_checked, interval, status, uptime, country, country_code,
+                 network, historic, added):
         self.url = url
         self.host = host
         self.ip = ip
@@ -25,13 +25,14 @@ class Tracker:
         self.status = status
         self.uptime = uptime
         self.country = country
+        self.country_code = country_code
+        self.network = network
         self.historic = historic
         self.added = added
-        self.network = network
 
     @classmethod
     def from_url(cls, url):
-        tracker = cls(url, None, None, None, None, None, None, None, [], None, None, [])
+        tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None)
         tracker.validate_url()
         print('URL is ', url)
         tracker.host = urlparse(tracker.url).hostname
@@ -122,9 +123,12 @@ class Tracker:
     def update_ipapi_data(self):
         self.country = []
         self.network = []
+        self.country_code = []
         for ip in self.ip:
-            self.country.append(self.ip_api(ip, 'country'))
-            self.network.append(self.ip_api(ip, 'org'))
+            ip_data = self.ip_api(ip).splitlines()
+            self.country.append(ip_data[0])
+            self.country_code.append(ip_data[1].lower())
+            self.network.append(ip_data[2])
 
     def scrape(self):
         return scraper.scrape(self.url)
@@ -138,9 +142,9 @@ class Tracker:
         self.historic.append(self.status)
 
     @staticmethod
-    def ip_api(ip, info_type):
+    def ip_api(ip):
         try:
-            response = urllib.request.urlopen('http://ip-api.com/line/' + ip + '?fields=' + info_type)
+            response = urllib.request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,org')
             tracker_info = response.read().decode('utf-8')
             sleep(0.9)  # This wait is to respect the queries per minute limit of IP-API and not get banned
         except IOError:

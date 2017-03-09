@@ -1,12 +1,11 @@
 import logging
 import sqlite3
-
-from threading import Lock
 from collections import deque
+from ipaddress import ip_address
 from itertools import islice
+from threading import Lock
 from time import time, sleep
 from urllib.parse import urlparse
-from ipaddress import ip_address
 
 from tracker import Tracker
 
@@ -42,6 +41,7 @@ def get_all_data_from_db():
                                 status=row['status'],
                                 uptime=row['uptime'],
                                 country=eval(row['country']),
+                                country_code=eval(row['country_code']),
                                 historic=eval(row['historic']),
                                 added=row['added'],
                                 network=eval(row['network']))
@@ -108,21 +108,21 @@ def process_submitted_deque():
 
 def get_main_from_db():
     html_list = get_all_data_from_db()
-    for tracker in html_list:
-        string = ''
-        for ip in tracker.ip:
-            string += ip + '<br/>'
-        tracker.ip = string
-
-        string = ''
-        for country in tracker.country:
-            string += country + '<br/>'
-        tracker.country = string
-
-        string = ''
-        for network in tracker.network:
-            string += network + '<br/>'
-        tracker.network = string
+#    for tracker in html_list:
+#        string = ''
+#        for ip in tracker.ip:
+#            string += ip + '<br/>'
+ #       tracker.ip = string
+#
+#        string = ''
+ #       for country in tracker.country:
+  #          string += country + '<br/>'
+   #     tracker.country = string
+#
+ #       string = ''
+#        for network in tracker.network:
+#            string += network + '<br/>'
+#        tracker.network = string
     return html_list
 
 
@@ -148,7 +148,7 @@ def process_new_tracker(tracker_candidate):
     except (RuntimeError, ValueError):
         return
     if 300 > tracker_candidate.interval or tracker_candidate.interval > 10800:  # trackers with an update interval
-                                                                                # less than 5' and more than 3h
+        # less than 5' and more than 3h
         return
     tracker_candidate.update_ipapi_data()
     tracker_candidate.is_up()
@@ -186,10 +186,10 @@ def get_150_submitted():
 def insert_in_db(tracker):
     conn = sqlite3.connect('trackon.db')
     c = conn.cursor()
-    c.execute('INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+    c.execute('INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
               (tracker.url, tracker.host, str(tracker.ip), tracker.latency, tracker.last_checked, tracker.interval,
-               tracker.status, tracker.uptime, str(tracker.country), str(tracker.historic), tracker.added,
-               str(tracker.network)))
+               tracker.status, tracker.uptime, str(tracker.country), str(tracker.country_code), str(tracker.network),
+               tracker.added, str(tracker.historic)))
     conn.commit()
     conn.close()
 
@@ -199,9 +199,10 @@ def update_in_db(tracker):
     c = conn.cursor()
     c.execute(
         "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-        " historic=?, country=?, network=? WHERE url=?",
+        " historic=?, country=?, country_code=?, network=? WHERE url=?",
         (str(tracker.ip), tracker.latency, tracker.last_checked, tracker.status, tracker.interval, tracker.uptime,
-         str(tracker.historic), str(tracker.country), str(tracker.network), tracker.url)).fetchone()
+         str(tracker.historic), str(tracker.country), str(tracker.country_code), str(tracker.network),
+         tracker.url)).fetchone()
     conn.commit()
     conn.close()
 
