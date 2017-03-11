@@ -4,7 +4,7 @@ from logging import FileHandler
 
 from bottle import Bottle, run, static_file, request, response, abort, mako_template as template
 from requestlogger import WSGILogger, ApacheFormatter
-
+import pprint
 import trackon
 import trackerlist_project
 
@@ -22,7 +22,7 @@ logger.info('Server started')
 
 @app.route('/')
 def main():
-    trackers_list = trackon.get_main_from_db()
+    trackers_list = trackon.get_all_data_from_db()
     return template('tpl/main.mako', trackers=trackers_list)
 
 
@@ -116,6 +116,14 @@ def static(path):
 def favicon():
     return static_file('favicon.ico', root='static/imgs')
 
+
+@app.hook('after_request')
+def check_host_http_header():
+    print(request.headers['host'])
+    accepted_hosts = {'localhost:8080', 'localhost', '127.0.0.1:8080', '127.0.0.1'}
+    if request.headers['host'] not in accepted_hosts:
+        abort(404, "This site can only be found in localhost:8080")
+
 update_status = threading.Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True
 update_status.start()
@@ -128,4 +136,4 @@ handlers = [FileHandler('access.log'), ]
 app = WSGILogger(app, handlers, ApacheFormatter())
 
 if __name__ == '__main__':
-    run(app, host='0.0.0.0', port=8080, server='waitress')
+    run(app, host='localhost', port=8080, server='waitress')

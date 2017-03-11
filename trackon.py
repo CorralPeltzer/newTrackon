@@ -106,26 +106,6 @@ def process_submitted_deque():
     processing_trackers = False
 
 
-def get_main_from_db():
-    html_list = get_all_data_from_db()
-#    for tracker in html_list:
-#        string = ''
-#        for ip in tracker.ip:
-#            string += ip + '<br/>'
- #       tracker.ip = string
-#
-#        string = ''
- #       for country in tracker.country:
-  #          string += country + '<br/>'
-   #     tracker.country = string
-#
- #       string = ''
-#        for network in tracker.network:
-#            string += network + '<br/>'
-#        tracker.network = string
-    return html_list
-
-
 def process_new_tracker(tracker_candidate):
     print('---------------------------------------------------------------')
     print('New tracker: ' + tracker_candidate.url)
