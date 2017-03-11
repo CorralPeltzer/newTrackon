@@ -2,9 +2,8 @@ import logging
 import threading
 from logging import FileHandler
 
-from bottle import Bottle, run, static_file, request, response, abort, mako_template as template
+from bottle import Bottle, run, static_file, request, response, abort, redirect, mako_template as template
 from requestlogger import WSGILogger, ApacheFormatter
-import pprint
 import trackon
 import trackerlist_project
 
@@ -122,7 +121,7 @@ def check_host_http_header():
     print(request.headers['host'])
     accepted_hosts = {'localhost:8080', 'localhost', '127.0.0.1:8080', '127.0.0.1'}
     if request.headers['host'] not in accepted_hosts:
-        abort(404, "This site can only be found in localhost:8080")
+        redirect('localhost:8080')
 
 update_status = threading.Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True
@@ -136,4 +135,4 @@ handlers = [FileHandler('access.log'), ]
 app = WSGILogger(app, handlers, ApacheFormatter())
 
 if __name__ == '__main__':
-    run(app, host='localhost', port=8080, server='waitress')
+    run(app, host='0.0.0.0', port=8080, server='waitress')
