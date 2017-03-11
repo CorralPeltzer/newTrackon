@@ -3,12 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>${self.title()}</title>
-    <link rel="stylesheet" href="/static/fluid960gs/all.css" media="screen">
     <link rel='shortcut icon' type='image/x-icon' href='/static/imgs/favicon.ico' />
-    <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
-    <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
-    <!--[if IE 7]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie.css" media="screen" /><![endif]-->
-    <link rel="stylesheet" href="/static/style.css" type="text/css"> ${self.extraheaders()}
+    <link rel="stylesheet" href="/static/css/base.min.css" type="text/css"> ${self.extraheaders()}
 </head>
 <body>
     <div class="container_12">
