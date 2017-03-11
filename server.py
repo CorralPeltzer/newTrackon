@@ -121,7 +121,7 @@ def check_host_http_header():
     print(request.headers['host'])
     accepted_hosts = {'localhost:8080', 'localhost', '127.0.0.1:8080', '127.0.0.1'}
     if request.headers['host'] not in accepted_hosts:
-        redirect('localhost:8080')
+        redirect('http://localhost:8080/', 301)
 
 update_status = threading.Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True

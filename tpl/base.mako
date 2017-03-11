@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <title>${self.title()}</title>
@@ -9,20 +8,13 @@
     <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
     <!--[if IE 6]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie6.css" media="screen" /><![endif]-->
     <!--[if IE 7]><link rel="stylesheet" type="text/css" href="/static/fluid960gs/ie.css" media="screen" /><![endif]-->
-
     <link rel="stylesheet" href="/static/style.css" type="text/css"> ${self.extraheaders()}
-
 </head>
-
 <body>
-
     <div class="container_12">
-
         <div class="grid_12 headfoot">
             <h1 id="branding"><a href="/"><i><b>newTrackon</b></i></a></h1>
         </div>
-
-
         <div class="grid_12 headfoot">
             <ul class="nav main">
                 <li><a href="/">Home</a>
@@ -46,7 +38,6 @@
             </ul>
         </div>
 
-
         ${self.body()}
 
         <div class="grid_12 headfoot" id="site_info">
@@ -55,27 +46,10 @@
                 </p>
             </div>
         </div>
-
         <div class="clear"></div>
-
     </div>
-
-    <script type="text/javascript">
-        try {
-            var pageTracker = _gat._getTracker("UA-1220719-11");
-            pageTracker._trackPageview();
-
-            var pageTracker2 = _gat._getTracker("UA-1220719-12");
-            pageTracker2._trackPageview();
-        } catch (err) {}
-    </script>
-
-
 </body>
-
 </html>
-
-
 <%def name="title()">newTrackon: Tracking the trackers</%def>
 <%def name="extraheaders()">
 </%def>
