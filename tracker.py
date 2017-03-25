@@ -58,7 +58,7 @@ class Tracker:
         debug = {'url': self.url, 'ip': self.ip[0], 'time': strftime("%H:%M:%S UTC", gmtime(t1))}
         try:
             if urlparse(self.url).scheme == 'udp':
-                parsed, raw = scraper.announce_udp(self.url)
+                parsed, raw, ip = scraper.announce_udp(self.url)
                 self.interval = parsed['interval']
                 pretty_data = pp.pformat(parsed)
                 debug['info'] = "Hex response: " + raw + '<br>' + "Parsed: " + pretty_data
@@ -84,11 +84,11 @@ class Tracker:
         trackon.update_in_db(self)
 
     def validate_url(self):
-        UCHARS = re.compile('^[a-zA-Z0-9_\-\./:]+$')
+        uchars = re.compile('^[a-zA-Z0-9_\-\./:]+$')
         url = urlparse(self.url)
         if url.scheme not in ['udp', 'http', 'https']:
             raise RuntimeError("Tracker URLs have to start with 'udp://', 'http://' or 'https://'")
-        if UCHARS.match(url.netloc) and UCHARS.match(url.path):
+        if uchars.match(url.netloc) and uchars.match(url.path):
             url = url._replace(path='/announce')
             self.url = url.geturl()
         else:
@@ -107,17 +107,15 @@ class Tracker:
             ipv4 = resolver.query(self.host, 'A')
             for rdata in ipv4:
                 self.ip.append(str(rdata))
-                print(rdata)
         except Exception:
             pass
         try:
             ipv6 = resolver.query(self.host, 'AAAA')
             for rdata in ipv6:
                 self.ip.append(str(rdata))
-                print(rdata)
         except Exception:
             pass
-        if not self.ip: # If DNS query fails, just preserve the previous IPs. Considering showing "Not found" instead.
+        if not self.ip:  # If DNS query fails, just preserve the previous IPs. Considering showing "Not found" instead.
             self.ip = previous_ips
 
     def update_ipapi_data(self):
@@ -126,12 +124,13 @@ class Tracker:
         self.country_code = []
         for ip in self.ip:
             ip_data = self.ip_api(ip).splitlines()
-            self.country.append(ip_data[0])
-            self.country_code.append(ip_data[1].lower())
-            self.network.append(ip_data[2])
+            if len(ip_data) == 3:
+                self.country.append(ip_data[0])
+                self.country_code.append(ip_data[1].lower())
+                self.network.append(ip_data[2])
 
     def scrape(self):
-        return scraper.scrape(self.url)
+        return scraper.scrape_submitted(self.url)
 
     def is_up(self):
         self.status = 1
@@ -146,7 +145,7 @@ class Tracker:
         try:
             response = urllib.request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,org')
             tracker_info = response.read().decode('utf-8')
-            sleep(0.9)  # This wait is to respect the queries per minute limit of IP-API and not get banned
+            sleep(0.5)  # This wait is to respect the queries per minute limit of IP-API and not get banned
         except IOError:
             tracker_info = 'Error'
         return tracker_info

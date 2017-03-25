@@ -1,7 +1,6 @@
 import logging
 import threading
 from logging import FileHandler
-
 from bottle import Bottle, run, static_file, request, response, abort, redirect, mako_template as template
 from requestlogger import WSGILogger, ApacheFormatter
 import trackon
@@ -36,10 +35,7 @@ def new_tracker():
 
 @app.route('/submitted')
 def submitted():
-    size, submitted150 = trackon.get_150_submitted()
-    if size == 0:
-        submitted150 = ''
-    return template('tpl/submitted.mako', submitted=submitted150, size=size)
+    return template('tpl/submitted.mako', data=trackon.submitted_data, size=len(trackon.submitted_trackers))
 
 
 @app.route('/faq')
@@ -118,7 +114,6 @@ def favicon():
 
 @app.hook('after_request')
 def check_host_http_header():
-    print(request.headers['host'])
     accepted_hosts = {'localhost:8080', 'localhost', '127.0.0.1:8080', '127.0.0.1'}
     if request.headers['host'] not in accepted_hosts:
         redirect('http://localhost:8080/', 301)

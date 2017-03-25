@@ -12,6 +12,7 @@ from tracker import Tracker
 max_input_length = 20000
 submitted_trackers = deque(maxlen=10000)
 raw_data = deque(maxlen=300)
+submitted_data = deque(maxlen=300)
 deque_lock = Lock()
 list_lock = Lock()
 trackers_list = []
@@ -107,9 +108,7 @@ def process_submitted_deque():
 
 
 def process_new_tracker(tracker_candidate):
-    print('---------------------------------------------------------------')
     print('New tracker: ' + tracker_candidate.url)
-
     all_ips_tracked = get_all_ips_tracked()
     exists_ip = set(tracker_candidate.ip).intersection(all_ips_tracked)
     if exists_ip:
@@ -129,18 +128,19 @@ def process_new_tracker(tracker_candidate):
         return
     if 300 > tracker_candidate.interval or tracker_candidate.interval > 10800:  # trackers with an update interval
         # less than 5' and more than 3h
+        debug = {'url': tracker_candidate.url, 'time': int(time()), 'status': 0,
+                 'info': 'Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours'}
+        submitted_data.appendleft(debug)
         return
     tracker_candidate.update_ipapi_data()
     tracker_candidate.is_up()
     tracker_candidate.update_uptime()
-    print('Adding tracker to list')
     insert_in_db(tracker_candidate)
     logger.info('TRACKER ADDED TO LIST: ' + tracker_candidate.url)
 
 
 def update_outdated_trackers():
     while True:
-        print("UPDATE STATUS LOOP")
         now = int(time())
         trackers_outdated = []
         for tracker in get_all_data_from_db():
@@ -148,19 +148,7 @@ def update_outdated_trackers():
                 trackers_outdated.append(tracker)
         for tracker in trackers_outdated:
             tracker.update_status()
-        print("Finished updating tracker status")
         sleep(10)
-
-
-def get_150_submitted():
-    string = ''
-    if submitted_trackers:
-        with deque_lock:
-            for tracker in islice(submitted_trackers, 150):
-                string += tracker.url + '<br>'
-        return len(submitted_trackers), string
-    else:
-        return 0, "None"
 
 
 def insert_in_db(tracker):

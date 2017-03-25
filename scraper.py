@@ -1,71 +1,80 @@
-import logging
 import socket
 import struct
-from time import time
 from urllib.parse import urlparse, quote_from_bytes
+from time import time
 from os import urandom
 import random
 import string
+import trackon
+import requests
+import bencode
 import pprint
 
-import requests
 
-import bencode
-
-logger = logging.getLogger('trackon_logger')
-
-
-def scrape(t):
-    """
-    Returns the update interval, time taken for the announcement and the first URL version correctly contacted
-
-    Args:
-        tracker (str): The announce url for a tracker
-    """
-
-    tnetloc = urlparse(t).netloc
+def scrape_submitted(t):
+    pp = pprint.PrettyPrinter(width=999999, compact=True)
+    parsed = urlparse(t)
+    tnetloc = parsed.netloc
+    try:
+        failover_ip = socket.gethostbyname(parsed.hostname)
+    except socket.error:
+        failover_ip = ''
     # UDP scrape
-    if urlparse(t).port:  # If the tracker netloc has a port, try with udp
+    if parsed.port:  # If the tracker netloc has a port, try with udp
         udp_version = 'udp://' + tnetloc + '/announce'
-        logger.info('Request ' + udp_version)
+        t1 = time()
+        debug_udp = {'url': udp_version, 'time': int(t1)}
         try:
-            t1 = time()
-            response, raw = announce_udp(udp_version)
+            parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
-            return latency, response['interval'], udp_version
+            pretty_data = pp.pformat(parsed)
+            debug_udp.update({'info': "Hex response: " + raw + '<br>' + "Parsed: " + pretty_data, 'status': 1})
+            trackon.submitted_data.appendleft(debug_udp)
+            return latency, parsed['interval'], udp_version
         except RuntimeError as e:
-            logger.info("Error: " + str(e))
-            print("UDP not working, trying HTTPS")
+            debug_udp.update({'info': str(e), 'status': 0})
+            if debug_udp['info'] != "Can't resolve IP":
+                debug_udp['ip'] = failover_ip
+            trackon.submitted_data.appendleft(debug_udp)
+        print("UDP not working, trying HTTPS")
 
     # HTTPS scrape
     if not urlparse(t).port:
         https_version = 'https://' + tnetloc + ':443/announce'
     else:
         https_version = 'https://' + tnetloc + '/announce'
+    t1 = time()
+    debug_https = {'url': https_version, 'time': int(t1), 'ip': failover_ip}
     try:
-        logger.info('Request ' + https_version)
-        t1 = time()
         response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
+        pretty_data = pp.pformat(response)
+        debug_https.update({'info': pretty_data, 'status': 1})
+        trackon.submitted_data.appendleft(debug_https)
         return latency, response['interval'], https_version
     except RuntimeError as e:
-        logger.info("Error: " + str(e))
+        debug_https.update({'info': str(e), 'status': 0})
         "HTTPS not working, trying HTTP"
+        trackon.submitted_data.appendleft(debug_https)
 
     # HTTP scrape
     if not urlparse(t).port:
         http_version = 'http://' + tnetloc + ':80/announce'
     else:
         http_version = 'http://' + tnetloc + '/announce'
+    t1 = time()
+    debug_http = {'url': http_version, 'time': int(t1), 'ip': failover_ip}
     try:
-        logger.info('Request ' + http_version)
-        t1 = time()
         response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
+        pretty_data = pp.pformat(response)
+        debug_http.update({'info': pretty_data, 'status': 1})
+        trackon.submitted_data.appendleft(debug_http)
         return latency, response['interval'], http_version
     except RuntimeError as e:
-        logger.info("Error: " + str(e))
-        raise RuntimeError
+        debug_http.update({'info': str(e), 'status': 0})
+        trackon.submitted_data.appendleft(debug_http)
+    raise RuntimeError
 
 
 def announce_http(tracker):
@@ -98,11 +107,9 @@ def announce_http(tracker):
             raise RuntimeError("Can't bdecode the tracker response")
 
     if 'failure reason' in tracker_response:
-        raise RuntimeError("Tracker failure reason: \"%s\"." % (tracker_response['failure reason']))
+        raise RuntimeError("Tracker failure reason: \"%s\"" % (tracker_response['failure reason']))
     elif 'peers' not in tracker_response:
         raise RuntimeError("Invalid response, 'peers' field is missing")
-    # elif 'peers' == "":
-    #    raise RuntimeError("Invalid response, 'peers' field is empty")     Not sure about the standard
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     pp.pprint(tracker_response)
     # if type(tracker_response['peers']) == str:
@@ -140,9 +147,10 @@ def announce_udp(udp_version):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(10)
     try:
-        conn = (socket.gethostbyname(parsed_tracker.hostname), parsed_tracker.port)
+        ip = socket.gethostbyname(parsed_tracker.hostname)
+        conn = (ip, parsed_tracker.port)
     except socket.error:
-        raise RuntimeError("Can't resolve DNS")
+        raise RuntimeError("Can't resolve IP")
 
     # Get connection ID
     req, transaction_id = udp_create_connection_request()
@@ -160,7 +168,7 @@ def announce_udp(udp_version):
         buf = sock.recvfrom(2048)[0]
     except socket.timeout:
         raise RuntimeError("UDP timeout")
-    return udp_parse_announce_response(buf, transaction_id)
+    return udp_parse_announce_response(buf, transaction_id) + (ip,)
 
 
 def udp_create_connection_request():

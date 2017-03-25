@@ -39,6 +39,6 @@
 % endif
 
 </table>
-        </div>
+</div>
 
 <%def name="title()">Raw tracker data</%def>
