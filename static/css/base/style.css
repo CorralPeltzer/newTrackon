@@ -63,7 +63,7 @@ dd {
     color: #333;
 }
 #branding {
-    background-color: #A2CE68!important;
+    background-color: #66bb6a!important;
 }
 /* XXX .headfoot is what seems to be causing trouble hidding parts of the page in Chrome, no idea why */
 
@@ -76,10 +76,10 @@ dd {
 /* Status classes */
 
 td.up {
-    background-color: #CCFF9F!important;
+    background-color: #98ee99!important;
 }
 td.down {
-    background-color: #FF9F9F!important;
+    background-color: #ff867c!important;
 }
 td {
     vertical-align: middle
