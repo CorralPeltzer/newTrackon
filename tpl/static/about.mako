@@ -17,7 +17,7 @@
 
 <p>Here is a list of some of the people that have helped make newTrackon possible:
 <ul>
-<li>Uriel †, the creator of Trackon.
+    <li><a href="http://uriel.cat-v.org/">Uriel †</a>, the creator of Trackon.
 <li><a href="https://github.com/erindru">Erin Drummond</a> for his python HTTP and UDP scraper.
 <li>Medecau in #bittorrent for ideas, feedback and beta-testing.
 <li>Moraes and nickjohnson in #appengine for excellent technical help while dealing with App Engine.

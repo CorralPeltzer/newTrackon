@@ -28,7 +28,7 @@ def scrape_submitted(t):
             parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
             pretty_data = pp.pformat(parsed)
-            debug_udp.update({'info': "Hex response: " + raw + '<br>' + "Parsed: " + pretty_data, 'status': 1})
+            debug_udp.update({'info': "Hex response: " + raw + '<br>' + "Parsed: " + pretty_data, 'status': 1, 'ip': ip})
             trackon.submitted_data.appendleft(debug_udp)
             return latency, parsed['interval'], udp_version
         except RuntimeError as e:

@@ -3,8 +3,14 @@
 <head>
     <meta charset="utf-8">
     <title>${self.title()}</title>
-    <link rel='shortcut icon' type='image/x-icon' href='/static/imgs/favicon.ico' />
-    <link rel="stylesheet" href="/static/css/base.min.css" type="text/css"> ${self.extraheaders()}
+    <link rel='shortcut icon' type='image/x-icon' href='/static/imgs/favicon.ico'/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-16x16.png" sizes="16x16">
+    <link rel="manifest" href="/static/imgs/favicons/manifest.json">
+    <link rel="mask-icon" href="/static/imgs/favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="/static/css/base.min.css" type="text/css"/>
 </head>
 <body>
     <div class="container_12">
