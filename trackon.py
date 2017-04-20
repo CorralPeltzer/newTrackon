@@ -1,5 +1,7 @@
+import os.path as path
 import logging
 import sqlite3
+import pickle
 from collections import deque
 from ipaddress import ip_address
 from itertools import islice
@@ -11,8 +13,17 @@ from tracker import Tracker
 
 max_input_length = 20000
 submitted_trackers = deque(maxlen=10000)
-raw_data = deque(maxlen=300)
-submitted_data = deque(maxlen=300)
+
+if path.exists('raw_data.pickle'):
+    raw_data = pickle.load(open('raw_data.pickle', 'rb'))
+else:
+    raw_data = deque(maxlen=300)
+if path.exists('submitted_data.pickle'):
+    submitted_data = pickle.load(open('submitted_data.pickle', 'rb'))
+else:
+    submitted_data = deque(maxlen=300)
+
+
 deque_lock = Lock()
 list_lock = Lock()
 trackers_list = []
@@ -58,6 +69,7 @@ def enqueue_new_trackers(input_string):
         return
     new_trackers_list = input_string.split()
     for url in new_trackers_list:
+        print("SUBMITTED " + url)
         add_one_tracker_to_submitted_deque(url)
     if processing_trackers is False:
         process_submitted_deque()
@@ -103,7 +115,8 @@ def process_submitted_deque():
             tracker = submitted_trackers.popleft()
         print("Size of deque: ", len(submitted_trackers))
         process_new_tracker(tracker)
-    print("Finished processing  new trackers")
+        pickle.dump(submitted_data, open('submitted_data.pickle', 'wb'))
+    print("Finished processing new trackers")
     processing_trackers = False
 
 
@@ -147,7 +160,9 @@ def update_outdated_trackers():
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)
         for tracker in trackers_outdated:
+            print("GONNA UPDATE " + tracker.url)
             tracker.update_status()
+            pickle.dump(raw_data, open('raw_data.pickle', 'wb'))
         sleep(10)
 
 

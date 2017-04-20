@@ -51,7 +51,6 @@ class Tracker:
             logger.info('Hostname not found')
             return
         self.update_ipapi_data()
-        print("TRACKER TO CHECK: " + self.url)
         self.last_checked = int(time())
         pp = pprint.PrettyPrinter(width=999999, compact=True)
         t1 = time()
