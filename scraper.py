@@ -107,7 +107,7 @@ def announce_http(tracker):
             raise RuntimeError("Can't bdecode the tracker response")
 
     if 'failure reason' in tracker_response:
-        raise RuntimeError("Tracker failure reason: \"%s\"" % (tracker_response['failure reason']))
+        raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
     elif 'peers' not in tracker_response:
         raise RuntimeError("Invalid response, 'peers' field is missing")
     pp = pprint.PrettyPrinter(width=999999, compact=True)

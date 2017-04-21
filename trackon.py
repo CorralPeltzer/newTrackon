@@ -141,8 +141,10 @@ def process_new_tracker(tracker_candidate):
         return
     if 300 > tracker_candidate.interval or tracker_candidate.interval > 10800:  # trackers with an update interval
         # less than 5' and more than 3h
-        debug = {'url': tracker_candidate.url, 'time': int(time()), 'status': 0,
-                 'info': 'Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours'}
+        debug = submitted_data.popleft()
+        info = debug['info']
+        debug.update({'status': 0,
+                 'info': info + '<br>Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours'})
         submitted_data.appendleft(debug)
         return
     tracker_candidate.update_ipapi_data()
