@@ -81,6 +81,9 @@ td.up {
 td.down {
     background-color: #ff867c!important;
 }
+td.rejected {
+    background-color: #ffcccb!important;
+}
 td {
     vertical-align: middle
 }

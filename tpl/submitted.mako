@@ -31,7 +31,7 @@
         % if response['status'] == 1:
             <td class="up"><b>Accepted</b></td>
         % else:
-            <td><b>Rejected</b></td>
+            <td class="rejected"><b>Rejected</b></td>
         % endif
         <td>${response['info']}</td>
     </tr>

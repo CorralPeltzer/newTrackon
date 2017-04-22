@@ -60,13 +60,13 @@ class Tracker:
                 parsed, raw, ip = scraper.announce_udp(self.url)
                 self.interval = parsed['interval']
                 pretty_data = pp.pformat(parsed)
-                debug['info'] = "Hex response: " + raw + '<br>' + "Parsed: " + pretty_data
+                debug['info'] = pretty_data.replace(scraper.my_ip, 'redacted')
                 trackon.raw_data.appendleft(debug)
             else:
                 response = scraper.announce_http(self.url)
                 self.interval = response['interval']
                 pretty_data = pp.pformat(response)
-                debug['info'] = pretty_data
+                debug['info'] = pretty_data.replace(scraper.my_ip, 'redacted')
                 trackon.raw_data.appendleft(debug)
             self.latency = int((time() - t1) * 1000)
             self.is_up()

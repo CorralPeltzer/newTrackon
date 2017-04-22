@@ -10,6 +10,7 @@ import requests
 import bencode
 import pprint
 
+my_ip = requests.get('https://api.ipify.org').text
 
 def scrape_submitted(t):
     pp = pprint.PrettyPrinter(width=999999, compact=True)
@@ -28,7 +29,7 @@ def scrape_submitted(t):
             parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
             pretty_data = pp.pformat(parsed)
-            debug_udp.update({'info': "Hex response: " + raw + '<br>' + "Parsed: " + pretty_data, 'status': 1, 'ip': ip})
+            debug_udp.update({'info': pretty_data.replace(my_ip, 'redacted'), 'status': 1, 'ip': ip})
             trackon.submitted_data.appendleft(debug_udp)
             return latency, parsed['interval'], udp_version
         except RuntimeError as e:
@@ -49,7 +50,7 @@ def scrape_submitted(t):
         response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
         pretty_data = pp.pformat(response)
-        debug_https.update({'info': pretty_data, 'status': 1})
+        debug_https.update({'info': pretty_data.replace(my_ip, 'redacted'), 'status': 1})
         trackon.submitted_data.appendleft(debug_https)
         return latency, response['interval'], https_version
     except RuntimeError as e:
@@ -68,7 +69,7 @@ def scrape_submitted(t):
         response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
         pretty_data = pp.pformat(response)
-        debug_http.update({'info': pretty_data, 'status': 1})
+        debug_http.update({'info': pretty_data.replace(my_ip, 'redacted'), 'status': 1})
         trackon.submitted_data.appendleft(debug_http)
         return latency, response['interval'], http_version
     except RuntimeError as e:
@@ -104,7 +105,7 @@ def announce_http(tracker):
         try:
             tracker_response = bencode.bdecode(response.text)
         except:
-            raise RuntimeError("Can't bdecode the tracker response")
+            raise RuntimeError("Can't bdecode the HTTP response")
 
     if 'failure reason' in tracker_response:
         raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
@@ -154,7 +155,10 @@ def announce_udp(udp_version):
 
     # Get connection ID
     req, transaction_id = udp_create_connection_request()
-    sock.sendto(req, conn)
+    try:
+        sock.sendto(req, conn)
+    except OSError:
+        raise RuntimeError("Denied by the OS, probably a strange IP")
     try:
         buf = sock.recvfrom(2048)[0]
     except socket.timeout:

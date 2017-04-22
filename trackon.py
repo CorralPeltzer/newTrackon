@@ -4,11 +4,9 @@ import sqlite3
 import pickle
 from collections import deque
 from ipaddress import ip_address
-from itertools import islice
 from threading import Lock
 from time import time, sleep
 from urllib.parse import urlparse
-
 from tracker import Tracker
 
 max_input_length = 20000
@@ -22,7 +20,6 @@ if path.exists('submitted_data.pickle'):
     submitted_data = pickle.load(open('submitted_data.pickle', 'rb'))
 else:
     submitted_data = deque(maxlen=300)
-
 
 deque_lock = Lock()
 list_lock = Lock()
