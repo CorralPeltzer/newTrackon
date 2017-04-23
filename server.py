@@ -30,7 +30,7 @@ def new_tracker():
     check_all_trackers = threading.Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
-    return main()
+    return submitted()
 
 
 @app.route('/submitted')
@@ -102,14 +102,20 @@ def about():
     return template('tpl/static/about.mako')
 
 
-@app.route('/static/:path#.+#', name='static')
+@app.route('/static/<path:path>')  # matches any static file
 def static(path):
     return static_file(path, root='static')
 
 
-@app.route('/favicon.ico')
-def favicon():
-    return static_file('favicon.ico', root='static/imgs')
+@app.route('/<filename>.<filetype:re:(png|svg|ico)>')  # matches all favicons that should be in root
+def favicon(filename, filetype):
+    response.content_type = 'image/x-icon'
+    return static_file(filename + '.' + filetype, root='static/imgs')
+
+
+@app.route('/<filename>.<filetype:re:(xml|json)>')  # matches browserconfig and manifest that should be in root
+def app_things(filename, filetype):
+    return static_file(filename + '.' + filetype, root='static')
 
 
 @app.hook('after_request')
