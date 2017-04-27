@@ -1,6 +1,6 @@
-requests
-bottle
-waitress
-mako
-wsgi-request-logger
-dnspython
+bottle==0.12.13
+dnspython==1.15.0
+Mako==1.0.6
+requests==2.13.0
+waitress==1.0.2
+wsgi-request-logger==0.4.6
