@@ -1,11 +1,11 @@
 <%inherit file="base.mako"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"/>
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.8.0/css/flag-icon.min.css">
-<script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.13/sorting/natural.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.13/sorting/date-eu.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css" integrity="sha256-2W/3LtLvI/CvYx3b+FekV7aKSJqyjUJcMibC8Pwe1Ug=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.8.0/css/flag-icon.min.css" integrity="sha256-EQjZwW4ljrt9dsonbyX+si6kbxgkVde47Ty9FQehnUg=" crossorigin="anonymous" />
+<script src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js" integrity="sha256-KyEwc9kHefOLZrGKuj1mUHGp400HdjT6+0rQpHoIovs=" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/natural.js" integrity="sha256-N3f4zkaAHf18uJNlRncQ+PPQnwPcICM82tJ/DQkDjYY=" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/date-eu.js" integrity="sha256-lPEWTPmjv6eC5rGj5/11u7fH8NgPr72fDR7J9dN7Wug=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js" integrity="sha256-1hjUhpc44NwiNg8OwMu2QzJXhD8kcj+sJA3aCQZoUjg=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js" integrity="sha256-8r65KJgULBDiZhwDydfWrEkx3yyV/grGsGzaekobngI=" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
 $(document).ready( function () {

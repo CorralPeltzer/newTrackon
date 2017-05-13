@@ -13,9 +13,10 @@
   <meta name="theme-color" content="#ffffff">
   <link rel="stylesheet" href="/static/css/theme.min.css" />
   <link rel="stylesheet" href="/static/css/custom.min.css" />
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -31,16 +32,16 @@
       </div>
       <div class="navbar-collapse collapse" id="navbar-main">
         <ul class="nav navbar-nav">
-          <li><a href="/">Home</a></li>
-          <li><a href="/list">List</a></li>
-          <li><a href="/submitted">Submitted</a></li>
-          <li><a href="/faq">FAQ</a></li>
-          <li><a href="/api">API</a></li>
-          <li><a href="/raw">Raw data</a></li>
-          <li><a href="https://github.com/CorralPeltzer/newTrackon">Source</a></li>
+          <li><a href="/"><i class="fa fa-home" aria-hidden="true"></i> Home</a></li>
+          <li><a href="/list"><i class="fa fa-list" aria-hidden="true"></i> List</a></li>
+          <li><a href="/submitted"><i class="fa fa-plus" aria-hidden="true"></i> Submitted</a></li>
+          <li><a href="/faq"><i class="fa fa-question-circle" aria-hidden="true"></i> FAQ</a></li>
+          <li><a href="/api"><i class="fa fa-code" aria-hidden="true"></i> API</a></li>
+          <li><a href="/raw"><i class="fa fa-terminal" aria-hidden="true"></i> Raw data</a></li>
+          <li><a href="https://github.com/CorralPeltzer/newTrackon"><i class="fa fa-github" aria-hidden="true"></i> Source</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="/about">about</a></li>
+          <li><a href="/about"><i class="fa fa-user" aria-hidden="true"></i> About</a></li>
         </ul>
       </div>
     </div>
