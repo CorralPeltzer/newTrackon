@@ -232,7 +232,7 @@ def udp_parse_announce_response(buf, sent_transaction_id):
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError("Transaction ID doesnt match in announce response! Expected %s, got %s"
                            % (sent_transaction_id, res_transaction_id))
-    print("Raw response: " + buf.hex())
+    #print("Raw response: " + buf.hex())
     if action == 0x1:
         ret = dict()
         offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8

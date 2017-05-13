@@ -1,8 +1,8 @@
 <%! from time import time %>
 <%inherit file="base.mako"/>
 
-<div class=grid_12>
-<h2 id=page-heading>Raw data</h2>
+<div class="container">
+<h2>Raw data</h2>
 
 <p>This is the information about the response of the last 300 trackers contacted, for research and debugging purposes.
     These include only trackers already in the list. </p>
@@ -11,8 +11,9 @@
 </div>
 
 % if data:
-<div class=grid_12>
-<table cellspacing=0 class=sortable>
+<div class="container-fluid">
+  <div class="table-responsive">
+    <table class="sortable table table-responsive table-striped table-bordered">
     <thead>
     <tr>
         <th>Time</th>
@@ -35,10 +36,8 @@
         <td>${response['info']}</td>
     </tr>
     % endfor
-
-% endif
-
 </table>
 </div>
-
+</div>
+% endif
 <%def name="title()">Raw tracker data</%def>

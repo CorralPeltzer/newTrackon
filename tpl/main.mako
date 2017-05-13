@@ -1,11 +1,12 @@
 <%inherit file="base.mako"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"/>
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.8.0/css/flag-icon.min.css">
-<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jq-2.2.4/dt-1.10.13/r-2.1.0/datatables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.13/sorting/natural.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.13/sorting/date-eu.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js"></script>
+
 <script type="text/javascript">
 $(document).ready( function () {
     $('#trackon_table').DataTable( {
@@ -16,31 +17,32 @@ $(document).ready( function () {
         { "type": "date-eu", targets: 9 }
     ]
     } );
-    document.getElementById('trackon_table').style.visibility = 'visible';
 } );
 </script>
-
-<div class="grid_12">
-
-<h2 id=page-heading>Tracking the Trackers</h2>
+<div class="container">
+<h1>Tracking the Trackers</h1>
 <p>newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
-    <p><b>To download a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a> section.</b>
-</div>
+<p><b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a> section.</b>
 
-<div class="grid_12">
 <hr>
-<p><a name="new"></a>
+
 <form method="POST" action="/">
-    <input type="text" name="tracker-address" value="" size=64>
-    <input type="submit" value="Add Tracker">
-</form></p>
-<p>You can submit multiple trackers separated by whitespaces. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
- or check the <a href="/submitted">Submitted</a> section.</p>
+    <div class="form-group">
+      <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
+      <span class="help-block">You can submit multiple trackers separated by whitespaces, newline, etc. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
+       or check the <a href="/submitted">Submitted</a> section.</span>
+    </div>
+    <div class="form-group">
+      <button type="submit" class="btn btn-primary" onclick="window.location='http://www.google.com';">Submit</button>
+    </div>
+</form>
+
+
+
 
 </div>
-
-<div class="grid_12">
-<table id="trackon_table" class="display responsive">
+<div class="container-fluid table-responsive">
+<table id="trackon_table" class="table display responsive table-striped table-bordered table-hover">
     <thead><tr>
       <th>Tracker URL</th>
       <th class="sorttable_numeric">Uptime *</th>
@@ -101,5 +103,4 @@ $(document).ready( function () {
 </noscript>
 <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
-
 <%def name="extraheaders()"></%def>

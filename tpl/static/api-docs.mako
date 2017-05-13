@@ -1,13 +1,9 @@
 <%inherit file="../base.mako"/>
-<div class=grid_12>
-
-<h2 id="page-heading">newTrackon Web API Description</h2>
-
-
-<h3>Read API</h3>
-
-<p>This set of APIs allows you retrive informatin about known trackers.</p>
-<dl>
+<div class="container">
+  <h2>HTTP API documentation</h2>
+  <h3>Read API</h3>
+  <p>This set of APIs allows you retrive informatin about known trackers.</p>
+  <dl>
     <dt>GET <a href="/api/stable">https://newtrackon.com/api/stable</a></dt>
     <dd>Returns a two line delimited list announce URLs of trackers that have an uptime of equal or more than 95%.</dd>
 
@@ -25,13 +21,13 @@
 
     <dt>GET <a href="/api/http">https://newtrackon.com/api/http</a></dt>
     <dd>Returns a two line delimited list announce URLs of stable and HTTP/HTTPS trackers.</dd>
-</dl>
-
-<h3>Write API</h3>
-<dl>
-    <dt>POST https://newtrackon.com/</dt>
-    <dd>Submits a new tracker to the list that will be checked and added if alive.</dd>
-</dl>
-</div>
-
-<%def name="title()">newTrackon's Web API documentation</%def>
+  </dl>
+  <h3>Write API</h3>
+  <dl>
+    <dt>POST https://newtrackon.com/api/add</dt>
+    <dd>Submits new trackers to the list that will be checked and added if alive.</dd>
+    <dd>Body: "application/x-www-form-urlencoded" Content Type, with an URL encoded body with the only key as "new_trackers" and its value the trackers separated by any whitespace character.</dd>
+    <dd>Response: 204 HTTP empty response.</dd>
+    </dl>
+  </div>
+  <%def name="title()">newTrackon's Web API documentation</%def>

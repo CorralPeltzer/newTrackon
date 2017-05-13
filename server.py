@@ -25,12 +25,22 @@ def main():
 
 
 @app.route('/', method='POST')
-def new_tracker():
-    new_ts = request.forms.get('tracker-address')
+def new_trackers():
+    new_ts = request.forms.get('new_trackers')
     check_all_trackers = threading.Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
-    return submitted()
+    return main()
+
+
+@app.route('/api/add', method='POST')
+def new_trackers_api():
+    new_ts = request.forms.get('new_trackers')
+    check_all_trackers = threading.Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
+    check_all_trackers.daemon = True
+    check_all_trackers.start()
+    response.status = 204
+    return response
 
 
 @app.route('/submitted')

@@ -1,7 +1,7 @@
 <%inherit file="../base.mako"/>
 <%def name="title()">newTrackon Frequently, Infrequently and Randomly Asked Questions</%def>
-<div class="grid_12">
-<h2 id="page-heading">newTrackon FAQ</h2>
+<div class="container">
+<h2>newTrackon FAQ</h2>
 
 <dl>
     <dt>I am trying to submit new trackers to the list but they are not added</dt>
@@ -9,7 +9,7 @@
     Second, check that the tracker is currently working with your BitTorrent client, only trackers working when submitted are added to the list.<br>
     If you have checked everything and really think there is an error with newTrackon, please contact me in the 'about' section.</dd>
 
-    <dt>I am the maintainer of a tracker and I want to change the URL in the list.</dt>
+    <dt>I am the maintainer of a tracker and I want to change/delete the URL in the list.</dt>
     <dd>Contact me as stated in 'about' section.</dd>
 
     <dt>How do I add a tracker to my torrents?</dt>
@@ -21,12 +21,8 @@
     <dt>Does newTrackon respect the trackers update interval?</dt>
     <dd>Yes.</dd>
 
-    <dt>What is the picture in the about page?</dt>
-    <dd>It is <i>Trago the dragon</i>, the mascot of newTrackon. It was originally
-    part of "<i>The Nine Dragons</i>" handscroll (九龍圖卷) by Chen Rong (陳容), a painter of the Southern Song Dynasty during the first half of the 13th century in China. It is dated to 1244. Or anyway this is what Wikipedia claims.</dd>
-
     <dt>How can I help newTrackon.com?</dt>
-    <dd>If you can program in Python, or know some CSS/javascript, I'm sure there are many improvements that could be made. And finally, if you find newTrackon useful, tell your friends about it, the more the merrier!
+    <dd>If you can program in Python, or know some Javascript, I'm sure there are many improvements that could be made. And finally, if you find newTrackon useful, tell your friends about it, the more the merrier!
     </dd>
 </dl>
 

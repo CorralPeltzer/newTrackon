@@ -1,0 +1,41 @@
+table {
+    white-space: nowrap !important;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  padding-top: 50px;
+  margin-bottom: 60px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  background-color: #ECF0F1;
+  line-height: 60px;
+}
+.footer p {
+  margin: 0;
+}
+th {
+    background-color: grey;
+    color: white;
+}
+td {
+    vertical-align: middle!important;
+}
+
+td.up {
+    background-color: #98ee99!important;
+}
+td.down {
+    background-color: #ff867c!important;
+}
+td.rejected {
+    background-color: #ffcccb!important;
+}
