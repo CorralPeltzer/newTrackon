@@ -32,16 +32,44 @@
       </div>
       <div class="navbar-collapse collapse" id="navbar-main">
         <ul class="nav navbar-nav">
+          % if active == 'main':
+          <li class="active"><a href="/"><i class="fa fa-home" aria-hidden="true"></i> Home</a></li>
+          % else:
           <li><a href="/"><i class="fa fa-home" aria-hidden="true"></i> Home</a></li>
+          % endif
+          % if active == 'list':
+          <li class="active"><a href="/list"><i class="fa fa-list" aria-hidden="true"></i> List</a></li>
+          % else:
           <li><a href="/list"><i class="fa fa-list" aria-hidden="true"></i> List</a></li>
+          % endif
+          % if active == 'submitted':
+          <li class="active"><a href="/submitted"><i class="fa fa-plus" aria-hidden="true"></i> Submitted</a></li>
+          % else:
           <li><a href="/submitted"><i class="fa fa-plus" aria-hidden="true"></i> Submitted</a></li>
+          % endif
+          % if active == 'faq':
+          <li class="active"><a href="/faq"><i class="fa fa-question-circle" aria-hidden="true"></i> FAQ</a></li>
+          % else:
           <li><a href="/faq"><i class="fa fa-question-circle" aria-hidden="true"></i> FAQ</a></li>
+          % endif
+          % if active == 'api':
+          <li class="active"><a href="/api"><i class="fa fa-code" aria-hidden="true"></i> API</a></li>
+          % else:
           <li><a href="/api"><i class="fa fa-code" aria-hidden="true"></i> API</a></li>
+          % endif
+          % if active == 'raw':
+          <li class="active"><a href="/raw"><i class="fa fa-terminal" aria-hidden="true"></i> Raw data</a></li>
+          % else:
           <li><a href="/raw"><i class="fa fa-terminal" aria-hidden="true"></i> Raw data</a></li>
+          % endif
           <li><a href="https://github.com/CorralPeltzer/newTrackon"><i class="fa fa-github" aria-hidden="true"></i> Source</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
+          % if active == 'about':
+          <li class="active"><a href="/about"><i class="fa fa-user" aria-hidden="true"></i> About</a></li>
+          % else:
           <li><a href="/about"><i class="fa fa-user" aria-hidden="true"></i> About</a></li>
+          % endif
         </ul>
       </div>
     </div>
@@ -49,17 +77,9 @@
 
   ${self.body()}
 
-
-<footer class="footer">
-      <p class="text-center">A <a href="https://twitter.com/CorralPeltzer">@CorralPeltzer</a> creation based on an <a href="http://uriel.cat-v.org/">Uriel</a> project</p>
+  <footer class="footer">
+    <p class="text-center">A <a href="https://twitter.com/CorralPeltzer">@CorralPeltzer</a> creation based on an <a href="http://uriel.cat-v.org/">Uriel</a> project</p>
   </div>
 </footer>
-
-
-
 </body>
-
 </html>
-<%def name="title()">newTrackon: Tracking the trackers</%def>
-<%def name="extraheaders()">
-</%def>

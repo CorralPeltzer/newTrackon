@@ -20,7 +20,7 @@ $(document).ready( function () {
 } );
 </script>
 <div class="container">
-<h1>Tracking the Trackers</h1>
+<h2 class="text-center">Tracking the Trackers</h2>
 <p>newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
 <p><b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a> section.</b>
 
@@ -33,7 +33,7 @@ $(document).ready( function () {
        or check the <a href="/submitted">Submitted</a> section.</span>
     </div>
     <div class="form-group">
-      <button type="submit" class="btn btn-primary" onclick="window.location='http://www.google.com';">Submit</button>
+      <button type="submit" class="btn btn-primary">Submit</button>
     </div>
 </form>
 
@@ -103,4 +103,4 @@ $(document).ready( function () {
 </noscript>
 <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the tracker, and can vary from 6 to 40 days.</p>
 </div>
-<%def name="extraheaders()"></%def>
+<%def name="title()">newtrackon, Tracking the Trackers</%def>

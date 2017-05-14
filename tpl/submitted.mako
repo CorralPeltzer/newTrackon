@@ -42,4 +42,4 @@
         </table>
       </div>
     </div>
-    <%def name="title()">Log of submitted trackers</%def>
+    <%def name="title()">Submitted Trackers - newTrackon</%def>

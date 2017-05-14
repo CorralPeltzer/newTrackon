@@ -1,5 +1,4 @@
 <%inherit file="../base.mako"/>
-<%def name="title()">newTrackon Frequently, Infrequently and Randomly Asked Questions</%def>
 <div class="container">
 <h2>newTrackon FAQ</h2>
 
@@ -25,5 +24,5 @@
     <dd>If you can program in Python, or know some Javascript, I'm sure there are many improvements that could be made. And finally, if you find newTrackon useful, tell your friends about it, the more the merrier!
     </dd>
 </dl>
-
 </div>
+<%def name="title()">FAQ - newTrackon</%def>

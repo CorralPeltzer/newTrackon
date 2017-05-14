@@ -18,10 +18,8 @@
         <li><a href="http://uriel.cat-v.org/">Uriel †</a>, the creator of Trackon.</li>
         <li><a href="https://github.com/erindru">Erin Drummond</a> for his python HTTP and UDP scraper.</li>
         <li>Medecau in #bittorrent for ideas, feedback and beta-testing.</li>
-        <li>20h and other folks in #cat-v for feedback and suggestions on how to improve the style and design of the site.</li>
-        <li>The #webdesign gang for much advice on how to improve the site's look and design.</li>
         <li>Grozdan, for many great suggestions, reporting many errors and adding many trackers.</li>
         <li>And many others!</li>
       </ul>
     </div>
-    <%def name="title()">About newTrackon.com</%def>
+    <%def name="title()">About - newTrackon</%def>

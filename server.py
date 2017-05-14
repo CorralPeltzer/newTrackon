@@ -21,7 +21,7 @@ logger.info('Server started')
 @app.route('/')
 def main():
     trackers_list = trackon.get_all_data_from_db()
-    return template('tpl/main.mako', trackers=trackers_list)
+    return template('tpl/main.mako', trackers=trackers_list, active='main')
 
 
 @app.route('/', method='POST')
@@ -46,28 +46,28 @@ def new_trackers_api():
 
 @app.route('/submitted')
 def submitted():
-    return template('tpl/submitted.mako', data=trackon.submitted_data, size=len(trackon.submitted_trackers))
+    return template('tpl/submitted.mako', data=trackon.submitted_data, size=len(trackon.submitted_trackers), active='submitted')
 
 
 @app.route('/faq')
 def faq():
-    return template('tpl/static/faq.mako')
+    return template('tpl/static/faq.mako', active='faq')
 
 
 @app.route('/list')
 def list_stable():
     stable_list, size = trackon.list_uptime(95)
-    return template('tpl/list.mako', stable=stable_list, size=size)
+    return template('tpl/list.mako', stable=stable_list, size=size, active='list')
 
 
 @app.route('/api')
 def api():
-    return template('tpl/static/api-docs.mako')
+    return template('tpl/static/api-docs.mako', active='api')
 
 
 @app.route('/raw')
 def raw():
-    return template('tpl/raw.mako', data=trackon.raw_data)
+    return template('tpl/raw.mako', data=trackon.raw_data, active='raw')
 
 
 @app.route('/api/<percentage:int>')
@@ -119,7 +119,7 @@ def api_http():
 
 @app.route('/about')
 def about():
-    return template('tpl/static/about.mako')
+    return template('tpl/static/about.mako', active='about')
 
 
 @app.route('/static/<path:path>')  # matches any static file

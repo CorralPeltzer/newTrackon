@@ -1,7 +1,12 @@
 table {
     white-space: nowrap !important;
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
 }
-
+.table-responsive {
+  width: auto !important;
+}
 html {
   position: relative;
   min-height: 100%;
@@ -9,6 +14,7 @@ html {
 body {
   padding-top: 50px;
   margin-bottom: 60px;
+  overflow-y: scroll;
 }
 .footer {
   position: absolute;
