@@ -17,6 +17,7 @@ $(document).ready( function () {
         { "type": "date-eu", targets: 9 }
     ]
     } );
+    $(".initially-hidden").css("visibility", "visible");
 } );
 </script>
 <div class="container">
@@ -42,7 +43,7 @@ $(document).ready( function () {
 
 </div>
 <div class="container-fluid table-responsive">
-<table id="trackon_table" class="table display responsive table-striped table-bordered table-hover">
+<table id="trackon_table" class="table display responsive table-striped table-bordered table-hover initially-hidden">
     <thead><tr>
       <th>Tracker URL</th>
       <th class="sorttable_numeric">Uptime *</th>

@@ -45,3 +45,6 @@ td.down {
 td.rejected {
     background-color: #ffcccb!important;
 }
+.initially-hidden {
+    visibility: hidden;
+}

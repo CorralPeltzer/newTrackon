@@ -14,7 +14,7 @@
     % if data:
     <div class="container-fluid">
       <div class="table-responsive">
-        <table class="sortable table table-responsive table-striped table-bordered">
+        <table class="sortable table table-responsive table-striped table-bordered initially-hidden">
           <thead>
             <tr>
               <th>Time</th>
@@ -42,4 +42,9 @@
         </table>
       </div>
     </div>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        $(".initially-hidden").css("visibility", "visible");
+    });
+    </script>
     <%def name="title()">Submitted Trackers - newTrackon</%def>
