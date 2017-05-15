@@ -84,9 +84,10 @@ def announce_http(tracker):
     pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
     request = "?info_hash=%s&peer_id=%s&port=6881&uploaded=0&downloaded=0&left=0&compact=1" % (thash, pid)
     url = tracker + request
+    headers = {'User-Agent': 'qBittorrent/3.3.12', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
     print(url)
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
     except requests.HTTPError:
