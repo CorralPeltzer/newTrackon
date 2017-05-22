@@ -37,4 +37,4 @@ ${stable}
       </pre>
     </div>
   </div>
-<%def name="title()">Stable Trackers - newTrackon</%def>
+<%def name="title()">Stable Trackers List - newTrackon</%def>

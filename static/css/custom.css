@@ -1,50 +1,68 @@
 table {
-    white-space: nowrap !important;
-    width: auto;
-    margin-left: auto;
-    margin-right: auto;
+  white-space: nowrap !important;
+  width: auto;
+  margin-left: auto;
+  margin-right: auto;
 }
+
 .table-responsive {
   width: auto !important;
 }
+
 html {
   position: relative;
   min-height: 100%;
 }
+
 body {
   padding-top: 50px;
   margin-bottom: 60px;
   overflow-y: scroll;
 }
+
 .footer {
   position: absolute;
   bottom: 0;
   width: 100%;
-  /* Set the fixed height of the footer here */
   height: 60px;
   background-color: #ECF0F1;
   line-height: 60px;
 }
+
 .footer p {
   margin: 0;
 }
+
 th {
-    background-color: grey;
-    color: white;
+  background-color: grey;
+  color: white;
 }
+
 td {
-    vertical-align: middle!important;
+  vertical-align: middle!important;
+  font-size: 15px;
 }
 
 td.up {
-    background-color: #98ee99!important;
+  background-color: #98ee99!important;
 }
+
 td.down {
-    background-color: #ff867c!important;
+  background-color: #ff867c!important;
 }
+
 td.rejected {
-    background-color: #ffcccb!important;
+  background-color: #ffcccb!important;
 }
+
 .initially-hidden {
-    visibility: hidden;
+  visibility: hidden;
+}
+
+.navbar-fixed-top {
+  font-size: 17px;
+}
+
+.right {
+  text-align: right;
 }

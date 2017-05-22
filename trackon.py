@@ -218,7 +218,7 @@ def list_uptime(uptime):
     return format_list(raw_list), length
 
 
-def list_udp():
+def api_udp():
     all_data = get_all_data_from_db()
     raw_list = []
     for t in all_data:
@@ -227,7 +227,7 @@ def list_udp():
     return format_list(raw_list)
 
 
-def list_http():
+def api_http():
     all_data = get_all_data_from_db()
     raw_list = []
     for t in all_data:

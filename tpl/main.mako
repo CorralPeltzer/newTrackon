@@ -6,8 +6,7 @@
 <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/date-eu.js" integrity="sha256-lPEWTPmjv6eC5rGj5/11u7fH8NgPr72fDR7J9dN7Wug=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js" integrity="sha256-1hjUhpc44NwiNg8OwMu2QzJXhD8kcj+sJA3aCQZoUjg=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js" integrity="sha256-8r65KJgULBDiZhwDydfWrEkx3yyV/grGsGzaekobngI=" crossorigin="anonymous"></script>
-
-<script type="text/javascript">
+<script>
 $(document).ready( function () {
     $('#trackon_table').DataTable( {
     "pageLength": 25,
@@ -92,7 +91,7 @@ $(document).ready( function () {
                         ${network}<br>
                     % endfor
                 </td>
-                <td>${t.latency} ms</td>
+                <td class="right">${t.latency} ms</td>
                 <td class="right">${t.added}</td>
             </tr>
         % endfor

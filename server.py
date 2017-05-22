@@ -72,10 +72,7 @@ def raw():
 
 @app.route('/api/<percentage:int>')
 def api_percentage(percentage):
-    response.set_header("Access-Control-Allow-Origin", "*")
-    response.content_type = 'text/plain'
     if 0 <= percentage <= 100:
-        response.content_type = 'text/plain'
         formatted_list, not_needed_length = trackon.list_uptime(percentage)
         return formatted_list
     else:
@@ -84,37 +81,32 @@ def api_percentage(percentage):
 
 @app.route('/api/stable')
 def api_stable():
-    response.set_header("Access-Control-Allow-Origin", "*")
-    response.content_type = 'text/plain'
+    add_api_headers()
     return api_percentage(95)
 
 
 @app.route('/api/all')
 def api_all():
-    response.set_header("Access-Control-Allow-Origin", "*")
-    response.content_type = 'text/plain'
+    add_api_headers()
     return api_percentage(0)
 
 
 @app.route('/api/live')
 def api_live():
-    response.set_header("Access-Control-Allow-Origin", "*")
-    response.content_type = 'text/plain'
+    add_api_headers()
     return trackon.list_live()
 
 
 @app.route('/api/udp')
 def api_udp():
-    response.set_header("Access-Control-Allow-Origin", "*")
-    response.content_type = 'text/plain'
-    return trackon.list_udp()
+    add_api_headers()
+    return trackon.api_udp()
 
 
 @app.route('/api/http')
 def api_http():
-    response.set_header("Access-Control-Allow-Origin", "*")
-    response.content_type = 'text/plain'
-    return trackon.list_http()
+    add_api_headers()
+    return trackon.api_http()
 
 
 @app.route('/about')
@@ -143,6 +135,11 @@ def check_host_http_header():
     accepted_hosts = {'localhost:8080', 'localhost', '127.0.0.1:8080', '127.0.0.1'}
     if request.headers['host'] not in accepted_hosts:
         redirect('http://localhost:8080/', 301)
+
+
+def add_api_headers():
+    response.set_header("Access-Control-Allow-Origin", "*")
+    response.content_type = 'text/plain'
 
 update_status = threading.Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True

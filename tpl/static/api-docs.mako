@@ -30,4 +30,4 @@
     <dd>Response: 204 HTTP empty response.</dd>
     </dl>
   </div>
-  <%def name="title()">REST API - newTrackon</%def>
+  <%def name="title()">API - newTrackon</%def>
