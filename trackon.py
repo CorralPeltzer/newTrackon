@@ -199,45 +199,44 @@ def get_all_ips_tracked():
 
 
 def list_live():
-    all_data = get_all_data_from_db()
-    raw_list = []
-    for t in all_data:
-        if t.status == 1:
-            raw_list.append(t.url)
+    conn = sqlite3.connect('trackon.db')
+    c = conn.cursor()
+    c.execute('SELECT URL FROM STATUS WHERE STATUS = 1 ORDER BY UPTIME DESC')
+    raw_list = c.fetchall()
+    conn.close()
     return format_list(raw_list)
 
 
 def list_uptime(uptime):
-    all_data = get_all_data_from_db()
-    raw_list = []
-    length = 0
-    for t in all_data:
-        if t.uptime >= uptime:
-            raw_list.append(t.url)
-            length += 1
-    return format_list(raw_list), length
+    conn = sqlite3.connect('trackon.db')
+    c = conn.cursor()
+    c.execute('SELECT URL FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC', (uptime,))
+    raw_list = c.fetchall()
+    conn.close()
+    return format_list(raw_list), len(raw_list)
 
 
 def api_udp():
-    all_data = get_all_data_from_db()
-    raw_list = []
-    for t in all_data:
-        if urlparse(t.url).scheme == 'udp' and t.uptime >= 95:
-            raw_list.append(t.url)
+    conn = sqlite3.connect('trackon.db')
+    c = conn.cursor()
+    c.execute('SELECT URL FROM STATUS WHERE URL LIKE "udp://%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
+    raw_list = c.fetchall()
+    conn.close()
     return format_list(raw_list)
 
 
 def api_http():
-    all_data = get_all_data_from_db()
-    raw_list = []
-    for t in all_data:
-        if urlparse(t.url).scheme in ['http', 'https'] and t.uptime >= 95:
-            raw_list.append(t.url)
+    conn = sqlite3.connect('trackon.db')
+    c = conn.cursor()
+    c.execute('SELECT URL FROM STATUS WHERE URL LIKE "http%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
+    raw_list = c.fetchall()
+    conn.close()
     return format_list(raw_list)
 
 
 def format_list(raw_list):
     formatted_list = ''
     for url in raw_list:
-        formatted_list += url + '\n' + '\n'
+        url_string = url[0]
+        formatted_list += url_string + '\n' + '\n'
     return formatted_list
