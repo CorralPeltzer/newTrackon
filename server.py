@@ -1,7 +1,7 @@
 import logging
 import threading
 from logging import FileHandler
-from bottle import Bottle, run, static_file, request, response, abort, redirect, mako_template as template
+from bottle import Bottle, run, static_file, request, response, HTTPError, redirect, mako_template as template
 from requestlogger import WSGILogger, ApacheFormatter
 import trackon
 import trackerlist_project
@@ -73,21 +73,21 @@ def raw():
 @app.route('/api/<percentage:int>')
 def api_percentage(percentage):
     if 0 <= percentage <= 100:
+        add_api_headers()
         formatted_list, not_needed_length = trackon.list_uptime(percentage)
         return formatted_list
     else:
-        abort(400, "The percentage has to be between 0 an 100")
+        # abort(400, "The percentage has to be between 0 an 100") Abort does not allow custom headers
+        raise HTTPError(status=400, body="The percentage has to be between 0 an 100", headers={"Access-Control-Allow-Origin": "*"})
 
 
 @app.route('/api/stable')
 def api_stable():
-    add_api_headers()
     return api_percentage(95)
 
 
 @app.route('/api/all')
 def api_all():
-    add_api_headers()
     return api_percentage(0)
 
 
