@@ -162,7 +162,19 @@ def update_outdated_trackers():
             print("GONNA UPDATE " + tracker.url)
             tracker.update_status()
             pickle.dump(raw_data, open('raw_data.pickle', 'wb'))
+        detect_new_ip_duplicates()
         sleep(10)
+
+
+def detect_new_ip_duplicates():
+    all_ips = get_all_ips_tracked()
+    non_duplicates = set()
+    for ip in all_ips:
+        if ip not in non_duplicates:
+            non_duplicates.add(ip)
+        else:
+            logger.info('IP' + ip + 'is duplicated, manual action required')
+            print("IP DUPLICATED: " + ip)
 
 
 def insert_in_db(tracker):
