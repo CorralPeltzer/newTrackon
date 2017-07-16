@@ -10,7 +10,7 @@ newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) b
 ## Installation
 After cloning the repo, make sure you have python 3, pip and sqlite3 installed (default in all major distributions).
 
-Download the dependencies required to run newTrackon:
+Install the dependencies required to run newTrackon:
 
 Ubuntu-Based / Debian:
 ```
