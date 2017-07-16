@@ -8,12 +8,16 @@ It also allows to submit new trackers to add them to the list.
 newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) by [Uriel †](https://github.com/uriel).
 
 ## Installation
+After cloning the repo, to make sure you have `python3`, `pip` and `sqlite3` installed (default in all major distributions), run
 
-After cloning the repo, make sure you have python 3, pip and sqlite3 installed (default in all major distributions).
-
-To install python dependencies, just run
+* Ubuntu-Based / Debian:
 ```
-pip install -r requirements.txt
+sudo apt-get install python3-pip sqlite3 python3 
+```
+
+Then, install python dependencies with
+```
+pip3 install -r requirements.txt
 ```
 This will install requests, bottle, waitress, mako, wsgi-requests-logger, and dnspython.
 
