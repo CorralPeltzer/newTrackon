@@ -13,9 +13,9 @@ After cloning the repo, make sure you have python 3, pip and sqlite3 installed (
 Download the dependencies required to run newTrackon:
 
 Ubuntu-Based / Debian:
-
+```
 sudo apt-get install python3-pip sqlite3 python3 
-
+```
 After cloning the repo, make sure you have python 3, pip and sqlite3 installed (default in all major distributions).
 
 To install python dependencies, just run
