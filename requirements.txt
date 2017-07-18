@@ -1,6 +1,6 @@
 bottle==0.12.13
 dnspython==1.15.0
-Mako==1.0.6
-requests==2.14.2
+Mako==1.0.7
+requests==2.18.1
 waitress==1.0.2
 wsgi-request-logger==0.4.6
