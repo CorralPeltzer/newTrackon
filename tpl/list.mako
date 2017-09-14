@@ -32,9 +32,7 @@ clipboard.on('error', function(e) {
   <p>This is a list of the <b>${size}</b> trackers with more than 95% of uptime, considered stable. You can copy the list to the clipboard and add it to your BitTorrent client.</p>
   <p><button class="btn btn-primary" data-clipboard-action="copy" data-clipboard-target="#tocopy">Copy ${size} trackers to clipboard </button><p>
     <div id="list">
-      <pre id="tocopy">
-${stable}
-      </pre>
+      <pre id="tocopy">${stable}</pre>
     </div>
   </div>
 <%def name="title()">Stable Trackers List - newTrackon</%def>
