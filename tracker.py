@@ -1,6 +1,5 @@
-import urllib.request, urllib.parse, urllib.error
+from urllib import request, parse
 from time import time, sleep, gmtime, strftime
-from urllib.parse import urlparse
 import re
 import scraper
 import logging
@@ -15,7 +14,7 @@ logger = logging.getLogger('trackon_logger')
 class Tracker:
 
     def __init__(self, url, host, ip, latency, last_checked, interval, status, uptime, country, country_code,
-                 network, historic, added):
+                 network, historic, added, last_downtime):
         self.url = url
         self.host = host
         self.ip = ip
@@ -29,13 +28,14 @@ class Tracker:
         self.network = network
         self.historic = historic
         self.added = added
+        self.last_downtime = last_downtime
 
     @classmethod
     def from_url(cls, url):
-        tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None)
+        tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None, None)
         tracker.validate_url()
         print('URL is ', url)
-        tracker.host = urlparse(tracker.url).hostname
+        tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
         if not tracker.ip:
             raise RuntimeError("Can't resolve IP")
@@ -56,7 +56,7 @@ class Tracker:
         t1 = time()
         debug = {'url': self.url, 'ip': self.ip[0], 'time': strftime("%H:%M:%S UTC", gmtime(t1))}
         try:
-            if urlparse(self.url).scheme == 'udp':
+            if parse.urlparse(self.url).scheme == 'udp':
                 parsed, raw, ip = scraper.announce_udp(self.url)
                 self.interval = parsed['interval']
                 pretty_data = pp.pformat(parsed)
@@ -84,7 +84,7 @@ class Tracker:
 
     def validate_url(self):
         uchars = re.compile('^[a-zA-Z0-9_\-\./:]+$')
-        url = urlparse(self.url)
+        url = parse.urlparse(self.url)
         if url.scheme not in ['udp', 'http', 'https']:
             raise RuntimeError("Tracker URLs have to start with 'udp://', 'http://' or 'https://'")
         if uchars.match(url.netloc) and uchars.match(url.path):
@@ -137,12 +137,13 @@ class Tracker:
 
     def is_down(self):
         self.status = 0
+        self.last_downtime = int(time())
         self.historic.append(self.status)
 
     @staticmethod
     def ip_api(ip):
         try:
-            response = urllib.request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,org')
+            response = request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,org')
             tracker_info = response.read().decode('utf-8')
             sleep(0.5)  # This wait is to respect the queries per minute limit of IP-API and not get banned
         except IOError:

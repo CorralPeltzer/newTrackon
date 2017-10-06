@@ -1,7 +1,5 @@
 <%! from time import time %>
 <%inherit file="base.mako"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js" integrity="sha256-1hjUhpc44NwiNg8OwMu2QzJXhD8kcj+sJA3aCQZoUjg=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js" integrity="sha256-8r65KJgULBDiZhwDydfWrEkx3yyV/grGsGzaekobngI=" crossorigin="anonymous"></script>
 <div class="container">
   <h2>Log of Newly Submitted Trackers</h2>
   <p>This is the information about the last 300 tried trackers. To make it to the queue, a tracker has to be a well-formed URL, not to be an IP, and resolve at least to an IPv4

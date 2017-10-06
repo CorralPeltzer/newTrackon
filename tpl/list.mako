@@ -1,5 +1,4 @@
 <%inherit file="base.mako"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.1/clipboard.min.js" integrity="sha256-El0fEiD3YOM7uIVZztyQzmbbPlgEj0oJVxRWziUh4UE=" crossorigin="anonymous"></script>
 <script>
 $('button').tooltip({
   trigger: 'click',

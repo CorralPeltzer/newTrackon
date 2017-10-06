@@ -12,5 +12,6 @@ CREATE TABLE `status` (
 	`network`	TEXT NOT NULL,
 	`added`		TEXT NOT NULL,
 	`historic`	TEXT NOT NULL,
+	`last_downtime` INTEGER NOT NULL,
 	PRIMARY KEY(`url`)
 );

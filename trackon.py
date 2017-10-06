@@ -53,7 +53,8 @@ def get_all_data_from_db():
                                 country_code=eval(row['country_code']),
                                 historic=eval(row['historic']),
                                 added=row['added'],
-                                network=eval(row['network']))
+                                network=eval(row['network']),
+                                last_downtime=row['last_downtime'])
         trackers_from_db.append(tracker_in_db)
     conn.close()
     return trackers_from_db
@@ -183,7 +184,7 @@ def insert_in_db(tracker):
     c.execute('INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
               (tracker.url, tracker.host, str(tracker.ip), tracker.latency, tracker.last_checked, tracker.interval,
                tracker.status, tracker.uptime, str(tracker.country), str(tracker.country_code), str(tracker.network),
-               tracker.added, str(tracker.historic)))
+               tracker.added, str(tracker.historic), tracker.last_downtime))
     conn.commit()
     conn.close()
 
@@ -193,10 +194,10 @@ def update_in_db(tracker):
     c = conn.cursor()
     c.execute(
         "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-        " historic=?, country=?, country_code=?, network=? WHERE url=?",
+        " historic=?, country=?, country_code=?, network=?, last_downtime=? WHERE url=?",
         (str(tracker.ip), tracker.latency, tracker.last_checked, tracker.status, tracker.interval, tracker.uptime,
          str(tracker.historic), str(tracker.country), str(tracker.country_code), str(tracker.network),
-         tracker.url)).fetchone()
+         tracker.last_downtime, tracker.url)).fetchone()
     conn.commit()
     conn.close()
 

@@ -141,6 +141,7 @@ def add_api_headers():
     response.set_header("Access-Control-Allow-Origin", "*")
     response.content_type = 'text/plain'
 
+
 update_status = threading.Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True
 update_status.start()
@@ -153,4 +154,4 @@ handlers = [FileHandler('access.log'), ]
 app = WSGILogger(app, handlers, ApacheFormatter())
 
 if __name__ == '__main__':
-    run(app, host='0.0.0.0', port=8080, server='waitress')
+    run(app, host='localhost', port=8080, server='waitress')
