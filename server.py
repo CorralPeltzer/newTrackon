@@ -21,6 +21,7 @@ logger.info('Server started')
 @app.route('/')
 def main():
     trackers_list = trackon.get_all_data_from_db()
+    trackers_list = trackon.process_uptime_and_downtime_time(trackers_list)
     return template('tpl/main.mako', trackers=trackers_list, active='main')
 
 
@@ -140,7 +141,6 @@ def check_host_http_header():
 def add_api_headers():
     response.set_header("Access-Control-Allow-Origin", "*")
     response.content_type = 'text/plain'
-
 
 update_status = threading.Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True

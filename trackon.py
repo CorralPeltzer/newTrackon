@@ -41,23 +41,80 @@ def get_all_data_from_db():
     c = conn.cursor()
     trackers_from_db = []
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
-        tracker_in_db = Tracker(url=row['url'],
-                                host=row['host'],
-                                ip=eval(row['ip']),
-                                latency=row['latency'],
-                                last_checked=row['last_checked'],
-                                interval=row['interval'],
-                                status=row['status'],
-                                uptime=row['uptime'],
-                                country=eval(row['country']),
-                                country_code=eval(row['country_code']),
-                                historic=eval(row['historic']),
-                                added=row['added'],
-                                network=eval(row['network']),
-                                last_downtime=row['last_downtime'])
+        tracker_in_db = Tracker(url=row.get('url'),
+                                host=row.get('host'),
+                                ip=eval(row.get('ip')),
+                                latency=row.get('latency'),
+                                last_checked=row.get('last_checked'),
+                                interval=row.get('interval'),
+                                status=row.get('status'),
+                                uptime=row.get('uptime'),
+                                country=eval(row.get('country')),
+                                country_code=eval(row.get('country_code')),
+                                historic=eval(row.get('historic')),
+                                added=row.get('added'),
+                                network=eval(row.get('network')),
+                                last_downtime=row.get('last_downtime'),
+                                last_uptime=row.get('last_uptime'))
         trackers_from_db.append(tracker_in_db)
     conn.close()
     return trackers_from_db
+
+
+def process_uptime_and_downtime_time(trackers_unprocessed):
+    for tracker in trackers_unprocessed:
+        if tracker.status == 1:
+            if not tracker.last_downtime:
+                tracker.status_string = "Working"
+            else:
+                time_string = calculate_time_ago(tracker.last_downtime)
+                tracker.status_string = "Working for " + time_string
+        elif tracker.status == 0:
+            if not tracker.last_uptime:
+                tracker.status_string = "Down"
+            else:
+                time_string = calculate_time_ago(tracker.last_uptime)
+                tracker.status_string = "Down for " + time_string
+    return trackers_unprocessed
+
+
+def calculate_time_ago(last_time):
+    now = int(time())
+    relative = now - int(last_time)
+    if relative < 60:
+        if relative == 1:
+            return str(int(round(relative))) + " second"
+        else:
+            return str(int(round(relative))) + " seconds"
+    minutes = round(relative / 60)
+    if minutes < 60:
+        if minutes == 1:
+            return str(minutes) + " minute"
+        else:
+            return str(minutes) + " minutes"
+    hours = round(relative / 3600)
+    if hours < 24:
+        if hours == 1:
+            return str(hours) + " hour"
+        else:
+            return str(hours) + " hours"
+    days = round(relative / 86400)
+    if days < 31:
+        if days == 1:
+            return str(days) + " day"
+        else:
+            return str(days) + " days"
+    months = round(relative / 2592000)
+    if months < 12:
+        if months == 1:
+            return str(months) + " month"
+        else:
+            return str(months) + " months"
+    years = round(relative / 31536000)
+    if years == 1:
+        return str(years) + " year"
+    else:
+        return str(years) + " years"
 
 
 def enqueue_new_trackers(input_string):
@@ -164,7 +221,7 @@ def update_outdated_trackers():
             tracker.update_status()
             pickle.dump(raw_data, open('raw_data.pickle', 'wb'))
         detect_new_ip_duplicates()
-        sleep(10)
+        sleep(5)
 
 
 def detect_new_ip_duplicates():
@@ -181,10 +238,10 @@ def detect_new_ip_duplicates():
 def insert_in_db(tracker):
     conn = sqlite3.connect('trackon.db')
     c = conn.cursor()
-    c.execute('INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    c.execute('INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
               (tracker.url, tracker.host, str(tracker.ip), tracker.latency, tracker.last_checked, tracker.interval,
                tracker.status, tracker.uptime, str(tracker.country), str(tracker.country_code), str(tracker.network),
-               tracker.added, str(tracker.historic), tracker.last_downtime))
+               tracker.added, str(tracker.historic), tracker.last_downtime, tracker.last_uptime,))
     conn.commit()
     conn.close()
 
@@ -194,10 +251,10 @@ def update_in_db(tracker):
     c = conn.cursor()
     c.execute(
         "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-        " historic=?, country=?, country_code=?, network=?, last_downtime=? WHERE url=?",
+        " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE url=?",
         (str(tracker.ip), tracker.latency, tracker.last_checked, tracker.status, tracker.interval, tracker.uptime,
          str(tracker.historic), str(tracker.country), str(tracker.country_code), str(tracker.network),
-         tracker.last_downtime, tracker.url)).fetchone()
+         tracker.last_downtime, tracker.last_uptime, tracker.url)).fetchone()
     conn.commit()
     conn.close()
 

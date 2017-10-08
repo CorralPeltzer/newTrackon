@@ -14,7 +14,7 @@ logger = logging.getLogger('trackon_logger')
 class Tracker:
 
     def __init__(self, url, host, ip, latency, last_checked, interval, status, uptime, country, country_code,
-                 network, historic, added, last_downtime):
+                 network, historic, added, last_downtime, last_uptime):
         self.url = url
         self.host = host
         self.ip = ip
@@ -29,10 +29,11 @@ class Tracker:
         self.historic = historic
         self.added = added
         self.last_downtime = last_downtime
+        self.last_uptime = last_uptime
 
     @classmethod
     def from_url(cls, url):
-        tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None, None)
+        tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None, None, None)
         tracker.validate_url()
         print('URL is ', url)
         tracker.host = parse.urlparse(tracker.url).hostname
@@ -133,6 +134,7 @@ class Tracker:
 
     def is_up(self):
         self.status = 1
+        self.last_uptime = int(time())
         self.historic.append(self.status)
 
     def is_down(self):

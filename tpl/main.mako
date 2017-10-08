@@ -47,7 +47,6 @@ $(document).ready( function () {
       <th class="sortable">Network</th>
       <th class="sorttable_numeric"><span title="Announce time">Time</span></th>
       <th>Added</th>
-      <!--<th>Last down</th> -->
     </tr></thead>
 
     <% lt = dt = 0 %>
@@ -87,7 +86,6 @@ $(document).ready( function () {
                 </td>
                 <td class="right">${t.latency} ms</td>
                 <td class="right">${t.added}</td>
-                <!--<td><span data-livestamp="${t.last_downtime}"></span></td>-->
             </tr>
         % endfor
     % endif
