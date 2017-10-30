@@ -59,10 +59,10 @@ $(document).ready( function () {
                 <td>${t.url}</td>
                 <td>${"%.2f" % t.uptime}%</td>
                 % if t.status == 1:
-                    <td class="up"><b>Working</b></td>
+                    <td class="up"><b>${t.status_string}</b></td>
                     <% lt += 1 %>
                 % else:
-                    <td class="down"><b>Down</b></td>
+                    <td class="down"><b>${t.status_string}</b></td>
                     <% dt += 1 %>
                 % endif
                 <td><span data-livestamp="${t.last_checked}"></span></td>
