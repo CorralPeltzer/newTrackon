@@ -12,14 +12,14 @@ After cloning the repo, to make sure you have `python3`, `pip` and `sqlite3` ins
 
 * Ubuntu-Based / Debian:
 ```
-sudo apt-get install python3-pip sqlite3 python3 
+sudo apt-get install python3-pip sqlite3 python3
 ```
 
 Then, install python dependencies with
 ```
 pip3 install -r requirements.txt
 ```
-This will install requests, bottle, waitress, mako, wsgi-requests-logger, and dnspython.
+This will install requests, Flask, cheroot, werkzeug, wsgi-requests-logger, Flask-Mako and dnspython.
 
 Then, create the database with
 ```
