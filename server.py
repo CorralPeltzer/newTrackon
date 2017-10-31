@@ -1,7 +1,5 @@
-import logging
-import threading
-from logging import FileHandler
-
+from threading import Thread
+from logging import FileHandler, getLogger
 from flask import Flask, send_from_directory, request, Response, redirect, make_response, abort
 from flask_mako import MakoTemplates, render_template
 from werkzeug.routing import BaseConverter
@@ -28,12 +26,7 @@ class RegexConverter(BaseConverter):
 
 
 app.url_map.converters['regex'] = RegexConverter
-logger = logging.getLogger('trackon_logger')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler('trackon.log')
-logger_format = logging.Formatter('%(asctime)s - %(message)s')
-handler.setFormatter(logger_format)
-logger.addHandler(handler)
+logger = getLogger('trackon_logger')
 logger.info('Server started')
 
 
@@ -47,7 +40,7 @@ def main():
 @app.route('/', methods=['POST'])
 def new_trackers():
     new_ts = request.form.get('new_trackers')
-    check_all_trackers = threading.Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
+    check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
     return main()
@@ -56,7 +49,7 @@ def new_trackers():
 @app.route('/api/add', methods=['POST'])
 def new_trackers_api():
     new_ts = request.form.get('new_trackers')
-    check_all_trackers = threading.Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
+    check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
     resp = Response(status=204, headers={'Access-Control-Allow-Origin': '*'})
@@ -158,11 +151,11 @@ def add_api_headers(resp):
     return resp
 
 
-update_status = threading.Thread(target=trackon.update_outdated_trackers)
+update_status = Thread(target=trackon.update_outdated_trackers)
 update_status.daemon = True
 update_status.start()
 
-get_trackerlist_project_list = threading.Thread(target=trackerlist_project.main)
+get_trackerlist_project_list = Thread(target=trackerlist_project.main)
 get_trackerlist_project_list.daemon = True
 get_trackerlist_project_list.start()
 

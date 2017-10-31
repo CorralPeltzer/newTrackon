@@ -25,7 +25,13 @@ deque_lock = Lock()
 list_lock = Lock()
 trackers_list = []
 processing_trackers = False
+
 logger = logging.getLogger('trackon_logger')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('trackon.log')
+logger_format = logging.Formatter('%(asctime)s - %(message)s')
+handler.setFormatter(logger_format)
+logger.addHandler(handler)
 
 
 def dict_factory(cursor, row):
