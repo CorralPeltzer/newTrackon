@@ -98,6 +98,11 @@ def api_stable():
     return api_percentage(95)
 
 
+@app.route('/api/best')
+def api_best():
+    return redirect('/api/stable', code=301)
+
+
 @app.route('/api/all')
 def api_all():
     return api_percentage(0)

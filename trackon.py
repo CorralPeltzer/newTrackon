@@ -124,6 +124,7 @@ def calculate_time_ago(last_time):
 
 
 def enqueue_new_trackers(input_string):
+    input_string = input_string.lower()
     global trackers_list
     trackers_list = get_all_data_from_db()
     if len(input_string) > max_input_length:
