@@ -2,7 +2,9 @@
 <div class="container">
   <h2>HTTP API documentation</h2>
   <h3>Read API</h3>
-  <p>This set of APIs allows you retrive informatin about known trackers.</p>
+  <p>This set of APIs allows you retrieve information about known trackers.</p>
+  <p><b>WARNING: Don't put these URLs in your BitTorrent client, they won't work. You have to put the trackers returned by these URLs in the BitTorrent client.</b></p>
+
   <dl>
     <dt>GET <a href="/api/stable">https://newtrackon.com/api/stable</a></dt>
     <dd>Returns a two line delimited list announce URLs of trackers that have an uptime of equal or more than 95%.</dd>

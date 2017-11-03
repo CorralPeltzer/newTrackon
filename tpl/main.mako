@@ -15,7 +15,7 @@ $(document).ready( function () {
 <div class="container">
 <h2 class="text-center">Tracking the Trackers</h2>
 <p>newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. A meta-tracker if you will. You can add any of the tracker announce URLs listed here to any of your torrents, or submit any other open/public trackers you might know of.</p>
-<p><b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a> section.</b>
+<p><b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a> section.</b></p>
 
 <hr>
 
