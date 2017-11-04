@@ -25,15 +25,19 @@
     </thead>
     % for response in data:
     <tr>
-        <td>${response['time']}</td>
-        <td>${response['url']}</td>
-        <td>${response['ip']}</td>
-        % if response['status'] == 1:
+        <td>${response.get('time')}</td>
+        <td>${response.get('url')}</td>
+        <td>
+        % if response.get('ip'):
+            ${response.get('ip')}
+        % endif
+        </td>
+        % if response.get('status') == 1:
             <td class="up"><b>Working</b></td>
         % else:
             <td class="down"><b>Down</b></td>
         % endif
-        <td>${response['info']}</td>
+        <td>${response.get('info')}</td>
     </tr>
     % endfor
 </table>

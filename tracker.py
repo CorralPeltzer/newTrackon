@@ -49,8 +49,11 @@ class Tracker:
         try:
             self.update_ips()
         except RuntimeError:
-            logger.info('Hostname not found')
+            self.ip = None
+        if not self.ip:
+            self.clear_tracker_without_ip()
             return
+
         self.update_ipapi_data()
         self.last_checked = int(time())
         pp = pprint.PrettyPrinter(width=999999, compact=True)
@@ -83,6 +86,19 @@ class Tracker:
 
         trackon.update_in_db(self)
 
+    def clear_tracker_without_ip(self):
+        self.country, self.network, self.country_code = None, None, None
+        self.latency = None
+        self.last_checked = int(time())
+        self.is_down()
+        self.update_uptime()
+        if self.uptime == 0:
+            self.interval = 10800
+        debug = {'url': self.url, 'ip': None, 'time': strftime("%H:%M:%S UTC", gmtime(time())),
+                 'status': 0, 'info': "Can't resolve IP"}
+        trackon.raw_data.appendleft(debug)
+        trackon.update_in_db(self)
+
     def validate_url(self):
         uchars = re.compile('^[a-zA-Z0-9_\-\./:]+$')
         url = parse.urlparse(self.url)
@@ -101,7 +117,6 @@ class Tracker:
         self.uptime = (uptime / len(self.historic)) * 100
 
     def update_ips(self):
-        previous_ips = self.ip
         self.ip = []
         try:
             ipv4 = resolver.query(self.host, 'A')
@@ -115,13 +130,11 @@ class Tracker:
                 self.ip.append(str(rdata))
         except Exception:
             pass
-        if not self.ip:  # If DNS query fails, just preserve the previous IPs. Considering showing "Not found" instead.
-            self.ip = previous_ips
+        if not self.ip:
+            self.ip = None
 
     def update_ipapi_data(self):
-        self.country = []
-        self.network = []
-        self.country_code = []
+        self.country, self.network, self.country_code = [], [], []
         for ip in self.ip:
             ip_data = self.ip_api(ip).splitlines()
             if len(ip_data) == 3:

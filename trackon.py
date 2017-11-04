@@ -8,6 +8,7 @@ from threading import Lock
 from time import time, sleep
 from urllib.parse import urlparse
 from tracker import Tracker
+from ast import literal_eval
 
 max_input_length = 20000
 submitted_trackers = deque(maxlen=10000)
@@ -49,17 +50,17 @@ def get_all_data_from_db():
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
         tracker_in_db = Tracker(url=row.get('url'),
                                 host=row.get('host'),
-                                ip=eval(row.get('ip')),
+                                ip=literal_eval(row.get('ip')),
                                 latency=row.get('latency'),
                                 last_checked=row.get('last_checked'),
                                 interval=row.get('interval'),
                                 status=row.get('status'),
                                 uptime=row.get('uptime'),
-                                country=eval(row.get('country')),
-                                country_code=eval(row.get('country_code')),
+                                country=literal_eval(row.get('country')),
+                                country_code=literal_eval(row.get('country_code')),
                                 historic=eval(row.get('historic')),
                                 added=row.get('added'),
-                                network=eval(row.get('network')),
+                                network=literal_eval(row.get('network')),
                                 last_downtime=row.get('last_downtime'),
                                 last_uptime=row.get('last_uptime'))
         trackers_from_db.append(tracker_in_db)
@@ -270,8 +271,9 @@ def get_all_ips_tracked():
     all_ips_of_all_trackers = []
     all_data = get_all_data_from_db()
     for tracker_in_list in all_data:
-        for ip in tracker_in_list.ip:
-            all_ips_of_all_trackers.append(ip)
+        if tracker_in_list.ip:
+            for ip in tracker_in_list.ip:
+                all_ips_of_all_trackers.append(ip)
     return all_ips_of_all_trackers
 
 

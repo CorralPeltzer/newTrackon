@@ -68,23 +68,36 @@ $(document).ready( function () {
                 <td><span data-livestamp="${t.last_checked}"></span></td>
                 <td>~${t.interval//60} min (${t.interval} sec)</td>
                 <td>
-                    % for ip in t.ip:
-                        ${ip}<br>
-                    % endfor
+                    % if t.ip:
+                        % for ip in t.ip:
+                            ${ip}<br>
+                        % endfor
+                    % else:
+                        Can't resolve IP
+                    % endif
                 </td>
                 <td>
-                    <% index = 0 %>
-                    % for country in t.country:
-                        <span class="flag-icon flag-icon-${t.country_code[index]}"></span> ${country}<br>
-                        <%index += 1 %>
-                    % endfor
+                    %if t.country:
+                        <% index = 0 %>
+                        % for country in t.country:
+                            <span class="flag-icon flag-icon-${t.country_code[index]}"></span> ${country}<br>
+                            <%index += 1 %>
+                        % endfor
+                    %endif
                 </td>
                 <td>
-                    % for network in t.network:
-                        ${network}<br>
-                    % endfor
+                    %if t.network:
+                        % for network in t.network:
+                            ${network}<br>
+                        % endfor
+                    %endif
+
                 </td>
-                <td class="right">${t.latency} ms</td>
+                <td class="right">
+                    %if t.latency:
+                        ${t.latency} ms
+                    %endif
+                </td>
                 <td class="right">${t.added}</td>
             </tr>
         % endfor
