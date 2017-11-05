@@ -82,6 +82,8 @@ class Tracker:
             trackon.raw_data.appendleft(debug)
             print("TRACKER DOWN")
             self.is_down()
+        if self.uptime == 0:
+            self.interval = 10800
         self.update_uptime()
 
         trackon.update_in_db(self)
