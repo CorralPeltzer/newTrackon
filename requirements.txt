@@ -1,6 +1,6 @@
 Flask_Mako==0.4
 requests==2.18.4
-cheroot==5.8.3
+cheroot==5.9.0
 Flask==0.12.2
 Werkzeug==0.12.2
 wsgi_request_logger==0.4.6
