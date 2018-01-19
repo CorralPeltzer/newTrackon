@@ -221,7 +221,7 @@ def udp_create_announce_request(connection_id, thash):
     key = udp_get_transaction_id()  # Unique key randomized by client
     buf += struct.pack("!i", key)
     buf += struct.pack("!i", -1)  # Number of peers required. Set to -1 for default
-    buf += struct.pack("!i", 0x76FD)  # port on which response will be sent
+    buf += struct.pack("!H", 0x76FD)  # port on which response will be sent
     return buf, transaction_id
 
 
