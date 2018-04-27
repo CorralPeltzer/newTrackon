@@ -1,7 +1,7 @@
 Flask_Mako==0.4
 requests==2.18.4
 cheroot==6.2.4
-Flask==0.12.2
+Flask==1.0
 Werkzeug==0.14.1
 wsgi_request_logger==0.4.6
 dnspython==1.15.0
