@@ -19,7 +19,7 @@ Then, install python dependencies with
 ```
 pip3 install -r requirements.txt
 ```
-This will install requests, Flask, cheroot, werkzeug, wsgi-requests-logger, Flask-Mako and dnspython.
+This will install requests, Flask, gevent, wsgi-requests-logger, Flask-Mako and dnspython.
 
 Then, create the database with
 ```
