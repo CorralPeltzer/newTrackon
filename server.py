@@ -3,8 +3,8 @@ from logging import FileHandler, getLogger
 from flask import Flask, send_from_directory, request, Response, redirect, make_response, abort
 from flask_mako import MakoTemplates, render_template
 from werkzeug.routing import BaseConverter
+from gevent.wsgi import WSGIServer
 from requestlogger import WSGILogger, ApacheFormatter
-from cheroot.wsgi import Server
 
 import trackon
 import trackerlist_project
@@ -167,10 +167,7 @@ get_trackerlist_project_list.start()
 handlers = [FileHandler('access.log'), ]
 app = WSGILogger(app, handlers, ApacheFormatter())
 
-server = Server(('0.0.0.0', 8080), app)
+server = WSGIServer(('127.0.0.1', 8080), app)
 
 if __name__ == '__main__':
-    try:
-        server.start()
-    except KeyboardInterrupt:
-        server.stop()
+    server.serve_forever()
