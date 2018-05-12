@@ -1,1 +1,7 @@
 *.pyc
+.idea
+*.pickle
+*.sh
+*.log
+*.html
+*.db
