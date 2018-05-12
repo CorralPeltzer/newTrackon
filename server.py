@@ -3,7 +3,7 @@ from logging import FileHandler, getLogger
 from flask import Flask, send_from_directory, request, Response, redirect, make_response, abort
 from flask_mako import MakoTemplates, render_template
 from werkzeug.routing import BaseConverter
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 from requestlogger import WSGILogger, ApacheFormatter
 
 import trackon
