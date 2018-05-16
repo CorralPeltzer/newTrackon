@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+requests = "==2.18.4"
+tornado = "==5.0.2"
+wsgi-request-logger = "==0.4.6"
+dnspython = "==1.15.0"
+Flask-Mako = "==0.4"
+Flask = "==1.0.2"
+Werkzeug = "==0.14.1"
+
+[requires]
+python_version = "3.5"
+
+[dev-packages]

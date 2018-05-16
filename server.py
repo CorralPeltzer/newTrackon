@@ -3,7 +3,9 @@ from logging import FileHandler, getLogger
 from flask import Flask, send_from_directory, request, Response, redirect, make_response, abort
 from flask_mako import MakoTemplates, render_template
 from werkzeug.routing import BaseConverter
-from gevent.pywsgi import WSGIServer
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
 from requestlogger import WSGILogger, ApacheFormatter
 
 import trackon
@@ -167,7 +169,8 @@ get_trackerlist_project_list.start()
 handlers = [FileHandler('access.log'), ]
 app = WSGILogger(app, handlers, ApacheFormatter())
 
-server = WSGIServer(('127.0.0.1', 8080), app)
+http_server = HTTPServer(WSGIContainer(app))
 
 if __name__ == '__main__':
-    server.serve_forever()
+    http_server.listen(8080)
+    IOLoop.instance().start()
