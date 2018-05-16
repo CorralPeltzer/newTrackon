@@ -17,9 +17,10 @@ After cloning the repo, to make sure you have `python3`, `pip`, `pipenv` and `sq
 sudo apt-get install python3-pip sqlite3 python3
 sudo pip3 install pipenv
 ```
-Then, browse to the project root folder and install the pipenv environment and dependencies with
+Then, browse to the project root folder. To install the pipenv environment and dependencies, and enter the pipenv:
 ```
 pipenv install
+pipenv shell
 ```
 This will install requests, Flask, gevent, wsgi-requests-logger, Flask-Mako and dnspython.
 
