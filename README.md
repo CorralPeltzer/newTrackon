@@ -7,17 +7,19 @@ It also allows to submit new trackers to add them to the list.
 
 newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) by [Uriel †](https://github.com/uriel).
 
+Hosted and tested only with Ubuntu 16.04 LTS.
+
 ## Installation
-After cloning the repo, to make sure you have `python3`, `pip` and `sqlite3` installed (default in all major distributions), run
+After cloning the repo, to make sure you have `python3`, `pip`, `pipenv` and `sqlite3` installed, run
 
 * Ubuntu-Based / Debian:
 ```
 sudo apt-get install python3-pip sqlite3 python3
+sudo pip3 install pipenv
 ```
-
-Then, install python dependencies with
+Then, browse to the project root folder and install the pipenv environment and dependencies with
 ```
-pip3 install -r requirements.txt
+pipenv install
 ```
 This will install requests, Flask, gevent, wsgi-requests-logger, Flask-Mako and dnspython.
 
