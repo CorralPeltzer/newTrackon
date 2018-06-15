@@ -1,5 +1,5 @@
 Flask_Mako==0.4
-requests==2.19.0
+requests==2.19.1
 tornado==5.0.2
 Flask==1.0.2
 Werkzeug==0.14.1
