@@ -120,10 +120,14 @@ class Tracker:
 
     def update_ips(self):
         self.ip = set()
-        for res in socket.getaddrinfo(self.host, None, socket.AF_UNSPEC):
-            self.ip.add(res[4][0])
+        try:
+            for res in socket.getaddrinfo(self.host, None, socket.AF_UNSPEC):
+                self.ip.add(res[4][0])
+        except socket.error:
+            pass
         if not self.ip:
             self.ip = None
+
 
     def update_ipapi_data(self):
         self.country, self.network, self.country_code = [], [], []
