@@ -152,7 +152,6 @@ def announce_udp(udp_version):
     for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, socket.AF_UNSPEC, socket.SOCK_DGRAM):
         af, socktype, proto, canonname, sa = res
         ip = sa[0]
-        print("Address:", sa)
         try:
             sock = socket.socket(af, socktype, proto)
             sock.settimeout(10)

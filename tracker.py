@@ -7,7 +7,7 @@ import trackon
 from collections import deque
 from datetime import datetime
 import pprint
-from dns import resolver
+import socket
 logger = logging.getLogger('trackon_logger')
 
 
@@ -119,19 +119,9 @@ class Tracker:
         self.uptime = (uptime / len(self.historic)) * 100
 
     def update_ips(self):
-        self.ip = []
-        try:
-            ipv4 = resolver.query(self.host, 'A')
-            for rdata in ipv4:
-                self.ip.append(str(rdata))
-        except Exception:
-            pass
-        try:
-            ipv6 = resolver.query(self.host, 'AAAA')
-            for rdata in ipv6:
-                self.ip.append(str(rdata))
-        except Exception:
-            pass
+        self.ip = set()
+        for res in socket.getaddrinfo(self.host, None, socket.AF_UNSPEC):
+            self.ip.add(res[4][0])
         if not self.ip:
             self.ip = None
 

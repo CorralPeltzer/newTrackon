@@ -4,4 +4,3 @@ tornado==5.1
 Flask==1.0.2
 Werkzeug==0.14.1
 wsgi_request_logger==0.4.6
-dnspython==1.15.0
