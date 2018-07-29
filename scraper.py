@@ -12,12 +12,13 @@ import pprint
 
 my_ip = requests.get('https://api.ipify.org').text
 
+
 def scrape_submitted(t):
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     parsed = urlparse(t)
     tnetloc = parsed.netloc
     try:
-        failover_ip = socket.gethostbyname(parsed.hostname)
+        failover_ip = socket.getaddrinfo(parsed.hostname, None)[0][4][0]
     except socket.error:
         failover_ip = ''
     # UDP scrape
@@ -93,7 +94,7 @@ def announce_http(tracker):
     except requests.HTTPError:
         raise RuntimeError("HTTP error")
     except requests.ConnectionError:
-        raise RuntimeError("HTTP connection error")
+        raise RuntimeError("HTTP connection failed")
     except requests.RequestException:
         raise RuntimeError("Ambiguous HTTP error")
     if response.status_code is not 200:
@@ -146,37 +147,57 @@ def announce_udp(udp_version):
     thash = trackerhash(type='udp')
     parsed_tracker = urlparse(udp_version)
     print("Scraping UDP: %s " % udp_version)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(10)
-    try:
-        ip = socket.gethostbyname(parsed_tracker.hostname)
-        conn = (ip, parsed_tracker.port)
-    except socket.error:
-        raise RuntimeError("Can't resolve IP")
+    sock = None
+    ip = None
+    for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, socket.AF_UNSPEC, socket.SOCK_DGRAM):
+        af, socktype, proto, canonname, sa = res
+        ip = sa[0]
+        print("Address:", sa)
+        try:
+            sock = socket.socket(af, socktype, proto)
+            sock.settimeout(10)
+        except OSError:
+            sock = None
+            continue
+        try:
+            sock.connect(sa)
+        except OSError:
+            sock.close()
+            sock = None
+            continue
+        break
+    if sock is None:
+        raise RuntimeError("UDP error")
 
     # Get connection ID
-    req, transaction_id = udp_create_connection_request()
+    req, transaction_id = udp_create_binary_connection_request()
     try:
-        sock.sendto(req, conn)
-    except OSError:
-        raise RuntimeError("Denied by the OS, probably a strange IP")
-    try:
-        buf = sock.recvfrom(2048)[0]
+        sock.sendall(req)
+        buf = sock.recv(2048)
+    except ConnectionRefusedError:
+        raise RuntimeError("UDP connection failed")
     except socket.timeout:
         raise RuntimeError("UDP timeout")
-    connection_id = udp_parse_connection_response(buf, transaction_id)
+    except socket.error as err:
+        raise RuntimeError("Other error: " + str(err))
 
+    connection_id = udp_parse_connection_response(buf, transaction_id)
     # Scrape away
     req, transaction_id = udp_create_announce_request(connection_id, thash)
-    sock.sendto(req, conn)
     try:
-        buf = sock.recvfrom(2048)[0]
+        sock.sendall(req)
+        buf = sock.recv(2048)
+    except ConnectionRefusedError:
+        raise RuntimeError("UDP connection failed")
     except socket.timeout:
         raise RuntimeError("UDP timeout")
+    except socket.error as err:
+        raise RuntimeError("Other error: " + str(err))
+    sock.close()
     return udp_parse_announce_response(buf, transaction_id) + (ip,)
 
 
-def udp_create_connection_request():
+def udp_create_binary_connection_request():
     connection_id = 0x41727101980  # default connection id
     action = 0x0  # action (0 = give me a new connection id)
     transaction_id = udp_get_transaction_id()
