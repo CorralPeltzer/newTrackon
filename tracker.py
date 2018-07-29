@@ -58,7 +58,7 @@ class Tracker:
         self.last_checked = int(time())
         pp = pprint.PrettyPrinter(width=999999, compact=True)
         t1 = time()
-        debug = {'url': self.url, 'ip': self.ip[0], 'time': strftime("%H:%M:%S UTC", gmtime(t1))}
+        debug = {'url': self.url, 'ip': list(self.ip)[0], 'time': strftime("%H:%M:%S UTC", gmtime(t1))}
         try:
             if parse.urlparse(self.url).scheme == 'udp':
                 parsed, raw, ip = scraper.announce_udp(self.url)
