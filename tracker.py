@@ -8,6 +8,7 @@ from collections import deque
 from datetime import datetime
 import pprint
 import socket
+from ipaddress import ip_address
 logger = logging.getLogger('trackon_logger')
 
 
@@ -119,15 +120,20 @@ class Tracker:
         self.uptime = (uptime / len(self.historic)) * 100
 
     def update_ips(self):
-        self.ip = set()
+        self.ip = []
+        temp_ips = set()
         try:
             for res in socket.getaddrinfo(self.host, None, socket.AF_UNSPEC):
-                self.ip.add(res[4][0])
+                temp_ips.add(res[4][0])
         except socket.error:
             pass
-        if not self.ip:
+        if temp_ips:  # Order IPs per protocol, IPv6 first
+            parsed_ips = []
+            [parsed_ips.append(ip_address(ip)) for ip in temp_ips]
+            [self.ip.append(str(ip)) for ip in parsed_ips if ip.version == 6]
+            [self.ip.append(str(ip)) for ip in parsed_ips if ip.version == 4]
+        elif not self.ip:
             self.ip = None
-
 
     def update_ipapi_data(self):
         self.country, self.network, self.country_code = [], [], []
