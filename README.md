@@ -7,7 +7,7 @@ It also allows to submit new trackers to add them to the list.
 
 newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) by [Uriel †](https://github.com/uriel).
 
-Hosted and tested only with Ubuntu 16.04 LTS.
+Hosted and tested only with Ubuntu 16.04 LTS. **To work correctly, it needs IPv4 and IPv6 connectivity.**
 
 ## Installation
 After cloning the repo, to make sure you have `python3`, `pip`, `pipenv` and `sqlite3` installed, run
