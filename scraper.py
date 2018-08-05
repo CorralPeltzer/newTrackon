@@ -120,7 +120,7 @@ def announce_http(tracker):
     if 'failure reason' in tracker_response:
         raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
     if 'peers' not in tracker_response and 'peers6' not in tracker_response:
-        raise RuntimeError("Invalid response, both 'peers' and 'peers6' field are missing")
+        raise RuntimeError("Invalid response, both 'peers' and 'peers6' field are missing: " + str(tracker_response))
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     pp.pprint(tracker_response)
     # if type(tracker_response['peers']) == str:
