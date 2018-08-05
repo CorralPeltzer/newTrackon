@@ -9,8 +9,10 @@ import trackon
 import requests
 import bencode
 import pprint
+import subprocess
 
-my_ip = requests.get('https://api.ipify.org').text
+my_ips = [subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip(),
+          subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()]
 
 
 def scrape_submitted(t):
@@ -30,7 +32,9 @@ def scrape_submitted(t):
             parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
             pretty_data = pp.pformat(parsed)
-            debug_udp.update({'info': pretty_data.replace(my_ip, 'redacted'), 'status': 1, 'ip': ip})
+            for one_ip in my_ips:
+                pretty_data = pretty_data.replace(one_ip, 'redacted')
+            debug_udp.update({'info': pretty_data, 'status': 1, 'ip': ip})
             trackon.submitted_data.appendleft(debug_udp)
             return latency, parsed['interval'], udp_version
         except RuntimeError as e:
@@ -51,7 +55,9 @@ def scrape_submitted(t):
         response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
         pretty_data = pp.pformat(response)
-        debug_https.update({'info': pretty_data.replace(my_ip, 'redacted'), 'status': 1})
+        for one_ip in my_ips:
+            pretty_data = pretty_data.replace(one_ip, 'redacted')
+        debug_https.update({'info': pretty_data, 'status': 1})
         trackon.submitted_data.appendleft(debug_https)
         return latency, response['interval'], https_version
     except RuntimeError as e:
@@ -70,7 +76,9 @@ def scrape_submitted(t):
         response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
         pretty_data = pp.pformat(response)
-        debug_http.update({'info': pretty_data.replace(my_ip, 'redacted'), 'status': 1})
+        for one_ip in my_ips:
+            pretty_data = pretty_data.replace(one_ip, 'redacted')
+        debug_http.update({'info': pretty_data, 'status': 1})
         trackon.submitted_data.appendleft(debug_http)
         return latency, response['interval'], http_version
     except RuntimeError as e:
@@ -111,7 +119,7 @@ def announce_http(tracker):
 
     if 'failure reason' in tracker_response:
         raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
-    elif 'peers' not in tracker_response:
+    elif any(peers_field in tracker_response for peers_field in ['peers', 'peers6']):
         raise RuntimeError("Invalid response, 'peers' field is missing")
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     pp.pprint(tracker_response)
@@ -253,7 +261,7 @@ def udp_parse_announce_response(buf, sent_transaction_id):
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError("Transaction ID doesnt match in announce response! Expected %s, got %s"
                            % (sent_transaction_id, res_transaction_id))
-    #print("Raw response: " + buf.hex())
+    # print("Raw response: " + buf.hex())
     if action == 0x1:
         ret = dict()
         offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
