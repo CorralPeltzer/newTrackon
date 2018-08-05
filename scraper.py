@@ -1,6 +1,6 @@
 import socket
 import struct
-from urllib.parse import urlparse, quote_from_bytes
+from urllib.parse import urlparse, quote_from_bytes, urlencode
 from time import time
 from os import urandom
 import random
@@ -91,8 +91,18 @@ def announce_http(tracker):
     print("Scraping HTTP: %s" % tracker)
     thash = trackerhash(type='http')
     pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
-    request = "?info_hash=%s&peer_id=%s&port=6881&uploaded=0&downloaded=0&left=0&compact=1" % (thash, pid)
-    url = tracker + request
+    request_dict = {'info_hash': thash,
+               'peer_id': pid,
+               'port': 6881,
+               'uploaded': 0,
+               'downloaded': 0,
+               'left': 0,
+               'compact': 1,
+               'ipv6': my_ips[1],
+               'ipv4': my_ips[0],
+               }
+    request = urlencode(request_dict)
+    url = tracker + '?' + request
     headers = {'User-Agent': 'qBittorrent/3.3.12', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
     print(url)
     try:
