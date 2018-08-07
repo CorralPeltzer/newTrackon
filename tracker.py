@@ -149,7 +149,7 @@ class Tracker:
                 self.network.append(ip_data[2])
 
     def scrape(self):
-        return scraper.scrape_submitted(self.url)
+        return scraper.scrape_submitted(self)
 
     def is_up(self):
         self.status = 1

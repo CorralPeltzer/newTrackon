@@ -1,6 +1,6 @@
 import socket
 import struct
-from urllib.parse import urlparse, quote_from_bytes, urlencode
+from urllib.parse import urlparse, urlencode
 from time import time
 from os import urandom
 import random
@@ -15,9 +15,9 @@ my_ips = [subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).deco
           subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()]
 
 
-def scrape_submitted(t):
+def scrape_submitted(tracker):
     pp = pprint.PrettyPrinter(width=999999, compact=True)
-    parsed = urlparse(t)
+    parsed = urlparse(tracker.url)
     tnetloc = parsed.netloc
     try:
         failover_ip = socket.getaddrinfo(parsed.hostname, None)[0][4][0]
@@ -45,7 +45,7 @@ def scrape_submitted(t):
         print("UDP not working, trying HTTPS")
 
     # HTTPS scrape
-    if not urlparse(t).port:
+    if not urlparse(tracker.url).port:
         https_version = 'https://' + tnetloc + ':443/announce'
     else:
         https_version = 'https://' + tnetloc + '/announce'
@@ -66,7 +66,7 @@ def scrape_submitted(t):
         trackon.submitted_data.appendleft(debug_https)
 
     # HTTP scrape
-    if not urlparse(t).port:
+    if not urlparse(tracker.url).port:
         http_version = 'http://' + tnetloc + ':80/announce'
     else:
         http_version = 'http://' + tnetloc + '/announce'
@@ -87,22 +87,23 @@ def scrape_submitted(t):
     raise RuntimeError
 
 
-def announce_http(tracker):
-    print("Scraping HTTP: %s" % tracker)
-    thash = trackerhash(type='http')
+def announce_http(url):
+    print("Scraping HTTP: %s" % url)
+    thash = urandom(20)
     pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
-    request_dict = {'info_hash': thash,
-               'peer_id': pid,
-               'port': 6881,
-               'uploaded': 0,
-               'downloaded': 0,
-               'left': 0,
-               'compact': 1,
-               'ipv6': my_ips[1],
-               'ipv4': my_ips[0],
-               }
-    request = urlencode(request_dict)
-    url = tracker + '?' + request
+
+    args_dict = {'info_hash': thash,
+                 'peer_id': pid,
+                 'port': 6881,
+                 'uploaded': 0,
+                 'downloaded': 0,
+                 'left': 0,
+                 'compact': 1,
+                 'ipv6': my_ips[1],
+                 'ipv4': my_ips[0]
+                 }
+    arguments = urlencode(args_dict)
+    url = url + '?' + arguments
     headers = {'User-Agent': 'qBittorrent/3.3.12', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
     print(url)
     try:
@@ -152,17 +153,8 @@ def decode_binary_peers(peers):
     print(peer_ips)
 
 
-def trackerhash(type):
-    """Generate a random info_hash to be used with this tracker."""
-    t_hash = urandom(20)
-    if type == 'udp':
-        return t_hash
-    if type == 'http':
-        return quote_from_bytes(t_hash)
-
-
 def announce_udp(udp_version):
-    thash = trackerhash(type='udp')
+    thash = urandom(20)
     parsed_tracker = urlparse(udp_version)
     print("Scraping UDP: %s " % udp_version)
     sock = None
