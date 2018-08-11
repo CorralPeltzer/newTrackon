@@ -202,8 +202,9 @@ def announce_udp(udp_version):
         raise RuntimeError("UDP timeout")
     except socket.error as err:
         raise RuntimeError("Other error: " + str(err))
+    family = sock.family
     sock.close()
-    return udp_parse_announce_response(buf, transaction_id) + (ip,)
+    return udp_parse_announce_response(buf, transaction_id, str(family)) + (ip,)
 
 
 def udp_create_binary_connection_request():
@@ -255,7 +256,7 @@ def udp_create_announce_request(connection_id, thash):
     return buf, transaction_id
 
 
-def udp_parse_announce_response(buf, sent_transaction_id):
+def udp_parse_announce_response(buf, sent_transaction_id, family):
     if len(buf) < 20:
         raise RuntimeError("Wrong response length while announcing: %s" % len(buf))
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
@@ -276,12 +277,20 @@ def udp_parse_announce_response(buf, sent_transaction_id):
         peers = list()
         x = 0
         while offset != len(buf):
+            binary_response = memoryview(buf)
             peers.append(dict())
-            peers[x]['IP'] = struct.unpack_from("!i", buf, offset)[0]
-            peers[x]['IP'] = socket.inet_ntoa(struct.pack("!i", peers[x]['IP']))
-            offset += 4
-            if offset >= len(buf):
-                raise RuntimeError("Error while reading peer port")
+            if family == "AddressFamily.AF_INET":  # IPv4
+                if len(buf) < offset + 6:
+                    raise RuntimeError("Invalid response length")
+                ipv4_address = bytes(binary_response[offset:offset + 4])
+                peers[x]['IP'] = socket.inet_ntop(socket.AF_INET, ipv4_address)
+                offset += 4
+            elif family == "AddressFamily.AF_INET6":  # IPv6
+                if len(buf) < offset + 18:
+                    raise RuntimeError("Invalid response length")
+                ipv6_address = bytes(binary_response[offset:offset + 16])
+                peers[x]['IP'] = socket.inet_ntop(socket.AF_INET6, ipv6_address)
+                offset += 16
             peers[x]['port'] = struct.unpack_from("!H", buf, offset)[0]
             offset += 2
             x += 1
