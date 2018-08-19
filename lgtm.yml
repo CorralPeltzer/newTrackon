@@ -1,0 +1,7 @@
+extraction:
+  python:
+    python_setup:
+      version: 3.6
+      requirements_files:
+        - requirements.txt
+      setup.py: false
