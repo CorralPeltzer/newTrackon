@@ -274,27 +274,7 @@ def udp_parse_announce_response(buf, sent_transaction_id, family):
         offset += 4
         ret['seeds'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        peers = list()
-        x = 0
-        while offset != len(buf):
-            binary_response = memoryview(buf)
-            peers.append(dict())
-            if family == "AddressFamily.AF_INET":  # IPv4
-                if len(buf) < offset + 6:
-                    raise RuntimeError("Invalid response length")
-                ipv4_address = bytes(binary_response[offset:offset + 4])
-                peers[x]['IP'] = socket.inet_ntop(socket.AF_INET, ipv4_address)
-                offset += 4
-            elif family == "AddressFamily.AF_INET6":  # IPv6
-                if len(buf) < offset + 18:
-                    raise RuntimeError("Invalid response length")
-                ipv6_address = bytes(binary_response[offset:offset + 16])
-                peers[x]['IP'] = socket.inet_ntop(socket.AF_INET6, ipv6_address)
-                offset += 16
-            peers[x]['port'] = struct.unpack_from("!H", buf, offset)[0]
-            offset += 2
-            x += 1
-        ret['peers'] = peers
+        ret['peers'] = decode_binary_peers_list(buf, offset, family)
         pp = pprint.PrettyPrinter(width=999999, compact=True)
         pp.pprint(ret)
         return ret, buf.hex()
@@ -302,6 +282,30 @@ def udp_parse_announce_response(buf, sent_transaction_id, family):
         # an error occured, try and extract the error string
         error = struct.unpack_from("!s", buf, 8)
         raise RuntimeError("Error while annoucing: %s" % error)
+
+
+def decode_binary_peers_list(buf, offset, family):
+    peers = list()
+    x = 0
+    while offset != len(buf):
+        binary_response = memoryview(buf)
+        peers.append(dict())
+        if family == "AddressFamily.AF_INET":  # IPv4
+            if len(buf) < offset + 6:
+                return peers
+            ipv4_address = bytes(binary_response[offset:offset + 4])
+            peers[x]['IP'] = socket.inet_ntop(socket.AF_INET, ipv4_address)
+            offset += 4
+        elif family == "AddressFamily.AF_INET6":  # IPv6
+            if len(buf) < offset + 18:
+                return peers
+            ipv6_address = bytes(binary_response[offset:offset + 16])
+            peers[x]['IP'] = socket.inet_ntop(socket.AF_INET6, ipv6_address)
+            offset += 16
+        peers[x]['port'] = struct.unpack_from("!H", buf, offset)[0]
+        offset += 2
+        x += 1
+    return peers
 
 
 def udp_get_transaction_id():
