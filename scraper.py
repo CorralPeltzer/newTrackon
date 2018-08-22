@@ -233,7 +233,6 @@ def udp_parse_connection_response(buf, sent_transaction_id):
     elif action == 0x3:
         error = struct.unpack_from("!s", buf, 8)
         raise RuntimeError("Error while trying to get a connection response: %s" % error)
-    pass
 
 
 def udp_create_announce_request(connection_id, thash):
