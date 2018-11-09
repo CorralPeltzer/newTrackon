@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "==2.20.0"
+requests = "==2.20.1"
 tornado = "==5.1.1"
 wsgi-request-logger = "==0.4.6"
 dnspython = "==1.15.0"
