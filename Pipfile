@@ -1,16 +1,23 @@
 [[source]]
+
 url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+
 [packages]
-requests = "==2.20.1"
+
+requests = "==2.21.0"
 tornado = "==5.1.1"
 wsgi-request-logger = "==0.4.6"
 Flask-Mako = "==0.4"
 Flask = "==1.0.2"
 
+
 [dev-packages]
 
+
+
 [requires]
+
 python_version = "3.6"
