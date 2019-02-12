@@ -104,7 +104,7 @@ def announce_http(url):
                  }
     arguments = urlencode(args_dict)
     url = url + '?' + arguments
-    headers = {'User-Agent': 'qBittorrent/3.3.12', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
+    headers = {'User-Agent': 'qBittorrent/4.1.5', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
     print(url)
     try:
         response = requests.get(url, headers=headers, timeout=10)
