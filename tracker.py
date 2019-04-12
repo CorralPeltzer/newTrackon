@@ -164,7 +164,7 @@ class Tracker:
     @staticmethod
     def ip_api(ip):
         try:
-            response = request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,org')
+            response = request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,isp')
             tracker_info = response.read().decode('utf-8')
             sleep(0.5)  # This wait is to respect the queries per minute limit of IP-API and not get banned
         except IOError:
