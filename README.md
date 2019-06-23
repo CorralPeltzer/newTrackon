@@ -1,6 +1,7 @@
 # newTrackon
 
 [![Requirements Status](https://requires.io/github/CorralPeltzer/newTrackon/requirements.svg?branch=master)](https://requires.io/github/CorralPeltzer/newTrackon/requirements/?branch=master)
+[![Beerpay](https://beerpay.io/CorralPeltzer/newTrackon/badge.svg?style=beer-square)](https://beerpay.io/CorralPeltzer/newTrackon)  [![Beerpay](https://beerpay.io/CorralPeltzer/newTrackon/make-wish.svg?style=flat-square)](https://beerpay.io/CorralPeltzer/newTrackon?focus=wish)
 
 newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use.
 It also allows to submit new trackers to add them to the list.
@@ -41,8 +42,3 @@ You can change the IP and port of the server editing the last line of server.py.
 Feel free to make suggestions, create pull requests, report issues or any other feedback.
 
 Contact me on [twitter](https://twitter.com/CorralPeltzer) or on corral.miguelangel@gmail.com
-
-## Support on Beerpay
-Hey dude! Help me out for a couple of :beers:!
-
-[![Beerpay](https://beerpay.io/CorralPeltzer/newTrackon/badge.svg?style=beer-square)](https://beerpay.io/CorralPeltzer/newTrackon)  [![Beerpay](https://beerpay.io/CorralPeltzer/newTrackon/make-wish.svg?style=flat-square)](https://beerpay.io/CorralPeltzer/newTrackon?focus=wish)
