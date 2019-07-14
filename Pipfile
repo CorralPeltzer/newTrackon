@@ -9,7 +9,6 @@ name = "pypi"
 
 requests = "==2.22.0"
 tornado = "==6.0.3"
-wsgi-request-logger = "==0.4.6"
 Flask-Mako = "==0.4"
 Flask = "==1.1.1"
 
