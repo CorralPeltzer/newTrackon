@@ -239,8 +239,7 @@ def detect_new_ip_duplicates():
         if ip not in non_duplicates:
             non_duplicates.add(ip)
         else:
-            logger.info('IP' + ip + 'is duplicated, manual action required')
-            print("IP DUPLICATED: " + ip)
+            logger.info('IP ' + ip + ' is duplicated, manual action required')
 
 
 def insert_in_db(tracker):
