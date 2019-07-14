@@ -6,7 +6,6 @@ from werkzeug.routing import BaseConverter
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
-from requestlogger import WSGILogger, ApacheFormatter
 
 import trackon
 import trackerlist_project
@@ -167,8 +166,6 @@ get_trackerlist_project_list.daemon = True
 get_trackerlist_project_list.start()
 
 handlers = [FileHandler('access.log'), ]
-app = WSGILogger(app, handlers, ApacheFormatter())
-
 http_server = HTTPServer(WSGIContainer(app))
 
 if __name__ == '__main__':

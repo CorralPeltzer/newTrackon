@@ -23,7 +23,7 @@ Then, browse to the project root folder. To install the pipenv environment and d
 pipenv install
 pipenv shell
 ```
-This will install requests, Flask, tornado, wsgi-requests-logger, and Flask-Mako.
+This will install requests, Flask, tornado, and Flask-Mako.
 
 Then, create the database with
 ```
