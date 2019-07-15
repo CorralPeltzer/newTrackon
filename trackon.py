@@ -196,6 +196,7 @@ def process_new_tracker(tracker_candidate):
                 print("Tracker already being tracked.")
                 return
 
+    tracker_candidate.last_downtime = int(time())
     logger.info('Contact new tracker ' + tracker_candidate.url)
     tracker_candidate.last_checked = int(time())
     try:
