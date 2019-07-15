@@ -10,6 +10,7 @@ import requests
 import bencode
 import pprint
 import subprocess
+import logging
 
 my_ips = [subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip(),
           subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()]
@@ -42,7 +43,7 @@ def scrape_submitted(tracker):
             if debug_udp['info'] != "Can't resolve IP":
                 debug_udp['ip'] = failover_ip
             trackon.submitted_data.appendleft(debug_udp)
-        print("UDP not working, trying HTTPS")
+        logging.info("UDP not working, trying HTTPS")
 
     # HTTPS scrape
     if not urlparse(tracker.url).port:
@@ -88,7 +89,7 @@ def scrape_submitted(tracker):
 
 
 def announce_http(url):
-    print("Scraping HTTP: %s" % url)
+    logging.info("Scraping HTTP: %s" % url)
     thash = urandom(20)
     pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
 
@@ -105,7 +106,7 @@ def announce_http(url):
     arguments = urlencode(args_dict)
     url = url + '?' + arguments
     headers = {'User-Agent': 'qBittorrent/4.1.5', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
-    print(url)
+    logging.info(url)
     try:
         response = requests.get(url, headers=headers, timeout=10)
     except requests.Timeout:
@@ -150,13 +151,13 @@ def decode_binary_peers(peers):
                     256 * presponse[4] + presponse[5]))
         peer_ips.append(peer_ip)
         presponse = presponse[6:]
-    print(peer_ips)
+    logging.info(peer_ips)
 
 
 def announce_udp(udp_version):
     thash = urandom(20)
     parsed_tracker = urlparse(udp_version)
-    print("Scraping UDP: %s " % udp_version)
+    logging.info("Scraping UDP: %s " % udp_version)
     sock = None
     ip = None
     for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, socket.AF_UNSPEC, socket.SOCK_DGRAM):
@@ -263,7 +264,7 @@ def udp_parse_announce_response(buf, sent_transaction_id, family):
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError("Transaction ID doesnt match in announce response! Expected %s, got %s"
                            % (sent_transaction_id, res_transaction_id))
-    # print("Raw response: " + buf.hex())
+    # logging.info("Raw response: " + buf.hex())
     if action == 0x1:
         ret = dict()
         offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8

@@ -36,7 +36,7 @@ class Tracker:
     def from_url(cls, url):
         tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None, None, None)
         tracker.validate_url()
-        print('URL is ', url)
+        logging.info('URL is ', url)
         tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
         if not tracker.ip:
@@ -80,12 +80,12 @@ class Tracker:
             self.latency = int((time() - t1) * 1000)
             self.is_up()
             debug['status'] = 1
-            print("TRACKER UP")
+            logging.info("TRACKER UP")
         except RuntimeError as e:
             logger.info('Tracker down: ' + self.url + ' Cause: ' + str(e))
             debug.update({'info': str(e), 'status': 0})
             trackon.raw_data.appendleft(debug)
-            print("TRACKER DOWN")
+            logging.info("TRACKER DOWN")
             self.is_down()
         if self.uptime == 0:
             self.interval = 10800
@@ -166,7 +166,7 @@ class Tracker:
         try:
             response = request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,isp')
             tracker_info = response.read().decode('utf-8')
-            sleep(0.5)  # This wait is to respect the queries per minute limit of IP-API and not get banned
+            sleep(0.5)  # Respect the queries per minute limit of IP-API
         except IOError:
             tracker_info = 'Error'
         return tracker_info
