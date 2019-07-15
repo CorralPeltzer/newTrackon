@@ -1,20 +1,20 @@
-from threading import Thread
 from logging import FileHandler, getLogger
+from threading import Thread
+
 from flask import Flask, send_from_directory, request, Response, redirect, make_response, abort
 from flask_mako import MakoTemplates, render_template
-from werkzeug.routing import BaseConverter
-from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer
+from werkzeug.routing import BaseConverter
 
-import trackon
 import trackerlist_project
+import trackon
 
 mako = MakoTemplates()
 app = Flask(__name__)
 app.template_folder = "tpl"
 mako.init_app(app)
-
 
 accepted_hosts = {'localhost:8080', 'localhost', '127.0.0.1', '127.0.0.1:8080'}
 canonical_url = 'http://localhost:8080/'
@@ -59,7 +59,8 @@ def new_trackers_api():
 
 @app.route('/submitted')
 def submitted():
-    return render_template('submitted.mako', data=trackon.submitted_data, size=len(trackon.submitted_trackers), active='submitted')
+    return render_template('submitted.mako', data=trackon.submitted_data, size=len(trackon.submitted_trackers),
+                           active='submitted')
 
 
 @app.route('/faq')
@@ -135,12 +136,14 @@ def about():
     return render_template('/static/about.mako', active='about')
 
 
-@app.route('/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>')  # matches all favicons that should be in root
+@app.route(
+    '/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>')  # matches all favicons that should be in root
 def favicon(filename, filetype):
     return send_from_directory('static/imgs/', filename + '.' + filetype)
 
 
-@app.route('/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>') # matches browserconfig and manifest that should be in root
+@app.route(
+    '/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>')  # matches browserconfig and manifest that should be in root
 def app_things(filename, filetype):
     return send_from_directory('static/', filename + '.' + filetype)
 

@@ -1,17 +1,18 @@
-import socket
-import struct
-from logging import getLogger
-from urllib.parse import urlparse, urlencode
-from time import time
-from os import urandom
-import random
-import string
-import trackon
-import requests
-import bencode
 import pprint
+import random
+import socket
+import string
+import struct
 import subprocess
+from logging import getLogger
+from os import urandom
+from time import time
+from urllib.parse import urlparse, urlencode
 
+import requests
+
+import bencode
+import trackon
 
 logger = getLogger('trackon_logger')
 my_ips = [subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip(),

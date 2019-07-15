@@ -1,14 +1,15 @@
-import os.path as path
 import logging
-import sqlite3
+import os.path as path
 import pickle
+import sqlite3
+from ast import literal_eval
 from collections import deque
 from ipaddress import ip_address
 from threading import Lock
 from time import time, sleep
 from urllib.parse import urlparse
+
 from tracker import Tracker
-from ast import literal_eval
 
 max_input_length = 20000
 submitted_trackers = deque(maxlen=10000)
@@ -208,7 +209,7 @@ def process_new_tracker(tracker_candidate):
         debug = submitted_data.popleft()
         info = debug['info']
         debug.update({'status': 0,
-                 'info': info + '<br>Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours'})
+                      'info': info + '<br>Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours'})
         submitted_data.appendleft(debug)
         return
     tracker_candidate.update_ipapi_data()

@@ -1,15 +1,15 @@
-from urllib import request, parse
-from time import time, sleep, gmtime, strftime
+import pprint
 import re
-import scraper
-from logging import getLogger
-import trackon
+import socket
 from collections import deque
 from datetime import datetime
-import pprint
-import socket
 from ipaddress import ip_address
+from logging import getLogger
+from time import time, sleep, gmtime, strftime
+from urllib import request, parse
 
+import scraper
+import trackon
 
 logger = getLogger('trackon_logger')
 
