@@ -132,7 +132,7 @@ def enqueue_new_trackers(input_string):
         return
     new_trackers_list = input_string.split()
     for url in new_trackers_list:
-        logging.info("SUBMITTED " + url)
+        logger.info(f'SUBMITTED {url}')
         add_one_tracker_to_submitted_deque(url)
     if processing_trackers is False:
         process_submitted_deque()
@@ -141,33 +141,33 @@ def enqueue_new_trackers(input_string):
 def add_one_tracker_to_submitted_deque(url):
     try:
         ip_address(urlparse(url).hostname)
-        logging.info("ADDRESS IS IP")
+        logger.info("ADDRESS IS IP")
         return
     except ValueError:
         pass
     with deque_lock:
         for tracker_in_deque in submitted_trackers:
             if urlparse(tracker_in_deque.url).netloc == urlparse(url).netloc:
-                logging.info("Tracker already in the queue.")
+                logger.info("Tracker already in the queue.")
                 return
     with list_lock:
         for tracker_in_list in trackers_list:
             if tracker_in_list.host == urlparse(url).hostname:
-                logging.info("Tracker already being tracked.")
+                logger.info("Tracker already being tracked.")
                 return
     try:
         tracker_candidate = Tracker.from_url(url)
     except (RuntimeError, ValueError) as e:
-        logging.info(e)
+        logger.info(str(e))
         return
     all_ips_tracked = get_all_ips_tracked()
     exists_ip = set(tracker_candidate.ip).intersection(all_ips_tracked)
     if exists_ip:
-        logging.info("IP of the tracker already in the list.")
+        logger.info("IP of the tracker already in the list.")
         return
     with deque_lock:
         submitted_trackers.append(tracker_candidate)
-    logging.info("Tracker added to the submitted queue")
+    logger.info("Tracker added to the submitted queue")
 
 
 def process_submitted_deque():
@@ -176,28 +176,28 @@ def process_submitted_deque():
     while submitted_trackers:
         with deque_lock:
             tracker = submitted_trackers.popleft()
-        logging.info("Size of deque: ", len(submitted_trackers))
+        logger.info(f'Size of deque: {len(submitted_trackers)}')
         process_new_tracker(tracker)
         pickle.dump(submitted_data, open('submitted_data.pickle', 'wb'))
-    logging.info("Finished processing new trackers")
+    logger.info("Finished processing new trackers")
     processing_trackers = False
 
 
 def process_new_tracker(tracker_candidate):
-    logging.info('New tracker: ' + tracker_candidate.url)
+    logger.info(f'New tracker: {tracker_candidate.url}')
     all_ips_tracked = get_all_ips_tracked()
     exists_ip = set(tracker_candidate.ip).intersection(all_ips_tracked)
     if exists_ip:
-        logging.info("IP of the tracker already in the list.")
+        logger.info("IP of the tracker already in the list.")
         return
     with list_lock:
         for tracker_in_list in trackers_list:
             if tracker_in_list.host == urlparse(tracker_candidate.url).hostname:
-                logging.info("Tracker already being tracked.")
+                logger.info("Tracker already being tracked.")
                 return
 
     tracker_candidate.last_downtime = int(time())
-    logger.info('Contact new tracker ' + tracker_candidate.url)
+    logger.info(f'Contact new tracker {tracker_candidate.url}')
     tracker_candidate.last_checked = int(time())
     try:
         tracker_candidate.latency, tracker_candidate.interval, tracker_candidate.url = tracker_candidate.scrape()
@@ -215,7 +215,7 @@ def process_new_tracker(tracker_candidate):
     tracker_candidate.is_up()
     tracker_candidate.update_uptime()
     insert_in_db(tracker_candidate)
-    logger.info('TRACKER ADDED TO LIST: ' + tracker_candidate.url)
+    logger.info(f'TRACKER ADDED TO LIST: {tracker_candidate.url}')
 
 
 def update_outdated_trackers():
@@ -226,7 +226,7 @@ def update_outdated_trackers():
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)
         for tracker in trackers_outdated:
-            logging.info("GONNA UPDATE " + tracker.url)
+            logger.info(f'GONNA UPDATE {tracker.url}')
             tracker.update_status()
             pickle.dump(raw_data, open('raw_data.pickle', 'wb'))
         detect_new_ip_duplicates()
@@ -240,7 +240,7 @@ def detect_new_ip_duplicates():
         if ip not in non_duplicates:
             non_duplicates.add(ip)
         else:
-            logger.info('IP ' + ip + ' is duplicated, manual action required')
+            logger.info(f'IP {ip} is duplicated, manual action required')
 
 
 def insert_in_db(tracker):

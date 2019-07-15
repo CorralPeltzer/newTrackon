@@ -2,14 +2,16 @@ from urllib import request, parse
 from time import time, sleep, gmtime, strftime
 import re
 import scraper
-import logging
+from logging import getLogger
 import trackon
 from collections import deque
 from datetime import datetime
 import pprint
 import socket
 from ipaddress import ip_address
-logger = logging.getLogger('trackon_logger')
+
+
+logger = getLogger('trackon_logger')
 
 
 class Tracker:
@@ -36,7 +38,7 @@ class Tracker:
     def from_url(cls, url):
         tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None, None, None)
         tracker.validate_url()
-        logging.info('URL is ', url)
+        logger.info(f'URL is {url}')
         tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
         if not tracker.ip:
@@ -80,12 +82,12 @@ class Tracker:
             self.latency = int((time() - t1) * 1000)
             self.is_up()
             debug['status'] = 1
-            logging.info("TRACKER UP")
+            logger.info("TRACKER UP")
         except RuntimeError as e:
-            logger.info('Tracker down: ' + self.url + ' Cause: ' + str(e))
+            logger.info(f'Tracker down: {self.url} Cause: {str(e)}')
             debug.update({'info': str(e), 'status': 0})
             trackon.raw_data.appendleft(debug)
-            logging.info("TRACKER DOWN")
+            logger.info("TRACKER DOWN")
             self.is_down()
         if self.uptime == 0:
             self.interval = 10800
