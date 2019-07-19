@@ -173,7 +173,6 @@ get_trackerlist_project_list = Thread(target=trackerlist_project.main)
 get_trackerlist_project_list.daemon = True
 get_trackerlist_project_list.start()
 
-handlers = [FileHandler('access.log'), ]
 http_server = HTTPServer(WSGIContainer(app))
 
 if __name__ == '__main__':
