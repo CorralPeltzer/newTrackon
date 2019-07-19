@@ -1,4 +1,4 @@
-from logging import FileHandler, getLogger
+from logging import FileHandler, getLogger, INFO, Formatter
 from threading import Thread
 
 from flask import Flask, send_from_directory, request, Response, redirect, make_response, abort
@@ -28,6 +28,11 @@ class RegexConverter(BaseConverter):
 
 app.url_map.converters['regex'] = RegexConverter
 logger = getLogger('trackon_logger')
+logger.setLevel(INFO)
+handler = FileHandler('trackon.log')
+logger_format = Formatter('%(asctime)s - %(message)s')
+handler.setFormatter(logger_format)
+logger.addHandler(handler)
 logger.info('Server started')
 
 

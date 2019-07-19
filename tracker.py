@@ -38,7 +38,7 @@ class Tracker:
     def from_url(cls, url):
         tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None, None, None)
         tracker.validate_url()
-        logger.info(f'URL is {url}')
+        logger.info(f'Preprocessing {url}')
         tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
         if not tracker.ip:
@@ -82,12 +82,11 @@ class Tracker:
             self.latency = int((time() - t1) * 1000)
             self.is_up()
             debug['status'] = 1
-            logger.info("TRACKER UP")
+            logger.info(f'{self.url} status is UP')
         except RuntimeError as e:
-            logger.info(f'Tracker down: {self.url} Cause: {str(e)}')
+            logger.info(f'{self.url} status is DOWN. Cause: {str(e)}')
             debug.update({'info': str(e), 'status': 0})
             trackon.raw_data.appendleft(debug)
-            logger.info("TRACKER DOWN")
             self.is_down()
         if self.uptime == 0:
             self.interval = 10800

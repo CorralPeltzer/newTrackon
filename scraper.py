@@ -46,7 +46,7 @@ def scrape_submitted(tracker):
             if debug_udp['info'] != "Can't resolve IP":
                 debug_udp['ip'] = failover_ip
             trackon.submitted_data.appendleft(debug_udp)
-        logger.info("UDP not working, trying HTTPS")
+        logger.info(f'{udp_version} UDP failed, trying HTTPS')
 
     # HTTPS scrape
     if not urlparse(tracker.url).port:
@@ -92,7 +92,7 @@ def scrape_submitted(tracker):
 
 
 def announce_http(url):
-    logger.info(f'Scraping HTTP: {url}')
+    logger.info(f'{url} Scraping HTTP')
     thash = urandom(20)
     pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
 
@@ -135,7 +135,7 @@ def announce_http(url):
         raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
     if 'peers' not in tracker_response and 'peers6' not in tracker_response:
         raise RuntimeError("Invalid response, both 'peers' and 'peers6' field are missing: " + str(tracker_response))
-    logger.info(f'{tracker_response}')
+    logger.info(f'Response: {tracker_response}')
     # if type(tracker_response['peers']) == str:
     # decode_binary_peers(tracker_response['peers']) TODO: decode binary peers response
 
@@ -157,7 +157,7 @@ def decode_binary_peers(peers):
 def announce_udp(udp_version):
     thash = urandom(20)
     parsed_tracker = urlparse(udp_version)
-    logger.info(f'Scraping UDP: {udp_version}')
+    logger.info(f'{udp_version} Scraping UDP')
     sock = None
     ip = None
     for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, socket.AF_UNSPEC, socket.SOCK_DGRAM):
@@ -274,7 +274,7 @@ def udp_parse_announce_response(buf, sent_transaction_id, family):
         ret['seeds'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
         ret['peers'] = decode_binary_peers_list(buf, offset, family)
-        logger.info(f'{ret}')
+        logger.info(f'Response: {ret}')
         return ret, buf.hex()
     else:
         # an error occured, try and extract the error string
