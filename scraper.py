@@ -14,7 +14,7 @@ import requests
 import bencode
 import trackon
 
-logger = getLogger('trackon_logger')
+logger = getLogger('newtrackon_logger')
 my_ips = [subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip(),
           subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()]
 

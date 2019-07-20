@@ -2,6 +2,7 @@ import logging
 import os.path as path
 import pickle
 import sqlite3
+import sys
 from ast import literal_eval
 from collections import deque
 from ipaddress import ip_address
@@ -28,7 +29,7 @@ list_lock = Lock()
 trackers_list = []
 processing_trackers = False
 
-logger = logging.getLogger('trackon_logger')
+logger = logging.getLogger('newtrackon_logger')
 
 
 def dict_factory(cursor, row):
@@ -67,17 +68,20 @@ def get_all_data_from_db():
 def process_uptime_and_downtime_time(trackers_unprocessed):
     for tracker in trackers_unprocessed:
         if tracker.status == 1:
+            tracker.status_epoch = tracker.last_downtime
             if not tracker.last_downtime:
-                tracker.status_string = "Working"
+                tracker.status_readable = "Working"
             else:
                 time_string = calculate_time_ago(tracker.last_downtime)
-                tracker.status_string = "Working for " + time_string
+                tracker.status_readable = "Working for " + time_string
         elif tracker.status == 0:
+            tracker.status_epoch = sys.maxsize
             if not tracker.last_uptime:
-                tracker.status_string = "Down"
+                tracker.status_readable = "Down"
             else:
                 time_string = calculate_time_ago(tracker.last_uptime)
-                tracker.status_string = "Down for " + time_string
+                tracker.status_readable = "Down for " + time_string
+
     return trackers_unprocessed
 
 

@@ -11,7 +11,7 @@ from urllib import request, parse
 import scraper
 import trackon
 
-logger = getLogger('trackon_logger')
+logger = getLogger('newtrackon_logger')
 
 
 class Tracker:

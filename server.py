@@ -24,7 +24,7 @@ class RegexConverter(BaseConverter):
 
 
 app.url_map.converters['regex'] = RegexConverter
-logger = getLogger('trackon_logger')
+logger = getLogger('newtrackon_logger')
 logger.setLevel(INFO)
 handler = FileHandler('trackon.log')
 logger_format = Formatter('%(asctime)s - %(message)s')
