@@ -135,7 +135,7 @@ def announce_http(url):
         raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
     if 'peers' not in tracker_response and 'peers6' not in tracker_response:
         raise RuntimeError("Invalid response, both 'peers' and 'peers6' field are missing: " + str(tracker_response))
-    logger.info(f'Response: {tracker_response}')
+    logger.info(f'{url} response: {tracker_response}')
     # if type(tracker_response['peers']) == str:
     # decode_binary_peers(tracker_response['peers']) TODO: decode binary peers response
 
@@ -205,7 +205,9 @@ def announce_udp(udp_version):
         raise RuntimeError("Other error: " + str(err))
     family = sock.family
     sock.close()
-    return udp_parse_announce_response(buf, transaction_id, str(family)) + (ip,)
+    parsed, raw = udp_parse_announce_response(buf, transaction_id, str(family))
+    logger.info(f'{udp_version} response: {parsed}')
+    return parsed, raw, ip
 
 
 def udp_create_binary_connection_request():
@@ -274,7 +276,6 @@ def udp_parse_announce_response(buf, sent_transaction_id, family):
         ret['seeds'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
         ret['peers'] = decode_binary_peers_list(buf, offset, family)
-        logger.info(f'Response: {ret}')
         return ret, buf.hex()
     else:
         # an error occured, try and extract the error string

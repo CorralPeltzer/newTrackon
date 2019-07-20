@@ -176,5 +176,5 @@ get_trackerlist_project_list.start()
 http_server = HTTPServer(WSGIContainer(app))
 
 if __name__ == '__main__':
-    http_server.listen(8080)
+    http_server.listen(8080, address='127.0.0.1')
     IOLoop.instance().start()
