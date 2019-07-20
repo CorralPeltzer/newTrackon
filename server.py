@@ -16,9 +16,6 @@ app = Flask(__name__)
 app.template_folder = "tpl"
 mako.init_app(app)
 
-accepted_hosts = {'localhost:8080', 'localhost', '127.0.0.1', '127.0.0.1:8080'}
-canonical_url = 'http://localhost:8080/'
-
 
 class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
@@ -151,12 +148,6 @@ def favicon(filename, filetype):
     '/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>')  # matches browserconfig and manifest that should be in root
 def app_things(filename, filetype):
     return send_from_directory('static/', filename + '.' + filetype)
-
-
-@app.before_request
-def check_host_http_header():
-    if request.headers.get('host') not in accepted_hosts:
-        return redirect(canonical_url, code=301)
 
 
 def add_api_headers(resp):
