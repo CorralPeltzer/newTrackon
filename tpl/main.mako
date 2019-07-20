@@ -2,7 +2,7 @@
 <script>
 $(document).ready( function () {
     $('#trackon_table').DataTable( {
-    "pageLength": 25,
+    "pageLength": 50,
     "order": [[ 1, 'desc' ], [ 9, 'asc' ]],
     "columnDefs": [
         { "type": "natural", targets: [3, 4, 5, 8] },
