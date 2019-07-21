@@ -11,12 +11,18 @@ from urllib.parse import urlparse, urlencode
 
 import requests
 
-import bencode
+import bdecode
 import trackon
 
+HTTP_PORT = 6881
+UDP_PORT = 30461
+SCRAPING_HEADERS = {'User-Agent': 'qBittorrent/4.1.5', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
+
 logger = getLogger('newtrackon_logger')
-my_ips = [subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip(),
-          subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()]
+
+my_ipv4 = subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip()
+my_ipv6 = subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()
+to_redact = [my_ipv4, my_ipv6, str(HTTP_PORT), str(UDP_PORT)]
 
 
 def scrape_submitted(tracker):
@@ -36,7 +42,7 @@ def scrape_submitted(tracker):
             parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
             pretty_data = pp.pformat(parsed)
-            for one_ip in my_ips:
+            for one_ip in to_redact:
                 pretty_data = pretty_data.replace(one_ip, 'redacted')
             debug_udp.update({'info': pretty_data, 'status': 1, 'ip': ip})
             trackon.submitted_data.appendleft(debug_udp)
@@ -59,7 +65,7 @@ def scrape_submitted(tracker):
         response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
         pretty_data = pp.pformat(response)
-        for one_ip in my_ips:
+        for one_ip in to_redact:
             pretty_data = pretty_data.replace(one_ip, 'redacted')
         debug_https.update({'info': pretty_data, 'status': 1})
         trackon.submitted_data.appendleft(debug_https)
@@ -80,7 +86,7 @@ def scrape_submitted(tracker):
         response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
         pretty_data = pp.pformat(response)
-        for one_ip in my_ips:
+        for one_ip in to_redact:
             pretty_data = pretty_data.replace(one_ip, 'redacted')
         debug_http.update({'info': pretty_data, 'status': 1})
         trackon.submitted_data.appendleft(debug_http)
@@ -98,19 +104,18 @@ def announce_http(url):
 
     args_dict = {'info_hash': thash,
                  'peer_id': pid,
-                 'port': 6881,
+                 'port': HTTP_PORT,
                  'uploaded': 0,
                  'downloaded': 0,
                  'left': 0,
                  'compact': 1,
-                 'ipv6': my_ips[1],
-                 'ipv4': my_ips[0]
+                 'ipv6': my_ipv6,
+                 'ipv4': my_ipv4
                  }
     arguments = urlencode(args_dict)
     url = url + '?' + arguments
-    headers = {'User-Agent': 'qBittorrent/4.1.5', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10)
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
     except requests.HTTPError:
@@ -127,7 +132,7 @@ def announce_http(url):
 
     else:
         try:
-            tracker_response = bencode.bdecode(response.text)
+            tracker_response = bdecode.bdecode(response.content)
         except:
             raise RuntimeError("Can't bdecode the HTTP response")
 

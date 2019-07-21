@@ -67,7 +67,7 @@ class Tracker:
                 parsed, raw, ip = scraper.announce_udp(self.url)
                 self.interval = parsed['interval']
                 pretty_data = pp.pformat(parsed)
-                for one_ip in scraper.my_ips:
+                for one_ip in scraper.to_redact:
                     pretty_data = pretty_data.replace(one_ip, 'redacted')
                 debug['info'] = pretty_data
                 trackon.raw_data.appendleft(debug)
@@ -75,7 +75,7 @@ class Tracker:
                 response = scraper.announce_http(self.url)
                 self.interval = response['interval']
                 pretty_data = pp.pformat(response)
-                for one_ip in scraper.my_ips:
+                for one_ip in scraper.to_redact:
                     pretty_data = pretty_data.replace(one_ip, 'redacted')
                 debug['info'] = pretty_data
                 trackon.raw_data.appendleft(debug)
