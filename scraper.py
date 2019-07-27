@@ -11,8 +11,8 @@ from urllib.parse import urlparse, urlencode
 
 import requests
 
-import bdecode
 import trackon
+from bdecode import bdecode, decode_binary_peers_list
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
@@ -132,7 +132,7 @@ def announce_http(url):
 
     else:
         try:
-            tracker_response = bdecode.bdecode(response.content)
+            tracker_response = bdecode(response.content)
         except:
             raise RuntimeError("Can't bdecode the HTTP response")
 
@@ -141,22 +141,7 @@ def announce_http(url):
     if 'peers' not in tracker_response and 'peers6' not in tracker_response:
         raise RuntimeError("Invalid response, both 'peers' and 'peers6' field are missing: " + str(tracker_response))
     logger.info(f'{url} response: {tracker_response}')
-    # if type(tracker_response['peers']) == str:
-    # decode_binary_peers(tracker_response['peers']) TODO: decode binary peers response
-
     return tracker_response
-
-
-def decode_binary_peers(peers):
-    """ Return a list of IPs and ports, given a binary list of peers,
-    from a tracker response. """
-    peer_ips = list()
-    presponse = [ord(i) for i in peers]
-    while presponse:
-        peer_ip = (('.'.join(str(x) for x in presponse[0:4]),
-                    256 * presponse[4] + presponse[5]))
-        peer_ips.append(peer_ip)
-        presponse = presponse[6:]
 
 
 def announce_udp(udp_version):
@@ -208,9 +193,9 @@ def announce_udp(udp_version):
         raise RuntimeError("UDP timeout")
     except socket.error as err:
         raise RuntimeError("Other error: " + str(err))
-    family = sock.family
+    ip_family = sock.family
     sock.close()
-    parsed, raw = udp_parse_announce_response(buf, transaction_id, str(family))
+    parsed, raw = udp_parse_announce_response(buf, transaction_id, ip_family)
     logger.info(f'{udp_version} response: {parsed}')
     return parsed, raw, ip
 
@@ -263,7 +248,7 @@ def udp_create_announce_request(connection_id, thash):
     return buf, transaction_id
 
 
-def udp_parse_announce_response(buf, sent_transaction_id, family):
+def udp_parse_announce_response(buf, sent_transaction_id, ip_family):
     if len(buf) < 20:
         raise RuntimeError("Wrong response length while announcing: %s" % len(buf))
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
@@ -280,36 +265,12 @@ def udp_parse_announce_response(buf, sent_transaction_id, family):
         offset += 4
         ret['seeds'] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        ret['peers'] = decode_binary_peers_list(buf, offset, family)
+        ret['peers'] = decode_binary_peers_list(buf, offset, ip_family)
         return ret, buf.hex()
     else:
         # an error occured, try and extract the error string
         error = struct.unpack_from("!s", buf, 8)
         raise RuntimeError("Error while annoucing: %s" % error)
-
-
-def decode_binary_peers_list(buf, offset, family):
-    peers = list()
-    x = 0
-    while offset != len(buf):
-        binary_response = memoryview(buf)
-        peers.append(dict())
-        if family == "AddressFamily.AF_INET":  # IPv4
-            if len(buf) < offset + 6:
-                return peers
-            ipv4_address = bytes(binary_response[offset:offset + 4])
-            peers[x]['IP'] = socket.inet_ntop(socket.AF_INET, ipv4_address)
-            offset += 4
-        elif family == "AddressFamily.AF_INET6":  # IPv6
-            if len(buf) < offset + 18:
-                return peers
-            ipv6_address = bytes(binary_response[offset:offset + 16])
-            peers[x]['IP'] = socket.inet_ntop(socket.AF_INET6, ipv6_address)
-            offset += 16
-        peers[x]['port'] = struct.unpack_from("!H", buf, offset)[0]
-        offset += 2
-        x += 1
-    return peers
 
 
 def udp_get_transaction_id():

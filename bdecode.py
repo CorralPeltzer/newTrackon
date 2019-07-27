@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from socket import AF_INET, AF_INET6, inet_ntop
-from struct import unpack
+from struct import unpack_from
 
 TOK_DICT = b'd'
 TOK_LIST = b'l'
@@ -19,10 +19,10 @@ def bdecode(data):
             response[key] = value
 
     if 'peers' in response:
-        response['peers'] = extract_compact_peers(response['peers'], AF_INET)
+        response['peers'] = decode_binary_peers_list(response['peers'], 0, AF_INET)
 
     if 'peers6' in response:
-        response['peers6'] = extract_compact_peers(response['peers6'], AF_INET6)
+        response['peers6'] = decode_binary_peers_list(response['peers6'], 0, AF_INET6)
 
     for key, value in response.items():
         if isinstance(value, bytes):
@@ -31,19 +31,25 @@ def bdecode(data):
     return response
 
 
-def extract_compact_peers(peers, ip_type):
-    # only handles compact peer info, possible future TODO: support dict info
-    if ip_type == AF_INET:
-        peer_length = 6
-    else:
-        peer_length = 18
-    peers_list = [peers[i:i + peer_length] for i in range(0, len(peers), peer_length)]
-    peers_tuples = []
-    for p in peers_list:
-        ip = inet_ntop(ip_type, p[:peer_length - 2])  # unpack the IP bytes
-        port = unpack("!H", p[peer_length - 2:])[0]  # unpack the port bytes
-        peers_tuples.append({'IP': ip, 'port': port})
-    return peers_tuples
+def decode_binary_peers_list(buf, offset, ip_family):
+    peers = []
+    x = 0
+    while offset != len(buf):
+        if ip_family == AF_INET:
+            peer_length = 6
+        else:
+            peer_length = 18
+        binary_response = memoryview(buf)
+        peers.append(dict())
+        if len(buf) < offset + peer_length:
+            return peers
+        ip_address = bytes(binary_response[offset:offset + peer_length - 2])
+        peers[x]['IP'] = inet_ntop(ip_family, ip_address)
+        offset += peer_length - 2
+        peers[x]['port'] = unpack_from("!H", buf, offset)[0]
+        offset += 2
+        x += 1
+    return peers
 
 
 class Decoder:
