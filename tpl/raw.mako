@@ -4,7 +4,7 @@
 <div class="container">
 <h2>Raw data</h2>
 
-<p>This is the information about the response of the last 300 trackers contacted, for research and debugging purposes.
+<p>This is the information about the response of the last 600 trackers contacted, for research and debugging purposes.
     These include only trackers already in the list. </p>
 <p>The trackers are queried with a random hash.</p>
 

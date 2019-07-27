@@ -2,7 +2,7 @@
 <%inherit file="base.mako"/>
 <div class="container">
   <h2>Log of Newly Submitted Trackers</h2>
-  <p>This is the information about the last 300 tried trackers. To make it to the queue, a tracker has to be a well-formed URL, not to be an IP, and resolve at least to an IPv4 or an IPv6
+  <p>This is the information about the last 600 tried trackers. To make it to the queue, a tracker has to be a well-formed URL, not to be an IP, and resolve at least to an IPv4 or an IPv6
     address.</p>
     <p>Every tracker to reach the queue is tried (in this order) with UDP, HTTPS and HTTP. When one protocol succeeds, and if its update interval is between 5 minutes and 3 hours,
       it gets added to the list. If no port is specified, the tracker is tried only with HTTPS on port 443 and HTTP on port 80.</p>

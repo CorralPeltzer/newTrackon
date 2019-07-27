@@ -18,11 +18,11 @@ submitted_trackers = deque(maxlen=10000)
 if path.exists('raw_data.pickle'):
     raw_data = pickle.load(open('raw_data.pickle', 'rb'))
 else:
-    raw_data = deque(maxlen=300)
+    raw_data = deque(maxlen=600)
 if path.exists('submitted_data.pickle'):
     submitted_data = pickle.load(open('submitted_data.pickle', 'rb'))
 else:
-    submitted_data = deque(maxlen=300)
+    submitted_data = deque(maxlen=600)
 
 deque_lock = Lock()
 list_lock = Lock()
