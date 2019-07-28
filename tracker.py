@@ -64,21 +64,14 @@ class Tracker:
         debug = {'url': self.url, 'ip': list(self.ip)[0], 'time': strftime("%H:%M:%S UTC", gmtime(t1))}
         try:
             if parse.urlparse(self.url).scheme == 'udp':
-                parsed, raw, ip = scraper.announce_udp(self.url)
-                self.interval = parsed['interval']
-                pretty_data = pp.pformat(parsed)
-                for one_ip in scraper.to_redact:
-                    pretty_data = pretty_data.replace(one_ip, 'redacted')
-                debug['info'] = pretty_data
-                trackon.raw_data.appendleft(debug)
+                response, _, _ = scraper.announce_udp(self.url)
             else:
                 response = scraper.announce_http(self.url)
-                self.interval = response['interval']
-                pretty_data = pp.pformat(response)
-                for one_ip in scraper.to_redact:
-                    pretty_data = pretty_data.replace(one_ip, 'redacted')
-                debug['info'] = pretty_data
-                trackon.raw_data.appendleft(debug)
+
+            self.interval = response['interval']
+            pretty_data = scraper.redact_origin(pp.pformat(response))
+            debug['info'] = pretty_data
+            trackon.raw_data.appendleft(debug)
             self.latency = int((time() - t1) * 1000)
             self.is_up()
             debug['status'] = 1

@@ -21,8 +21,8 @@ SCRAPING_HEADERS = {'User-Agent': 'qBittorrent/4.1.5', 'Accept-Encoding': 'gzip'
 logger = getLogger('newtrackon_logger')
 
 my_ipv4 = subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip()
-my_ipv6 = subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()
-to_redact = [my_ipv4, my_ipv6, str(HTTP_PORT), str(UDP_PORT)]
+my_ipv6 = 'test'
+to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
 def scrape_submitted(tracker):
@@ -41,9 +41,7 @@ def scrape_submitted(tracker):
         try:
             parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
-            pretty_data = pp.pformat(parsed)
-            for one_ip in to_redact:
-                pretty_data = pretty_data.replace(one_ip, 'redacted')
+            pretty_data = redact_origin(pp.pformat(parsed))
             debug_udp.update({'info': pretty_data, 'status': 1, 'ip': ip})
             trackon.submitted_data.appendleft(debug_udp)
             return latency, parsed['interval'], udp_version
@@ -64,9 +62,7 @@ def scrape_submitted(tracker):
     try:
         response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
-        pretty_data = pp.pformat(response)
-        for one_ip in to_redact:
-            pretty_data = pretty_data.replace(one_ip, 'redacted')
+        pretty_data = redact_origin(pp.pformat(response))
         debug_https.update({'info': pretty_data, 'status': 1})
         trackon.submitted_data.appendleft(debug_https)
         return latency, response['interval'], https_version
@@ -85,9 +81,7 @@ def scrape_submitted(tracker):
     try:
         response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
-        pretty_data = pp.pformat(response)
-        for one_ip in to_redact:
-            pretty_data = pretty_data.replace(one_ip, 'redacted')
+        pretty_data = redact_origin(pp.pformat(response))
         debug_http.update({'info': pretty_data, 'status': 1})
         trackon.submitted_data.appendleft(debug_http)
         return latency, response['interval'], http_version
@@ -275,3 +269,11 @@ def udp_parse_announce_response(buf, sent_transaction_id, ip_family):
 
 def udp_get_transaction_id():
     return int(random.randrange(0, 255))
+
+
+def redact_origin(response):
+    response = response.replace(my_ipv4, 'v4-redacted')
+    response = response.replace(my_ipv6, 'v6-redacted')
+    for port in to_redact:
+        response = response.replace(port, 'redacted')
+    return response
