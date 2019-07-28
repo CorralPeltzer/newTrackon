@@ -21,7 +21,7 @@ SCRAPING_HEADERS = {'User-Agent': 'qBittorrent/4.1.5', 'Accept-Encoding': 'gzip'
 logger = getLogger('newtrackon_logger')
 
 my_ipv4 = subprocess.check_output(['curl', '-4', 'https://icanhazip.com/']).decode('utf-8').strip()
-my_ipv6 = 'test'
+my_ipv6 = subprocess.check_output(['curl', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()
 to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
