@@ -31,7 +31,7 @@ def scrape_submitted(tracker):
     tnetloc = parsed.netloc
     try:
         failover_ip = socket.getaddrinfo(parsed.hostname, None)[0][4][0]
-    except socket.error:
+    except OSError:
         failover_ip = ''
     # UDP scrape
     if parsed.port:  # If the tracker netloc has a port, try with udp
@@ -144,8 +144,15 @@ def announce_udp(udp_version):
     logger.info(f'{udp_version} Scraping UDP')
     sock = None
     ip = None
-    for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, socket.AF_UNSPEC, socket.SOCK_DGRAM):
-        af, socktype, proto, canonname, sa = res
+    getaddr_responses = []
+    try:
+        for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM):
+            getaddr_responses.append(res)
+    except OSError as err:
+        raise RuntimeError('UDP error: ' + str(err))
+
+    for res in getaddr_responses:
+        af, socktype, proto, _, sa = res
         ip = sa[0]
         try:
             sock = socket.socket(af, socktype, proto)
@@ -161,7 +168,7 @@ def announce_udp(udp_version):
             continue
         break
     if sock is None:
-        raise RuntimeError("UDP error")
+        raise RuntimeError("UDP connection error")
 
     # Get connection ID
     req, transaction_id = udp_create_binary_connection_request()
@@ -172,8 +179,8 @@ def announce_udp(udp_version):
         raise RuntimeError("UDP connection failed")
     except socket.timeout:
         raise RuntimeError("UDP timeout")
-    except socket.error as err:
-        raise RuntimeError("Other error: " + str(err))
+    except OSError as err:
+        raise RuntimeError("UDP error: " + str(err))
 
     connection_id = udp_parse_connection_response(buf, transaction_id)
     # Scrape away
@@ -185,8 +192,8 @@ def announce_udp(udp_version):
         raise RuntimeError("UDP connection failed")
     except socket.timeout:
         raise RuntimeError("UDP timeout")
-    except socket.error as err:
-        raise RuntimeError("Other error: " + str(err))
+    except OSError as err:
+        raise RuntimeError("UDP error: " + str(err))
     ip_family = sock.family
     sock.close()
     parsed, raw = udp_parse_announce_response(buf, transaction_id, ip_family)

@@ -121,7 +121,7 @@ class Tracker:
         self.ip = []
         temp_ips = set()
         try:
-            for res in socket.getaddrinfo(self.host, None, socket.AF_UNSPEC):
+            for res in socket.getaddrinfo(self.host, None):
                 temp_ips.add(res[4][0])
         except socket.error:
             pass
