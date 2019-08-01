@@ -72,8 +72,7 @@ def faq():
 
 @app.route('/list')
 def list_stable():
-    stable_list, size = trackon.list_uptime(95)
-    return render_template('list.mako', stable=stable_list, size=size, active='list')
+    return render_template('/static/list.mako', active='list')
 
 
 @app.route('/api')
