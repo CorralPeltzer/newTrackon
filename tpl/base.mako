@@ -116,7 +116,6 @@
 <footer class="footer">
     <p class="text-center">A <a href="https://twitter.com/CorralPeltzer">@CorralPeltzer</a> creation based on an <a
             href="http://uriel.cat-v.org/">Uriel</a> project</p>
-    </div>
 </footer>
 </body>
 </html>
