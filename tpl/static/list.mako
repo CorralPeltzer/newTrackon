@@ -34,7 +34,7 @@
         getTrackers();
     });
 
-    var clipboard = new Clipboard('button');
+    var clipboard = new ClipboardJS('.btn');
 
     clipboard.on('success', function (e) {
         setTooltip(e.trigger, 'Copied!');
@@ -57,7 +57,7 @@
         </button>
     </p>
     <div id="list">
-        <pre id="tocopy"></pre>
+        <pre id="tocopy">Loading...</pre>
     </div>
 </div>
 <%def name="title()">Stable Trackers List - newTrackon</%def>
