@@ -48,38 +48,22 @@ def get_all_data_from_db():
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
         tracker_in_db = Tracker(url=row.get('url'),
                                 host=row.get('host'),
-                                ip=try_to_json_load_list(row.get('ip')),
+                                ip=json.loads(row.get('ip')),
                                 latency=row.get('latency'),
                                 last_checked=row.get('last_checked'),
                                 interval=row.get('interval'),
                                 status=row.get('status'),
                                 uptime=row.get('uptime'),
-                                country=try_to_json_load_list(row.get('country')),
-                                country_code=try_to_json_load_list(row.get('country_code')),
-                                historic=try_to_json_load_deque(row.get('historic')),
+                                country=json.loads(row.get('country')),
+                                country_code=json.loads(row.get('country_code')),
+                                historic=deque(json.loads((row.get('historic'))), maxlen=1000),
                                 added=row.get('added'),
-                                network=try_to_json_load_list(row.get('network')),
+                                network=json.loads(row.get('network')),
                                 last_downtime=row.get('last_downtime'),
                                 last_uptime=row.get('last_uptime'))
         trackers_from_db.append(tracker_in_db)
     conn.close()
     return trackers_from_db
-
-
-def try_to_json_load_list(value):
-    try:
-        return json.loads(value)
-    except ValueError:
-        logger.info(f'DB migration: Json loads failed, evaluating string: {value}')
-        return literal_eval(value)
-
-
-def try_to_json_load_deque(value):
-    try:
-        return deque(json.loads(value), maxlen=1000)
-    except ValueError:
-        logger.info(f'DB migration: Json loads failed, evaluating string: {value}')
-        return eval(value)
 
 
 def process_uptime_and_downtime_time(trackers_unprocessed):
