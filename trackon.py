@@ -4,9 +4,8 @@ import os.path as path
 import pickle
 import sqlite3
 import sys
-from ast import literal_eval
 from collections import deque
-from ipaddress import ip_address
+from ipaddress import ip_address, IPv4Address
 from threading import Lock
 from time import time, sleep
 from urllib.parse import urlparse
@@ -279,40 +278,34 @@ def get_all_ips_tracked():
     return all_ips_of_all_trackers
 
 
-def list_live():
+def api_general(query, uptime=0, include_ipv6_only=True):
     conn = sqlite3.connect('trackon.db')
     c = conn.cursor()
-    c.execute('SELECT URL FROM STATUS WHERE STATUS = 1 ORDER BY UPTIME DESC')
+    if query == '/api/http':
+        c.execute('SELECT URL, IP FROM STATUS WHERE URL LIKE "http%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
+    elif query == '/api/udp':
+        c.execute('SELECT URL, IP FROM STATUS WHERE URL LIKE "udp://%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
+    elif query == '/api/live':
+        c.execute('SELECT URL, IP FROM STATUS WHERE STATUS = 1 ORDER BY UPTIME DESC')
+    elif query == 'percentage':
+        c.execute('SELECT URL, IP FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC', (uptime,))
     raw_list = c.fetchall()
     conn.close()
+
+    if not include_ipv6_only:
+        raw_list = remove_ipv6_only_trackers(raw_list)
+
     return format_list(raw_list)
 
 
-def list_uptime(uptime):
-    conn = sqlite3.connect('trackon.db')
-    c = conn.cursor()
-    c.execute('SELECT URL FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC', (uptime,))
-    raw_list = c.fetchall()
-    conn.close()
-    return format_list(raw_list), len(raw_list)
-
-
-def api_udp():
-    conn = sqlite3.connect('trackon.db')
-    c = conn.cursor()
-    c.execute('SELECT URL FROM STATUS WHERE URL LIKE "udp://%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
-    raw_list = c.fetchall()
-    conn.close()
-    return format_list(raw_list)
-
-
-def api_http():
-    conn = sqlite3.connect('trackon.db')
-    c = conn.cursor()
-    c.execute('SELECT URL FROM STATUS WHERE URL LIKE "http%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
-    raw_list = c.fetchall()
-    conn.close()
-    return format_list(raw_list)
+def remove_ipv6_only_trackers(raw_list):
+    cleaned_list = []
+    for url, ips_list in raw_list:
+        ips_list = json.loads(ips_list)
+        ips_built = [ip_address(ip) for ip in ips_list]
+        if any(isinstance(one_ip, IPv4Address) for one_ip in ips_built):
+            cleaned_list.append((url, ips_list))
+    return cleaned_list
 
 
 def format_list(raw_list):

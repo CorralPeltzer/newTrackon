@@ -76,7 +76,7 @@ def list_stable():
 
 
 @app.route('/api')
-def api():
+def api_docs():
     return render_template('/static/api-docs.mako', active='api')
 
 
@@ -87,8 +87,9 @@ def raw():
 
 @app.route('/api/<int:percentage>')
 def api_percentage(percentage):
+    include_upv6_only = False if request.args.get('include_ipv6_only_trackers') == 'False' else True
     if 0 <= percentage <= 100:
-        formatted_list, not_needed_length = trackon.list_uptime(percentage)
+        formatted_list = trackon.api_general('percentage', percentage, include_upv6_only)
         resp = make_response(formatted_list)
         resp = add_api_headers(resp)
         return resp
@@ -112,22 +113,10 @@ def api_all():
 
 
 @app.route('/api/live')
-def api_live():
-    resp = make_response(trackon.list_live())
-    resp = add_api_headers(resp)
-    return resp
-
-
 @app.route('/api/udp')
-def api_udp():
-    resp = make_response(trackon.api_udp())
-    resp = add_api_headers(resp)
-    return resp
-
-
 @app.route('/api/http')
-def api_http():
-    resp = make_response(trackon.api_http())
+def api_multiple():
+    resp = make_response(trackon.api_general(request.path))
     resp = add_api_headers(resp)
     return resp
 
