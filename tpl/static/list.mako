@@ -19,7 +19,7 @@
 
     function getTrackers() {
         $.get({
-            url: "api/95",
+            url: "api/stable",
             data: null,
             success: function (text) {
                 $('#tocopy').text(text);

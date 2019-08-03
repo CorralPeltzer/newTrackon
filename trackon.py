@@ -1,3 +1,4 @@
+import json
 import logging
 import os.path as path
 import pickle
@@ -47,22 +48,38 @@ def get_all_data_from_db():
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
         tracker_in_db = Tracker(url=row.get('url'),
                                 host=row.get('host'),
-                                ip=literal_eval(row.get('ip')),
+                                ip=try_to_json_load_list(row.get('ip')),
                                 latency=row.get('latency'),
                                 last_checked=row.get('last_checked'),
                                 interval=row.get('interval'),
                                 status=row.get('status'),
                                 uptime=row.get('uptime'),
-                                country=literal_eval(row.get('country')),
-                                country_code=literal_eval(row.get('country_code')),
-                                historic=eval(row.get('historic')),
+                                country=try_to_json_load_list(row.get('country')),
+                                country_code=try_to_json_load_list(row.get('country_code')),
+                                historic=try_to_json_load_deque(row.get('historic')),
                                 added=row.get('added'),
-                                network=literal_eval(row.get('network')),
+                                network=try_to_json_load_list(row.get('network')),
                                 last_downtime=row.get('last_downtime'),
                                 last_uptime=row.get('last_uptime'))
         trackers_from_db.append(tracker_in_db)
     conn.close()
     return trackers_from_db
+
+
+def try_to_json_load_list(value):
+    try:
+        return json.loads(value)
+    except ValueError:
+        logger.info(f'DB migration: Json loads failed, evaluating string: {value}')
+        return literal_eval(value)
+
+
+def try_to_json_load_deque(value):
+    try:
+        return deque(json.loads(value), maxlen=1000)
+    except ValueError:
+        logger.info(f'DB migration: Json loads failed, evaluating string: {value}')
+        return eval(value)
 
 
 def process_uptime_and_downtime_time(trackers_unprocessed):
@@ -246,9 +263,10 @@ def insert_in_db(tracker):
     conn = sqlite3.connect('trackon.db')
     c = conn.cursor()
     c.execute('INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-              (tracker.url, tracker.host, str(tracker.ip), tracker.latency, tracker.last_checked, tracker.interval,
-               tracker.status, tracker.uptime, str(tracker.country), str(tracker.country_code), str(tracker.network),
-               tracker.added, str(tracker.historic), tracker.last_downtime, tracker.last_uptime,))
+              (tracker.url, tracker.host, json.dumps(tracker.ip), tracker.latency, tracker.last_checked,
+               tracker.interval, tracker.status, tracker.uptime, json.dumps(tracker.country),
+               json.dumps(tracker.country_code), json.dumps(tracker.network), tracker.added,
+               json.dumps(list(tracker.historic)), tracker.last_downtime, tracker.last_uptime,))
     conn.commit()
     conn.close()
 
@@ -259,9 +277,10 @@ def update_in_db(tracker):
     c.execute(
         "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
         " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE url=?",
-        (str(tracker.ip), tracker.latency, tracker.last_checked, tracker.status, tracker.interval, tracker.uptime,
-         str(tracker.historic), str(tracker.country), str(tracker.country_code), str(tracker.network),
-         tracker.last_downtime, tracker.last_uptime, tracker.url)).fetchone()
+        (json.dumps(tracker.ip), tracker.latency, tracker.last_checked, tracker.status, tracker.interval,
+         tracker.uptime, json.dumps(list(tracker.historic)), json.dumps(tracker.country),
+         json.dumps(tracker.country_code), json.dumps(tracker.network), tracker.last_downtime, tracker.last_uptime,
+         tracker.url)).fetchone()
     conn.commit()
     conn.close()
 

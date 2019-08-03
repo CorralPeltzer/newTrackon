@@ -21,8 +21,6 @@
     <ul>
         <li><a href="http://uriel.cat-v.org/">Uriel †</a>, the creator of Trackon.</li>
         <li><a href="https://github.com/erindru">Erin Drummond</a> for his python HTTP and UDP scraper.</li>
-        <li>Medecau in #bittorrent for ideas, feedback and beta-testing.</li>
-        <li>Grozdan, for many great suggestions, reporting many errors and adding many trackers.</li>
         <li>And many others!</li>
     </ul>
 </div>
