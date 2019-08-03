@@ -87,7 +87,7 @@ def raw():
 
 @app.route('/api/<int:percentage>')
 def api_percentage(percentage):
-    include_upv6_only = False if request.args.get('include_ipv6_only_trackers') == 'False' else True
+    include_upv6_only = False if request.args.get('include_ipv6_only_trackers') in ('False', '0') else True
     if 0 <= percentage <= 100:
         formatted_list = trackon.api_general('percentage', percentage, include_upv6_only)
         resp = make_response(formatted_list)

@@ -128,7 +128,7 @@ def announce_http(url):
         try:
             tracker_response = bdecode(response.content)
         except:
-            raise RuntimeError("Can't bdecode the HTTP response")
+            raise RuntimeError("Can't bdecode the response")
 
     if 'failure reason' in tracker_response:
         raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
