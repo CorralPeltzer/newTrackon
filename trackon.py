@@ -302,9 +302,10 @@ def remove_ipv6_only_trackers(raw_list):
     cleaned_list = []
     for url, ips_list in raw_list:
         ips_list = json.loads(ips_list)
-        ips_built = [ip_address(ip) for ip in ips_list]
-        if any(isinstance(one_ip, IPv4Address) for one_ip in ips_built):
-            cleaned_list.append((url, ips_list))
+        if ips_list:
+            ips_built = [ip_address(ip) for ip in ips_list]
+            if any(isinstance(one_ip, IPv4Address) for one_ip in ips_built):
+                cleaned_list.append((url, ips_list))
     return cleaned_list
 
 
