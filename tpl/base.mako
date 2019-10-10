@@ -20,7 +20,7 @@
 
     % if active == 'main':
         <link rel="stylesheet" href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"
-              integrity="sha256-2W/3LtLvI/CvYx3b+FekV7aKSJqyjUJcMibC8Pwe1Ug=" crossorigin="anonymous"/>
+              integrity="sha256-m+goSbLEQFhDbOg/8tlTxB6i+tufIA+51IfjfOrYgGU=" crossorigin="anonymous"/>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.3.0/css/flag-icon.min.css"
               integrity="sha256-NkXMfPcpoih3/xWDcrJcAX78pHpfwxkhNj0bAf8AMTs=" crossorigin="anonymous"/>
     % endif
@@ -30,7 +30,7 @@
             integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
     % if active == 'main':
         <script src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"
-                integrity="sha256-KyEwc9kHefOLZrGKuj1mUHGp400HdjT6+0rQpHoIovs=" crossorigin="anonymous"></script>
+                integrity="sha256-Vg4UWwyi02j888zx5nm7F3eu+uQPlbwGa5T5KWECwE4=" crossorigin="anonymous"></script>
         <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/natural.js"
                 integrity="sha256-N3f4zkaAHf18uJNlRncQ+PPQnwPcICM82tJ/DQkDjYY=" crossorigin="anonymous"></script>
         <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/date-eu.js"
