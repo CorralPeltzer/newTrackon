@@ -16,12 +16,15 @@ from bdecode import bdecode, decode_binary_peers_list
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
-SCRAPING_HEADERS = {'User-Agent': 'qBittorrent/4.1.5', 'Accept-Encoding': 'gzip', 'Connection': 'close'}
+SCRAPING_HEADERS = {'User-Agent': 'qBittorrent/4.1.5',
+                    'Accept-Encoding': 'gzip', 'Connection': 'close'}
 
 logger = getLogger('newtrackon_logger')
 
-my_ipv4 = subprocess.check_output(['curl', '-s', '-4', 'https://icanhazip.com/']).decode('utf-8').strip()
-my_ipv6 = subprocess.check_output(['curl', '-s', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()
+my_ipv4 = subprocess.check_output(
+    ['curl', '-s', '-4', 'https://icanhazip.com/']).decode('utf-8').strip()
+my_ipv6 = subprocess.check_output(
+    ['curl', '-s', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()
 to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
