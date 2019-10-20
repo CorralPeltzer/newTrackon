@@ -16,15 +16,24 @@ from bdecode import bdecode, decode_binary_peers_list
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
-SCRAPING_HEADERS = {'User-Agent': 'qBittorrent/4.1.5',
-                    'Accept-Encoding': 'gzip', 'Connection': 'close'}
+SCRAPING_HEADERS = {
+    "User-Agent": "qBittorrent/4.1.5",
+    "Accept-Encoding": "gzip",
+    "Connection": "close",
+}
 
-logger = getLogger('newtrackon_logger')
+logger = getLogger("newtrackon_logger")
 
-my_ipv4 = subprocess.check_output(
-    ['curl', '-s', '-4', 'https://icanhazip.com/']).decode('utf-8').strip()
-my_ipv6 = subprocess.check_output(
-    ['curl', '-s', '-6', 'https://icanhazip.com/']).decode('utf-8').strip()
+my_ipv4 = (
+    subprocess.check_output(["curl", "-s", "-4", "https://icanhazip.com/"])
+    .decode("utf-8")
+    .strip()
+)
+my_ipv6 = (
+    subprocess.check_output(["curl", "-s", "-6", "https://icanhazip.com/"])
+    .decode("utf-8")
+    .strip()
+)
 to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
@@ -35,82 +44,85 @@ def scrape_submitted(tracker):
     try:
         failover_ip = socket.getaddrinfo(parsed.hostname, None)[0][4][0]
     except OSError:
-        failover_ip = ''
+        failover_ip = ""
     # UDP scrape
     if parsed.port:  # If the tracker netloc has a port, try with udp
-        udp_version = 'udp://' + tnetloc + '/announce'
+        udp_version = "udp://" + tnetloc + "/announce"
         t1 = time()
-        debug_udp = {'url': udp_version, 'time': int(t1)}
+        debug_udp = {"url": udp_version, "time": int(t1)}
         try:
             parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
             pretty_data = redact_origin(pp.pformat(parsed))
-            debug_udp.update({'info': pretty_data, 'status': 1, 'ip': ip})
+            debug_udp.update({"info": pretty_data, "status": 1, "ip": ip})
             trackon.submitted_data.appendleft(debug_udp)
-            return latency, parsed['interval'], udp_version
+            return latency, parsed["interval"], udp_version
         except RuntimeError as e:
-            debug_udp.update({'info': str(e), 'status': 0})
-            if debug_udp['info'] != "Can't resolve IP":
-                debug_udp['ip'] = failover_ip
+            debug_udp.update({"info": str(e), "status": 0})
+            if debug_udp["info"] != "Can't resolve IP":
+                debug_udp["ip"] = failover_ip
             trackon.submitted_data.appendleft(debug_udp)
-        logger.info(f'{udp_version} UDP failed, trying HTTPS')
+        logger.info(f"{udp_version} UDP failed, trying HTTPS")
 
     # HTTPS scrape
     if not urlparse(tracker.url).port:
-        https_version = 'https://' + tnetloc + ':443/announce'
+        https_version = "https://" + tnetloc + ":443/announce"
     else:
-        https_version = 'https://' + tnetloc + '/announce'
+        https_version = "https://" + tnetloc + "/announce"
     t1 = time()
-    debug_https = {'url': https_version, 'time': int(t1), 'ip': failover_ip}
+    debug_https = {"url": https_version, "time": int(t1), "ip": failover_ip}
     try:
         response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(response))
-        debug_https.update({'info': pretty_data, 'status': 1})
+        debug_https.update({"info": pretty_data, "status": 1})
         trackon.submitted_data.appendleft(debug_https)
-        return latency, response['interval'], https_version
+        return latency, response["interval"], https_version
     except RuntimeError as e:
-        debug_https.update({'info': str(e), 'status': 0})
+        debug_https.update({"info": str(e), "status": 0})
         "HTTPS not working, trying HTTP"
         trackon.submitted_data.appendleft(debug_https)
 
     # HTTP scrape
     if not urlparse(tracker.url).port:
-        http_version = 'http://' + tnetloc + ':80/announce'
+        http_version = "http://" + tnetloc + ":80/announce"
     else:
-        http_version = 'http://' + tnetloc + '/announce'
+        http_version = "http://" + tnetloc + "/announce"
     t1 = time()
-    debug_http = {'url': http_version, 'time': int(t1), 'ip': failover_ip}
+    debug_http = {"url": http_version, "time": int(t1), "ip": failover_ip}
     try:
         response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(response))
-        debug_http.update({'info': pretty_data, 'status': 1})
+        debug_http.update({"info": pretty_data, "status": 1})
         trackon.submitted_data.appendleft(debug_http)
-        return latency, response['interval'], http_version
+        return latency, response["interval"], http_version
     except RuntimeError as e:
-        debug_http.update({'info': str(e), 'status': 0})
+        debug_http.update({"info": str(e), "status": 0})
         trackon.submitted_data.appendleft(debug_http)
     raise RuntimeError
 
 
 def announce_http(url):
-    logger.info(f'{url} Scraping HTTP')
+    logger.info(f"{url} Scraping HTTP")
     thash = urandom(20)
-    pid = "-qB3360-" + ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
+    pid = "-qB3360-" + "".join(
+        [random.choice(string.ascii_letters + string.digits) for _ in range(12)]
+    )
 
-    args_dict = {'info_hash': thash,
-                 'peer_id': pid,
-                 'port': HTTP_PORT,
-                 'uploaded': 0,
-                 'downloaded': 0,
-                 'left': 0,
-                 'compact': 1,
-                 'ipv6': my_ipv6,
-                 'ipv4': my_ipv4
-                 }
+    args_dict = {
+        "info_hash": thash,
+        "peer_id": pid,
+        "port": HTTP_PORT,
+        "uploaded": 0,
+        "downloaded": 0,
+        "left": 0,
+        "compact": 1,
+        "ipv6": my_ipv6,
+        "ipv4": my_ipv4,
+    }
     arguments = urlencode(args_dict)
-    url = url + '?' + arguments
+    url = url + "?" + arguments
     try:
         response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10)
     except requests.Timeout:
@@ -133,26 +145,33 @@ def announce_http(url):
         except:
             raise RuntimeError("Can't bdecode the response")
 
-    if 'failure reason' in tracker_response:
-        raise RuntimeError("Tracker error message: \"%s\"" % (tracker_response['failure reason']))
-    if 'peers' not in tracker_response and 'peers6' not in tracker_response:
-        raise RuntimeError("Invalid response, both 'peers' and 'peers6' field are missing: " + str(tracker_response))
-    logger.info(f'{url} response: {tracker_response}')
+    if "failure reason" in tracker_response:
+        raise RuntimeError(
+            'Tracker error message: "%s"' % (tracker_response["failure reason"])
+        )
+    if "peers" not in tracker_response and "peers6" not in tracker_response:
+        raise RuntimeError(
+            "Invalid response, both 'peers' and 'peers6' field are missing: "
+            + str(tracker_response)
+        )
+    logger.info(f"{url} response: {tracker_response}")
     return tracker_response
 
 
 def announce_udp(udp_version):
     thash = urandom(20)
     parsed_tracker = urlparse(udp_version)
-    logger.info(f'{udp_version} Scraping UDP')
+    logger.info(f"{udp_version} Scraping UDP")
     sock = None
     ip = None
     getaddr_responses = []
     try:
-        for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM):
+        for res in socket.getaddrinfo(
+            parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM
+        ):
             getaddr_responses.append(res)
     except OSError as err:
-        raise RuntimeError('UDP error: ' + str(err))
+        raise RuntimeError("UDP error: " + str(err))
 
     for res in getaddr_responses:
         af, socktype, proto, _, sa = res
@@ -200,7 +219,7 @@ def announce_udp(udp_version):
     ip_family = sock.family
     sock.close()
     parsed, raw = udp_parse_announce_response(buf, transaction_id, ip_family)
-    logger.info(f'{udp_version} response: {parsed}')
+    logger.info(f"{udp_version} response: {parsed}")
     return parsed, raw, ip
 
 
@@ -219,17 +238,25 @@ def udp_parse_connection_response(buf, sent_transaction_id):
         raise RuntimeError("Wrong response length getting connection id: %s" % len(buf))
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
 
-    res_transaction_id = struct.unpack_from("!i", buf, 4)[0]  # next 4 bytes is transaction id
+    res_transaction_id = struct.unpack_from("!i", buf, 4)[
+        0
+    ]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
-        raise RuntimeError("Transaction ID doesnt match in connection response. Expected %s, got %s"
-                           % (sent_transaction_id, res_transaction_id))
+        raise RuntimeError(
+            "Transaction ID doesnt match in connection response. Expected %s, got %s"
+            % (sent_transaction_id, res_transaction_id)
+        )
 
     if action == 0x0:
-        connection_id = struct.unpack_from("!q", buf, 8)[0]  # unpack 8 bytes from byte 8, should be the connection_id
+        connection_id = struct.unpack_from("!q", buf, 8)[
+            0
+        ]  # unpack 8 bytes from byte 8, should be the connection_id
         return connection_id
     elif action == 0x3:
         error = struct.unpack_from("!s", buf, 8)
-        raise RuntimeError("Error while trying to get a connection response: %s" % error)
+        raise RuntimeError(
+            "Error while trying to get a connection response: %s" % error
+        )
 
 
 def udp_create_announce_request(connection_id, thash):
@@ -244,7 +271,9 @@ def udp_create_announce_request(connection_id, thash):
     buf += struct.pack("!q", 0x0)  # number of bytes left
     buf += struct.pack("!q", 0x0)  # number of bytes uploaded
     buf += struct.pack("!i", 0x2)  # event 0 denotes start of downloading
-    buf += struct.pack("!i", 0x0)  # IP address set to 0. Response received to the sender of this packet
+    buf += struct.pack(
+        "!i", 0x0
+    )  # IP address set to 0. Response received to the sender of this packet
     key = udp_get_transaction_id()  # Unique key randomized by client
     buf += struct.pack("!i", key)
     buf += struct.pack("!i", -1)  # Number of peers required. Set to -1 for default
@@ -256,20 +285,26 @@ def udp_parse_announce_response(buf, sent_transaction_id, ip_family):
     if len(buf) < 20:
         raise RuntimeError("Wrong response length while announcing: %s" % len(buf))
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
-    res_transaction_id = struct.unpack_from("!i", buf, 4)[0]  # next 4 bytes is transaction id
+    res_transaction_id = struct.unpack_from("!i", buf, 4)[
+        0
+    ]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
-        raise RuntimeError("Transaction ID doesnt match in announce response! Expected %s, got %s"
-                           % (sent_transaction_id, res_transaction_id))
+        raise RuntimeError(
+            "Transaction ID doesnt match in announce response! Expected %s, got %s"
+            % (sent_transaction_id, res_transaction_id)
+        )
     if action == 0x1:
         ret = dict()
-        offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
-        ret['interval'] = struct.unpack_from("!i", buf, offset)[0]
+        offset = (
+            8
+        )  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
+        ret["interval"] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        ret['leechers'] = struct.unpack_from("!i", buf, offset)[0]
+        ret["leechers"] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        ret['seeds'] = struct.unpack_from("!i", buf, offset)[0]
+        ret["seeds"] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        ret['peers'] = decode_binary_peers_list(buf, offset, ip_family)
+        ret["peers"] = decode_binary_peers_list(buf, offset, ip_family)
         return ret, buf.hex()
     else:
         # an error occured, try and extract the error string
@@ -282,8 +317,8 @@ def udp_get_transaction_id():
 
 
 def redact_origin(response):
-    response = response.replace(my_ipv4, 'v4-redacted')
-    response = response.replace(my_ipv6, 'v6-redacted')
+    response = response.replace(my_ipv4, "v4-redacted")
+    response = response.replace(my_ipv6, "v6-redacted")
     for port in to_redact:
-        response = response.replace(port, 'redacted')
+        response = response.replace(port, "redacted")
     return response

@@ -11,13 +11,28 @@ from urllib import request, parse
 import scraper
 import trackon
 
-logger = getLogger('newtrackon_logger')
+logger = getLogger("newtrackon_logger")
 
 
 class Tracker:
-
-    def __init__(self, url, host, ip, latency, last_checked, interval, status, uptime, country, country_code,
-                 network, historic, added, last_downtime, last_uptime):
+    def __init__(
+        self,
+        url,
+        host,
+        ip,
+        latency,
+        last_checked,
+        interval,
+        status,
+        uptime,
+        country,
+        country_code,
+        network,
+        historic,
+        added,
+        last_downtime,
+        last_uptime,
+    ):
         self.url = url
         self.host = host
         self.ip = ip
@@ -36,9 +51,25 @@ class Tracker:
 
     @classmethod
     def from_url(cls, url):
-        tracker = cls(url, None, None, None, None, None, None, None, [], [], [], None, None, None, None)
+        tracker = cls(
+            url,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            [],
+            [],
+            [],
+            None,
+            None,
+            None,
+            None,
+        )
         tracker.validate_url()
-        logger.info(f'Preprocessing {url}')
+        logger.info(f"Preprocessing {url}")
         tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
         if not tracker.ip:
@@ -61,24 +92,28 @@ class Tracker:
         self.last_checked = int(time())
         pp = pprint.PrettyPrinter(width=999999, compact=True)
         t1 = time()
-        debug = {'url': self.url, 'ip': list(self.ip)[0], 'time': strftime("%H:%M:%S UTC", gmtime(t1))}
+        debug = {
+            "url": self.url,
+            "ip": list(self.ip)[0],
+            "time": strftime("%H:%M:%S UTC", gmtime(t1)),
+        }
         try:
-            if parse.urlparse(self.url).scheme == 'udp':
+            if parse.urlparse(self.url).scheme == "udp":
                 response, _, _ = scraper.announce_udp(self.url)
             else:
                 response = scraper.announce_http(self.url)
 
-            self.interval = response['interval']
+            self.interval = response["interval"]
             pretty_data = scraper.redact_origin(pp.pformat(response))
-            debug['info'] = pretty_data
+            debug["info"] = pretty_data
             trackon.raw_data.appendleft(debug)
             self.latency = int((time() - t1) * 1000)
             self.is_up()
-            debug['status'] = 1
-            logger.info(f'{self.url} status is UP')
+            debug["status"] = 1
+            logger.info(f"{self.url} status is UP")
         except RuntimeError as e:
-            logger.info(f'{self.url} status is DOWN. Cause: {str(e)}')
-            debug.update({'info': str(e), 'status': 0})
+            logger.info(f"{self.url} status is DOWN. Cause: {str(e)}")
+            debug.update({"info": str(e), "status": 0})
             trackon.raw_data.appendleft(debug)
             self.is_down()
         if self.uptime == 0:
@@ -95,18 +130,25 @@ class Tracker:
         self.update_uptime()
         if self.uptime == 0:
             self.interval = 10800
-        debug = {'url': self.url, 'ip': None, 'time': strftime("%H:%M:%S UTC", gmtime(time())),
-                 'status': 0, 'info': "Can't resolve IP"}
+        debug = {
+            "url": self.url,
+            "ip": None,
+            "time": strftime("%H:%M:%S UTC", gmtime(time())),
+            "status": 0,
+            "info": "Can't resolve IP",
+        }
         trackon.raw_data.appendleft(debug)
         trackon.update_in_db(self)
 
     def validate_url(self):
-        uchars = re.compile('^[a-zA-Z0-9_\-\./:]+$')
+        uchars = re.compile("^[a-zA-Z0-9_\-\./:]+$")
         url = parse.urlparse(self.url)
-        if url.scheme not in ['udp', 'http', 'https']:
-            raise RuntimeError("Tracker URLs have to start with 'udp://', 'http://' or 'https://'")
+        if url.scheme not in ["udp", "http", "https"]:
+            raise RuntimeError(
+                "Tracker URLs have to start with 'udp://', 'http://' or 'https://'"
+            )
         if uchars.match(url.netloc) and uchars.match(url.path):
-            url = url._replace(path='/announce')
+            url = url._replace(path="/announce")
             self.url = url.geturl()
         else:
             raise RuntimeError("Invalid announce URL")
@@ -158,9 +200,11 @@ class Tracker:
     @staticmethod
     def ip_api(ip):
         try:
-            response = request.urlopen('http://ip-api.com/line/' + ip + '?fields=country,countryCode,isp')
-            tracker_info = response.read().decode('utf-8')
+            response = request.urlopen(
+                "http://ip-api.com/line/" + ip + "?fields=country,countryCode,isp"
+            )
+            tracker_info = response.read().decode("utf-8")
             sleep(0.5)  # Respect the queries per minute limit of IP-API
         except IOError:
-            tracker_info = 'Error'
+            tracker_info = "Error"
         return tracker_info

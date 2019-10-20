@@ -1,7 +1,15 @@
 from logging import FileHandler, getLogger, INFO, Formatter
 from threading import Thread
 
-from flask import Flask, send_from_directory, request, Response, redirect, make_response, abort
+from flask import (
+    Flask,
+    send_from_directory,
+    request,
+    Response,
+    redirect,
+    make_response,
+    abort,
+)
 from flask_mako import MakoTemplates, render_template
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -23,124 +31,142 @@ class RegexConverter(BaseConverter):
         self.regex = items[0]
 
 
-app.url_map.converters['regex'] = RegexConverter
-logger = getLogger('newtrackon_logger')
+app.url_map.converters["regex"] = RegexConverter
+logger = getLogger("newtrackon_logger")
 logger.setLevel(INFO)
-handler = FileHandler('trackon.log')
-logger_format = Formatter('%(asctime)s - %(message)s')
+handler = FileHandler("trackon.log")
+logger_format = Formatter("%(asctime)s - %(message)s")
 handler.setFormatter(logger_format)
 logger.addHandler(handler)
-logger.info('Server started')
+logger.info("Server started")
 
 
-@app.route('/')
+@app.route("/")
 def main():
     trackers_list = trackon.get_all_data_from_db()
     trackers_list = trackon.process_uptime_and_downtime_time(trackers_list)
-    return render_template('main.mako', trackers=trackers_list, active='main')
+    return render_template("main.mako", trackers=trackers_list, active="main")
 
 
-@app.route('/', methods=['POST'])
+@app.route("/", methods=["POST"])
 def new_trackers():
-    new_ts = request.form.get('new_trackers')
+    new_ts = request.form.get("new_trackers")
     check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
     return main()
 
 
-@app.route('/api/add', methods=['POST'])
+@app.route("/api/add", methods=["POST"])
 def new_trackers_api():
-    new_ts = request.form.get('new_trackers')
+    new_ts = request.form.get("new_trackers")
     check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
-    resp = Response(status=204, headers={'Access-Control-Allow-Origin': '*'})
+    resp = Response(status=204, headers={"Access-Control-Allow-Origin": "*"})
     return resp
 
 
-@app.route('/submitted')
+@app.route("/submitted")
 def submitted():
-    return render_template('submitted.mako', data=trackon.submitted_data, size=len(trackon.submitted_trackers),
-                           active='submitted')
+    return render_template(
+        "submitted.mako",
+        data=trackon.submitted_data,
+        size=len(trackon.submitted_trackers),
+        active="submitted",
+    )
 
 
-@app.route('/faq')
+@app.route("/faq")
 def faq():
-    return render_template('/static/faq.mako', active='faq')
+    return render_template("/static/faq.mako", active="faq")
 
 
-@app.route('/list')
+@app.route("/list")
 def list_stable():
-    return render_template('/static/list.mako', active='list')
+    return render_template("/static/list.mako", active="list")
 
 
-@app.route('/api')
+@app.route("/api")
 def api_docs():
-    return render_template('/static/api-docs.mako', active='api')
+    return render_template("/static/api-docs.mako", active="api")
 
 
-@app.route('/raw')
+@app.route("/raw")
 def raw():
-    return render_template('raw.mako', data=trackon.raw_data, active='raw')
+    return render_template("raw.mako", data=trackon.raw_data, active="raw")
 
 
-@app.route('/api/<int:percentage>')
+@app.route("/api/<int:percentage>")
 def api_percentage(percentage):
-    include_upv6_only = False if request.args.get('include_ipv6_only_trackers') in ('False', '0') else True
+    include_upv6_only = (
+        False
+        if request.args.get("include_ipv6_only_trackers") in ("False", "0")
+        else True
+    )
     if 0 <= percentage <= 100:
-        formatted_list = trackon.api_general('percentage', percentage, include_upv6_only)
+        formatted_list = trackon.api_general(
+            "percentage", percentage, include_upv6_only
+        )
         resp = make_response(formatted_list)
         resp = add_api_headers(resp)
         return resp
     else:
-        abort(Response("The percentage has to be between 0 an 100", 400, headers={'Access-Control-Allow-Origin': '*'}))
+        abort(
+            Response(
+                "The percentage has to be between 0 an 100",
+                400,
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+        )
 
 
-@app.route('/api/stable')
+@app.route("/api/stable")
 def api_stable():
     return api_percentage(95)
 
 
-@app.route('/api/best')
+@app.route("/api/best")
 def api_best():
-    return redirect('/api/stable', code=301)
+    return redirect("/api/stable", code=301)
 
 
-@app.route('/api/all')
+@app.route("/api/all")
 def api_all():
     return api_percentage(0)
 
 
-@app.route('/api/live')
-@app.route('/api/udp')
-@app.route('/api/http')
+@app.route("/api/live")
+@app.route("/api/udp")
+@app.route("/api/http")
 def api_multiple():
     resp = make_response(trackon.api_general(request.path))
     resp = add_api_headers(resp)
     return resp
 
 
-@app.route('/about')
+@app.route("/about")
 def about():
-    return render_template('/static/about.mako', active='about')
+    return render_template("/static/about.mako", active="about")
 
 
 @app.route(
-    '/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>')  # matches all favicons that should be in root
+    '/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>'
+)  # matches all favicons that should be in root
 def favicon(filename, filetype):
-    return send_from_directory('static/imgs/', filename + '.' + filetype)
+    return send_from_directory("static/imgs/", filename + "." + filetype)
 
 
 @app.route(
-    '/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>')  # matches browserconfig and manifest that should be in root
+    '/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>'
+)  # matches browserconfig and manifest that should be in root
 def app_things(filename, filetype):
-    return send_from_directory('static/', filename + '.' + filetype)
+    return send_from_directory("static/", filename + "." + filetype)
 
 
 def add_api_headers(resp):
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    resp.mimetype = 'text/plain'
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.mimetype = "text/plain"
     return resp
 
 
@@ -154,6 +180,6 @@ get_trackerlist_project_list.start()
 
 http_server = HTTPServer(WSGIContainer(app))
 
-if __name__ == '__main__':
-    http_server.listen(8080, address='127.0.0.1')
+if __name__ == "__main__":
+    http_server.listen(8080, address="127.0.0.1")
     IOLoop.instance().start()
