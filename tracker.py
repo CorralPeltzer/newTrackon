@@ -204,7 +204,7 @@ class Tracker:
                 "http://ip-api.com/line/" + ip + "?fields=country,countryCode,isp"
             )
             tracker_info = response.read().decode("utf-8")
-            sleep(0.5)  # Respect the queries per minute limit of IP-API
+            sleep(1.35)  # Respect the queries per minute limit of IP-API
         except IOError:
             tracker_info = "Error"
         return tracker_info
