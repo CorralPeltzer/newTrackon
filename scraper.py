@@ -243,7 +243,7 @@ def udp_parse_connection_response(buf, sent_transaction_id):
     ]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError(
-            "Transaction ID doesnt match in connection response. Expected %s, got %s"
+            "Transaction ID doesn't match in connection response. Expected %s, got %s"
             % (sent_transaction_id, res_transaction_id)
         )
 
