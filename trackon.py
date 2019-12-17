@@ -26,7 +26,6 @@ else:
 
 deque_lock = Lock()
 list_lock = Lock()
-trackers_list = []
 processing_trackers = False
 
 logger = logging.getLogger("newtrackon_logger")
@@ -128,8 +127,6 @@ def calculate_time_ago(last_time):
 
 def enqueue_new_trackers(input_string):
     input_string = input_string.lower()
-    global trackers_list
-    trackers_list = get_all_data_from_db()
     if len(input_string) > max_input_length:
         return
     new_trackers_list = input_string.split()
@@ -153,8 +150,8 @@ def add_one_tracker_to_submitted_deque(url):
                 logger.info(f"Tracker {url} denied, already in the queue")
                 return
     with list_lock:
-        for tracker_in_list in trackers_list:
-            if tracker_in_list.host == urlparse(url).hostname:
+        for tracker in get_all_data_from_db():
+            if tracker.host == urlparse(url).hostname:
                 logger.info(f"Tracker {url} denied, already being tracked")
                 return
     try:
@@ -195,8 +192,8 @@ def process_new_tracker(tracker_candidate):
         )
         return
     with list_lock:
-        for tracker_in_list in trackers_list:
-            if tracker_in_list.host == urlparse(tracker_candidate.url).hostname:
+        for tracker in get_all_data_from_db():
+            if tracker.host == urlparse(tracker_candidate.url).hostname:
                 logger.info(
                     f"Tracker {tracker_candidate.url} denied, already being tracked"
                 )
