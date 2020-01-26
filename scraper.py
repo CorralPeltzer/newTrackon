@@ -98,7 +98,7 @@ def scrape_submitted(tracker):
         trackon.submitted_data.appendleft(debug_http)
         return latency, response["interval"], http_version
     except RuntimeError as e:
-        debug_http.update({"info": str(e), "status": 0})
+        debug_http.update({"info": redact_origin(str(e)), "status": 0})
         trackon.submitted_data.appendleft(debug_http)
     raise RuntimeError
 
