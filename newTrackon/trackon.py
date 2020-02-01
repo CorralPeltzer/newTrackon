@@ -15,15 +15,15 @@ from newTrackon.tracker import Tracker
 max_input_length = 20000
 submitted_trackers = deque(maxlen=10000)
 db_file = "data/trackon.db"
-raw_history_location = "data/raw_data.pickle"
-submitted_history_location = "data/submitted_data.pickle"
+raw_history_file = "data/raw_data.pickle"
+submitted_history_file = "data/submitted_data.pickle"
 
-if path.exists(raw_history_location):
-    raw_data = pickle.load(open(raw_history_location, "rb"))
+if path.exists(raw_history_file):
+    raw_data = pickle.load(open(raw_history_file, "rb"))
 else:
     raw_data = deque(maxlen=600)
-if path.exists(submitted_history_location):
-    submitted_data = pickle.load(open(submitted_history_location, "rb"))
+if path.exists(submitted_history_file):
+    submitted_data = pickle.load(open(submitted_history_file, "rb"))
 else:
     submitted_data = deque(maxlen=600)
 
@@ -180,7 +180,7 @@ def process_submitted_deque():
             tracker = submitted_trackers.popleft()
         logger.info(f"Size of queue: {len(submitted_trackers)}")
         process_new_tracker(tracker)
-        pickle.dump(submitted_data, open(submitted_history_location, "wb"))
+        pickle.dump(submitted_data, open(submitted_history_file, "wb"))
     logger.info("Finished processing new trackers")
     processing_trackers = False
 
@@ -242,7 +242,7 @@ def update_outdated_trackers():
         for tracker in trackers_outdated:
             logger.info(f"Updating {tracker.url}")
             tracker.update_status()
-            pickle.dump(raw_data, open(raw_history_location, "wb"))
+            pickle.dump(raw_data, open(raw_history_file, "wb"))
         detect_new_ip_duplicates()
         sleep(5)
 
