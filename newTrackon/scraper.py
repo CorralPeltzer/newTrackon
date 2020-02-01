@@ -11,8 +11,8 @@ from urllib.parse import urlparse, urlencode
 
 import requests
 
-import trackon
-from bdecode import bdecode, decode_binary_peers_list
+from newTrackon.bdecode import bdecode, decode_binary_peers_list
+from newTrackon.persistance import submitted_data
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
@@ -55,13 +55,13 @@ def scrape_submitted(tracker):
             latency = int((time() - t1) * 1000)
             pretty_data = redact_origin(pp.pformat(parsed))
             debug_udp.update({"info": pretty_data, "status": 1, "ip": ip})
-            trackon.submitted_data.appendleft(debug_udp)
+            submitted_data.appendleft(debug_udp)
             return latency, parsed["interval"], udp_version
         except RuntimeError as e:
             debug_udp.update({"info": str(e), "status": 0})
             if debug_udp["info"] != "Can't resolve IP":
                 debug_udp["ip"] = failover_ip
-            trackon.submitted_data.appendleft(debug_udp)
+            submitted_data.appendleft(debug_udp)
         logger.info(f"{udp_version} UDP failed, trying HTTPS")
 
     # HTTPS scrape
@@ -76,12 +76,12 @@ def scrape_submitted(tracker):
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(response))
         debug_https.update({"info": pretty_data, "status": 1})
-        trackon.submitted_data.appendleft(debug_https)
+        submitted_data.appendleft(debug_https)
         return latency, response["interval"], https_version
     except RuntimeError as e:
         debug_https.update({"info": str(e), "status": 0})
         "HTTPS not working, trying HTTP"
-        trackon.submitted_data.appendleft(debug_https)
+        submitted_data.appendleft(debug_https)
 
     # HTTP scrape
     if not urlparse(tracker.url).port:
@@ -95,11 +95,11 @@ def scrape_submitted(tracker):
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(response))
         debug_http.update({"info": pretty_data, "status": 1})
-        trackon.submitted_data.appendleft(debug_http)
+        submitted_data.appendleft(debug_http)
         return latency, response["interval"], http_version
     except RuntimeError as e:
         debug_http.update({"info": redact_origin(str(e)), "status": 0})
-        trackon.submitted_data.appendleft(debug_http)
+        submitted_data.appendleft(debug_http)
     raise RuntimeError
 
 
