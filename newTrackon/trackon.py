@@ -108,9 +108,11 @@ def process_new_tracker(tracker_candidate):
     tracker_candidate.last_downtime = int(time())
     tracker_candidate.last_checked = int(time())
     try:
-        tracker_candidate.latency, tracker_candidate.interval, tracker_candidate.url = (
-            tracker_candidate.scrape()
-        )
+        (
+            tracker_candidate.latency,
+            tracker_candidate.interval,
+            tracker_candidate.url,
+        ) = tracker_candidate.scrape()
     except (RuntimeError, ValueError):
         return
     if (
