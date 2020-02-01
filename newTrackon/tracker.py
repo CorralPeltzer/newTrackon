@@ -8,8 +8,7 @@ from logging import getLogger
 from time import time, sleep, gmtime, strftime
 from urllib import request, parse
 
-import scraper
-import trackon
+from newTrackon import scraper, trackon
 
 logger = getLogger("newtrackon_logger")
 

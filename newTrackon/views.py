@@ -11,17 +11,12 @@ from flask import (
     abort,
 )
 from flask_mako import MakoTemplates, render_template
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-from tornado.wsgi import WSGIContainer
 from werkzeug.routing import BaseConverter
-
-import trackerlist_project
-import trackon
+from newTrackon import trackerlist_project, trackon
 
 mako = MakoTemplates()
 app = Flask(__name__)
-app.template_folder = "tpl"
+app.template_folder = 'tpl'
 mako.init_app(app)
 
 
@@ -34,7 +29,7 @@ class RegexConverter(BaseConverter):
 app.url_map.converters["regex"] = RegexConverter
 logger = getLogger("newtrackon_logger")
 logger.setLevel(INFO)
-handler = FileHandler("trackon.log")
+handler = FileHandler("data/trackon.log")
 logger_format = Formatter("%(asctime)s - %(message)s")
 handler.setFormatter(logger_format)
 logger.addHandler(handler)
@@ -177,9 +172,3 @@ update_status.start()
 get_trackerlist_project_list = Thread(target=trackerlist_project.main)
 get_trackerlist_project_list.daemon = True
 get_trackerlist_project_list.start()
-
-http_server = HTTPServer(WSGIContainer(app))
-
-if __name__ == "__main__":
-    http_server.listen(8080, address="127.0.0.1")
-    IOLoop.instance().start()

@@ -27,12 +27,12 @@ This will install requests, Flask, tornado, and Flask-Mako.
 
 Then, create the database with
 ```
-sqlite3 trackon.db < trackon.schema
+sqlite3 data/test.db < trackon.schema
 ```
 
 Finally, run 
 ```
-python3 server.py
+python3 run.py
 ```
 This will start the web server in all interfaces at port 8080, you can access to the main page opening in your browser `localhost:8080`.
 You can change the IP and port of the server editing the last line of server.py.

@@ -10,17 +10,20 @@ from threading import Lock
 from time import time, sleep
 from urllib.parse import urlparse
 
-from tracker import Tracker
+from newTrackon.tracker import Tracker
 
 max_input_length = 20000
 submitted_trackers = deque(maxlen=10000)
+db_file = "data/trackon.db"
+raw_history_location = "data/raw_data.pickle"
+submitted_history_location = "data/submitted_data.pickle"
 
-if path.exists("raw_data.pickle"):
-    raw_data = pickle.load(open("raw_data.pickle", "rb"))
+if path.exists(raw_history_location):
+    raw_data = pickle.load(open(raw_history_location, "rb"))
 else:
     raw_data = deque(maxlen=600)
-if path.exists("submitted_data.pickle"):
-    submitted_data = pickle.load(open("submitted_data.pickle", "rb"))
+if path.exists(submitted_history_location):
+    submitted_data = pickle.load(open(submitted_history_location, "rb"))
 else:
     submitted_data = deque(maxlen=600)
 
@@ -39,7 +42,7 @@ def dict_factory(cursor, row):
 
 
 def get_all_data_from_db():
-    conn = sqlite3.connect("trackon.db")
+    conn = sqlite3.connect(db_file)
     conn.row_factory = dict_factory
     c = conn.cursor()
     trackers_from_db = []
@@ -177,7 +180,7 @@ def process_submitted_deque():
             tracker = submitted_trackers.popleft()
         logger.info(f"Size of queue: {len(submitted_trackers)}")
         process_new_tracker(tracker)
-        pickle.dump(submitted_data, open("submitted_data.pickle", "wb"))
+        pickle.dump(submitted_data, open(submitted_history_location, "wb"))
     logger.info("Finished processing new trackers")
     processing_trackers = False
 
@@ -239,7 +242,7 @@ def update_outdated_trackers():
         for tracker in trackers_outdated:
             logger.info(f"Updating {tracker.url}")
             tracker.update_status()
-            pickle.dump(raw_data, open("raw_data.pickle", "wb"))
+            pickle.dump(raw_data, open(raw_history_location, "wb"))
         detect_new_ip_duplicates()
         sleep(5)
 
@@ -255,7 +258,7 @@ def detect_new_ip_duplicates():
 
 
 def insert_in_db(tracker):
-    conn = sqlite3.connect("trackon.db")
+    conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
         "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -282,7 +285,7 @@ def insert_in_db(tracker):
 
 
 def update_in_db(tracker):
-    conn = sqlite3.connect("trackon.db")
+    conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
         "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
@@ -318,7 +321,7 @@ def get_all_ips_tracked():
 
 
 def api_general(query, uptime=0, include_ipv6_only=True):
-    conn = sqlite3.connect("trackon.db")
+    conn = sqlite3.connect(db_file)
     c = conn.cursor()
     if query == "/api/http":
         c.execute(

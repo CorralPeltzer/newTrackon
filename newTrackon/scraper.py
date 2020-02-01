@@ -11,8 +11,8 @@ from urllib.parse import urlparse, urlencode
 
 import requests
 
-import trackon
-from bdecode import bdecode, decode_binary_peers_list
+from newTrackon import trackon
+from newTrackon.bdecode import bdecode, decode_binary_peers_list
 
 HTTP_PORT = 6881
 UDP_PORT = 30461

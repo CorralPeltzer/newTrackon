@@ -2,7 +2,7 @@ from time import sleep
 
 import requests
 
-import trackon
+from newTrackon import trackon
 
 
 def main():
