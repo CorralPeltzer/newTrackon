@@ -5,9 +5,17 @@ from urllib.parse import urlparse
 
 from newTrackon.tracker import Tracker
 from newTrackon.scraper import scrape_submitted
-from newTrackon.db import get_all_data,  insert_new_tracker
-from newTrackon.persistance import submitted_history_file, save_obj_to_disk, raw_data, raw_history_file, \
-    deque_lock, list_lock, submitted_trackers, submitted_data
+from newTrackon.db import get_all_data, insert_new_tracker
+from newTrackon.persistance import (
+    submitted_history_file,
+    save_obj_to_disk,
+    raw_data,
+    raw_history_file,
+    deque_lock,
+    list_lock,
+    submitted_trackers,
+    submitted_data,
+)
 
 max_input_length = 20000
 processing_trackers = False
