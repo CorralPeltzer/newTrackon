@@ -8,7 +8,7 @@ from logging import getLogger
 from time import time, sleep, gmtime, strftime
 from urllib import request, parse
 
-from newTrackon import scraper, trackon
+from newTrackon import scraper, trackon, db
 
 logger = getLogger("newtrackon_logger")
 
@@ -119,7 +119,7 @@ class Tracker:
             self.interval = 10800
         self.update_uptime()
 
-        trackon.update_in_db(self)
+        db.update_tracker(self)
 
     def clear_tracker_without_ip(self):
         self.country, self.network, self.country_code = None, None, None
@@ -137,7 +137,7 @@ class Tracker:
             "info": "Can't resolve IP",
         }
         trackon.raw_data.appendleft(debug)
-        trackon.update_in_db(self)
+        db.update_tracker(self)
 
     def validate_url(self):
         uchars = re.compile("^[a-zA-Z0-9_\-\./:]+$")

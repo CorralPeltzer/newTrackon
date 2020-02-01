@@ -12,7 +12,9 @@ from flask import (
 )
 from flask_mako import MakoTemplates, render_template
 from werkzeug.routing import BaseConverter
-from newTrackon import trackerlist_project, trackon
+
+from newTrackon import db, utils, trackon
+
 
 mako = MakoTemplates()
 app = Flask(__name__)
@@ -38,8 +40,8 @@ logger.info("Server started")
 
 @app.route("/")
 def main():
-    trackers_list = trackon.get_all_data_from_db()
-    trackers_list = trackon.process_uptime_and_downtime_time(trackers_list)
+    trackers_list = db.get_all_data()
+    trackers_list = utils.process_uptime_and_downtime_time(trackers_list)
     return render_template("main.mako", trackers=trackers_list, active="main")
 
 
@@ -100,11 +102,11 @@ def api_percentage(percentage):
         else True
     )
     if 0 <= percentage <= 100:
-        formatted_list = trackon.api_general(
+        formatted_list = db.get_api_data(
             "percentage", percentage, include_upv6_only
         )
         resp = make_response(formatted_list)
-        resp = add_api_headers(resp)
+        resp = utils.add_api_headers(resp)
         return resp
     else:
         abort(
@@ -135,8 +137,8 @@ def api_all():
 @app.route("/api/udp")
 @app.route("/api/http")
 def api_multiple():
-    resp = make_response(trackon.api_general(request.path))
-    resp = add_api_headers(resp)
+    resp = make_response(db.get_api_data(request.path))
+    resp = utils.add_api_headers(resp)
     return resp
 
 
@@ -157,18 +159,3 @@ def favicon(filename, filetype):
 )  # matches browserconfig and manifest that should be in root
 def app_things(filename, filetype):
     return send_from_directory("static/", filename + "." + filetype)
-
-
-def add_api_headers(resp):
-    resp.headers["Access-Control-Allow-Origin"] = "*"
-    resp.mimetype = "text/plain"
-    return resp
-
-
-update_status = Thread(target=trackon.update_outdated_trackers)
-update_status.daemon = True
-update_status.start()
-
-get_trackerlist_project_list = Thread(target=trackerlist_project.main)
-get_trackerlist_project_list.daemon = True
-get_trackerlist_project_list.start()
