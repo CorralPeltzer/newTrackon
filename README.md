@@ -27,7 +27,7 @@ This will install requests, Flask, tornado, and Flask-Mako.
 
 Then, create the database with
 ```
-sqlite3 data/test.db < trackon.schema
+sqlite3 data/trackon.db < trackon.schema
 ```
 
 Finally, run 
