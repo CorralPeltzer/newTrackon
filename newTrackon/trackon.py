@@ -2,23 +2,23 @@ import logging
 from ipaddress import ip_address
 from time import time, sleep
 from urllib.parse import urlparse
-
+from threading import Lock
 from newTrackon.tracker import Tracker
 from newTrackon.scraper import scrape_submitted
-from newTrackon.db import get_all_data, insert_new_tracker
+from newTrackon import db
 from newTrackon.persistance import (
     submitted_history_file,
     save_obj_to_disk,
     raw_data,
     raw_history_file,
-    deque_lock,
-    list_lock,
     submitted_trackers,
     submitted_data,
 )
 
 max_input_length = 20000
 processing_trackers = False
+deque_lock = Lock()
+list_lock = Lock()
 
 logger = logging.getLogger("newtrackon_logger")
 
@@ -48,7 +48,7 @@ def add_one_tracker_to_submitted_deque(url):
                 logger.info(f"Tracker {url} denied, already in the queue")
                 return
     with list_lock:
-        for tracker in get_all_data():
+        for tracker in db.get_all_data():
             if tracker.host == urlparse(url).hostname:
                 logger.info(f"Tracker {url} denied, already being tracked")
                 return
@@ -90,7 +90,7 @@ def process_new_tracker(tracker_candidate):
         )
         return
     with list_lock:
-        for tracker in get_all_data():
+        for tracker in db.get_all_data():
             if tracker.host == urlparse(tracker_candidate.url).hostname:
                 logger.info(
                     f"Tracker {tracker_candidate.url} denied, already being tracked"
@@ -125,7 +125,7 @@ def process_new_tracker(tracker_candidate):
     tracker_candidate.update_ipapi_data()
     tracker_candidate.is_up()
     tracker_candidate.update_uptime()
-    insert_new_tracker(tracker_candidate)
+    db.insert_new_tracker(tracker_candidate)
     logger.info(f"New tracker {tracker_candidate.url} added to newTrackon")
 
 
@@ -133,12 +133,13 @@ def update_outdated_trackers():
     while True:
         now = int(time())
         trackers_outdated = []
-        for tracker in get_all_data():
+        for tracker in db.get_all_data():
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)
         for tracker in trackers_outdated:
             logger.info(f"Updating {tracker.url}")
             tracker.update_status()
+            db.update_tracker(tracker)
             save_obj_to_disk(raw_data, raw_history_file)
         detect_new_ip_duplicates()
         sleep(5)
@@ -156,7 +157,7 @@ def detect_new_ip_duplicates():
 
 def get_all_ips_tracked():
     all_ips_of_all_trackers = []
-    all_data = get_all_data()
+    all_data = db.get_all_data()
     for tracker_in_list in all_data:
         if tracker_in_list.ip:
             for ip in tracker_in_list.ip:

@@ -1,5 +1,4 @@
 import os.path as path
-from threading import Lock
 from collections import deque
 import pickle
 
@@ -16,9 +15,6 @@ if path.exists(submitted_history_file):
     submitted_data = pickle.load(open(submitted_history_file, "rb"))
 else:
     submitted_data = deque(maxlen=600)
-
-deque_lock = Lock()
-list_lock = Lock()
 
 
 def save_obj_to_disk(obj, filename):
