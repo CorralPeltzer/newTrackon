@@ -308,7 +308,13 @@ def udp_get_transaction_id():
 
 
 def get_server_ip(ip_version):
-    return subprocess.check_output(["curl", "-s", "-" + ip_version, "https://icanhazip.com/"]).decode("utf-8").strip()
+    return (
+        subprocess.check_output(
+            ["curl", "-s", "-" + ip_version, "https://icanhazip.com/"]
+        )
+        .decode("utf-8")
+        .strip()
+    )
 
 
 def redact_origin(response):

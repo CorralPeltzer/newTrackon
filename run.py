@@ -10,16 +10,28 @@ from threading import Thread
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='newTrackon arguments')
-    parser.add_argument('--port', type=int, help='Port for the flask server', default=8080)
-    parser.add_argument('--ignore-ipv4', help='Ignore newTrackon server IPv4 detection', dest='ignore_ipv4', action='store_true')
-    parser.add_argument('--ignore-ipv6', help='Ignore newTrackon server IPv6 detection', dest='ignore_ipv6', action='store_true')
+    parser = argparse.ArgumentParser(description="newTrackon arguments")
+    parser.add_argument(
+        "--port", type=int, help="Port for the flask server", default=8080
+    )
+    parser.add_argument(
+        "--ignore-ipv4",
+        help="Ignore newTrackon server IPv4 detection",
+        dest="ignore_ipv4",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--ignore-ipv6",
+        help="Ignore newTrackon server IPv6 detection",
+        dest="ignore_ipv6",
+        action="store_true",
+    )
 
     args = parser.parse_args()
     if not args.ignore_ipv4:
-        utils.my_ipv4 = get_server_ip('4')
+        utils.my_ipv4 = get_server_ip("4")
     if not args.ignore_ipv6:
-        utils.my_ipv6 = get_server_ip('6')
+        utils.my_ipv6 = get_server_ip("6")
 
     http_server = HTTPServer(WSGIContainer(app))
 
