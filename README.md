@@ -11,11 +11,11 @@ newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) b
 Hosted and tested only with Ubuntu 18.04 LTS. **To work correctly, it needs IPv4 and IPv6 connectivity.**
 
 ## Installation
-After cloning the repo, to make sure you have `python3`, `pip`, `pipenv` and `sqlite3` installed, run
+After cloning the repo, to make sure you have `python3`, `pip` and `pipenv` installed, run
 
-* Ubuntu-Based / Debian:
+* Ubuntu-based / Debian:
 ```
-sudo apt-get install python3-pip sqlite3 python3
+sudo apt-get install python3 python3-pip
 sudo pip3 install pipenv
 ```
 Then, browse to the project root folder. To install the pipenv environment and dependencies, and enter the pipenv:
@@ -24,11 +24,6 @@ pipenv install
 pipenv shell
 ```
 This will install requests, Flask, tornado, and Flask-Mako.
-
-Then, create the database with
-```
-sqlite3 data/trackon.db < trackon.schema
-```
 
 Finally, run 
 ```

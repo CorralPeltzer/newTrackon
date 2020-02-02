@@ -1,11 +1,44 @@
-import sqlite3
 import json
+import sqlite3
 from collections import deque
+from os import path
 
-from newTrackon.utils import dict_factory, remove_ipv6_only_trackers, format_list
 from newTrackon.tracker import Tracker
+from newTrackon.utils import dict_factory, remove_ipv6_only_trackers, format_list
 
 db_file = "data/trackon.db"
+
+
+def ensure_db_existence():
+    if not path.exists(db_file):
+        create_db()
+
+
+def create_db():
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute(
+        """CREATE TABLE `status` (
+        `url`	TEXT NOT NULL,
+        `host`	TEXT NOT NULL,
+        `ip`	TEXT,
+        `latency`	INTEGER,
+        `last_checked`	INTEGER,
+        `interval`	INTEGER,
+        `status`	INTEGER,
+        `uptime`	INTEGER,
+        `country`	TEXT,
+        `country_code`	TEXT,
+        `network`	TEXT,
+        `added`		TEXT,
+        `historic`	TEXT,
+        `last_downtime` INTEGER,
+        `last_uptime`	INTEGER,
+        PRIMARY KEY(`url`)
+        );"""
+    )
+    conn.commit()
+    conn.close()
 
 
 def update_tracker(tracker):
