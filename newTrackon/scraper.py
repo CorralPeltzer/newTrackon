@@ -13,6 +13,7 @@ import requests
 
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
 from newTrackon.persistance import submitted_data
+from newTrackon import utils
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
@@ -24,16 +25,6 @@ SCRAPING_HEADERS = {
 
 logger = getLogger("newtrackon_logger")
 
-my_ipv4 = (
-    subprocess.check_output(["curl", "-s", "-4", "https://icanhazip.com/"])
-    .decode("utf-8")
-    .strip()
-)
-my_ipv6 = (
-    subprocess.check_output(["curl", "-s", "-6", "https://icanhazip.com/"])
-    .decode("utf-8")
-    .strip()
-)
 to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
@@ -118,8 +109,8 @@ def announce_http(url):
         "downloaded": 0,
         "left": 0,
         "compact": 1,
-        "ipv6": my_ipv6,
-        "ipv4": my_ipv4,
+        "ipv6": utils.my_ipv6,
+        "ipv4": utils.my_ipv4,
     }
     arguments = urlencode(args_dict)
     url = url + "?" + arguments
@@ -316,9 +307,15 @@ def udp_get_transaction_id():
     return int(random.randrange(0, 255))
 
 
+def get_server_ip(ip_version):
+    return subprocess.check_output(["curl", "-s", "-" + ip_version, "https://icanhazip.com/"]).decode("utf-8").strip()
+
+
 def redact_origin(response):
-    response = response.replace(my_ipv4, "v4-redacted")
-    response = response.replace(my_ipv6, "v6-redacted")
+    if utils.my_ipv4:
+        response = response.replace(utils.my_ipv4, "v4-redacted")
+    if utils.my_ipv6:
+        response = response.replace(utils.my_ipv6, "v6-redacted")
     for port in to_redact:
         response = response.replace(port, "redacted")
     return response
