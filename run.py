@@ -1,5 +1,4 @@
 import argparse
-import subprocess
 from newTrackon.views import app
 from newTrackon.scraper import get_server_ip
 from newTrackon import trackerlist_project, trackon, utils
