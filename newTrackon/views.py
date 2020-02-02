@@ -41,7 +41,7 @@ logger.info("Server started")
 @app.route("/")
 def main():
     trackers_list = db.get_all_data()
-    trackers_list = utils.process_uptime_and_downtime_time(trackers_list)
+    trackers_list = utils.format_uptime_and_downtime_time(trackers_list)
     return render_template("main.mako", trackers=trackers_list, active="main")
 
 

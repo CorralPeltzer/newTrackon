@@ -34,8 +34,7 @@ Finally, run
 ```
 python3 run.py
 ```
-This will start the web server in all interfaces at port 8080, you can access to the main page opening in your browser `localhost:8080`.
-You can change the IP and port of the server editing the last line of server.py.
+This will start the web server in localhost at port 8080, you can access to the main page opening in your browser `http://localhost:8080`.
 
 ## Contributors
 

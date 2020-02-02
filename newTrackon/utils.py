@@ -4,6 +4,10 @@ from ipaddress import ip_address, IPv4Address
 from time import time
 
 
+my_ipv4 = None
+my_ipv6 = None
+
+
 def add_api_headers(resp):
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.mimetype = "text/plain"
@@ -17,7 +21,7 @@ def dict_factory(cursor, row):
     return d
 
 
-def process_uptime_and_downtime_time(trackers_unprocessed):
+def format_uptime_and_downtime_time(trackers_unprocessed):
     for tracker in trackers_unprocessed:
         if tracker.status == 1:
             tracker.status_epoch = tracker.last_downtime
