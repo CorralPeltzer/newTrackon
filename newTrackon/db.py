@@ -35,7 +35,8 @@ def create_db():
         `last_downtime` INTEGER,
         `last_uptime`	INTEGER,
         PRIMARY KEY(`url`)
-        );""")
+        );"""
+    )
     conn.commit()
     conn.close()
 
