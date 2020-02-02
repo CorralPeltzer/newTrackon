@@ -1,4 +1,4 @@
-import os.path as path
+from os import path
 from collections import deque
 import pickle
 
