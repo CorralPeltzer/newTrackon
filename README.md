@@ -1,35 +1,55 @@
 # newTrackon
 
 [![Requirements Status](https://requires.io/github/CorralPeltzer/newTrackon/requirements.svg?branch=master)](https://requires.io/github/CorralPeltzer/newTrackon/requirements/?branch=master)
-[![Beerpay](https://beerpay.io/CorralPeltzer/newTrackon/badge.svg?style=beer-square)](https://beerpay.io/CorralPeltzer/newTrackon)
 
 newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use.
 It also allows to submit new trackers to add them to the list.
 
 newTrackon is based on the abandoned [Trackon](http://repo.cat-v.org/trackon/) by [Uriel †](https://github.com/uriel).
 
-Hosted and tested only with Ubuntu 18.04 LTS. **To work correctly, it needs IPv4 and IPv6 connectivity.**
+
+**By default, newTrackon needs IPv4 and IPv6 internet connectivity, and the application won't start without both.
+Run with arguments `--ignore-ipv6` or `--ignore-ipv4` to skip this check.**
+
+## Arguments
+run.py [--address ADDRESS] [--port PORT] [--ignore-ipv4]
+              [--ignore-ipv6]
+
+optional arguments:
+  * `--address ADDRESS`  Address for the flask server
+  * `--port PORT`        Port for the flask server
+  * `--ignore-ipv4`      Ignore newTrackon server IPv4 detection
+  * `--ignore-ipv6`      Ignore newTrackon server IPv6 detection
+
 
 ## Installation
-After cloning the repo, to make sure you have `python3`, `pip` and `pipenv` installed, run
 
-* Ubuntu-based / Debian:
+### With Docker
+Build the image with
 ```
-sudo apt-get install python3 python3-pip
-sudo pip3 install pipenv
+docker build -t newtrackon .
 ```
-Then, browse to the project root folder. To install the pipenv environment and dependencies, and enter the pipenv:
+and run the application
+```
+docker run -d -p 8080:8080 newtrackon --address=0.0.0.0
+```
+You can now access to the main page opening in your browser `http://localhost:8080`.
+
+### With pipenv
+Make sure you have `python3.6`, `pip` and `pipenv`.
+
+Install the pipenv environment and dependencies:
 ```
 pipenv install
 pipenv shell
 ```
 This will install requests, Flask, tornado, and Flask-Mako.
 
-Finally, run 
+Finally, run
 ```
 python3 run.py
 ```
-This will start the web server in localhost at port 8080, you can access to the main page opening in your browser `http://localhost:8080`.
+You can now access to the main page opening in your browser `http://localhost:8080`.
 
 ## Contributors
 
