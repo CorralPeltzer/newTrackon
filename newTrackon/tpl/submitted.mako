@@ -35,7 +35,7 @@
         % else:
             <td class="rejected"><b>Rejected</b></td>
         % endif
-        <td>${response['info']}</td>
+        <td>${response['info'] | h}</td>
     </tr>
 % endfor
 
