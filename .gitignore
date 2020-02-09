@@ -1,6 +1,6 @@
 *.pyc
 .idea
-*.pickle
+*.json
 *.sh
 *.log
 *.html
