@@ -18,7 +18,8 @@ from newTrackon import db, utils, trackon
 
 mako = MakoTemplates()
 app = Flask(__name__)
-app.template_folder = 'tpl'
+app.template_folder = "tpl"
+app.config["MAKO_DEFAULT_FILTERS"] = ["h"]
 mako.init_app(app)
 
 
