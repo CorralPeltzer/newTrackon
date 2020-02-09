@@ -12,7 +12,7 @@ from urllib.parse import urlparse, urlencode
 import requests
 
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
-from newTrackon.persistance import submitted_data
+from newTrackon.persistence import submitted_data
 from newTrackon import utils
 
 HTTP_PORT = 6881

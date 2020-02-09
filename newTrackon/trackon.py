@@ -6,9 +6,9 @@ from threading import Lock
 from newTrackon.tracker import Tracker
 from newTrackon.scraper import scrape_submitted
 from newTrackon import db
-from newTrackon.persistance import (
+from newTrackon.persistence import (
     submitted_history_file,
-    save_obj_to_disk,
+    save_deque_to_disk,
     raw_data,
     raw_history_file,
     submitted_trackers,
@@ -75,7 +75,7 @@ def process_submitted_deque():
             tracker = submitted_trackers.popleft()
         logger.info(f"Size of queue: {len(submitted_trackers)}")
         process_new_tracker(tracker)
-        save_obj_to_disk(submitted_data, submitted_history_file)
+        save_deque_to_disk(submitted_data, submitted_history_file)
     logger.info("Finished processing new trackers")
     processing_trackers = False
 
@@ -140,7 +140,7 @@ def update_outdated_trackers():
             logger.info(f"Updating {tracker.url}")
             tracker.update_status()
             db.update_tracker(tracker)
-            save_obj_to_disk(raw_data, raw_history_file)
+            save_deque_to_disk(raw_data, raw_history_file)
         detect_new_ip_duplicates()
         sleep(5)
 
