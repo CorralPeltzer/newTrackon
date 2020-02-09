@@ -36,7 +36,7 @@ docker run -d -p 8080:8080 newtrackon --address=0.0.0.0
 You can now access to the main page opening in your browser `http://localhost:8080`.
 
 ### With pipenv
-Make sure you have `python3.6`, `pip` and `pipenv`.
+Make sure you have `curl`, `python3.6`, `pip` and `pipenv`.
 
 Install the pipenv environment and dependencies:
 ```

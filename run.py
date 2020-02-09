@@ -9,7 +9,7 @@ from threading import Thread
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="newTrackon arguments")
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--address", type=str, help="Address for the flask server", default="127.0.0.1"
     )
