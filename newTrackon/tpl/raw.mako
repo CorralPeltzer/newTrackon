@@ -38,7 +38,7 @@
                         % else:
                             <td class="down"><b>Down</b></td>
                         % endif
-                        <td>${response.get('info')}</td>
+                        <td>${response.get('info') | h}</td>
                     </tr>
                 % endfor
             </table>
