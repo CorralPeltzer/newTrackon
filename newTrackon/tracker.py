@@ -8,7 +8,7 @@ from logging import getLogger
 from time import time, sleep, gmtime, strftime
 from urllib import request, parse
 
-from newTrackon import scraper, persistance
+from newTrackon import scraper, persistence
 
 logger = getLogger("newtrackon_logger")
 
@@ -105,7 +105,7 @@ class Tracker:
             self.interval = response["interval"]
             pretty_data = scraper.redact_origin(pp.pformat(response))
             debug["info"] = pretty_data
-            persistance.raw_data.appendleft(debug)
+            persistence.raw_data.appendleft(debug)
             self.latency = int((time() - t1) * 1000)
             self.is_up()
             debug["status"] = 1
@@ -113,7 +113,7 @@ class Tracker:
         except RuntimeError as e:
             logger.info(f"{self.url} status is DOWN. Cause: {str(e)}")
             debug.update({"info": str(e), "status": 0})
-            persistance.raw_data.appendleft(debug)
+            persistence.raw_data.appendleft(debug)
             self.is_down()
         if self.uptime == 0:
             self.interval = 10800
@@ -134,7 +134,7 @@ class Tracker:
             "status": 0,
             "info": "Can't resolve IP",
         }
-        persistance.raw_data.appendleft(debug)
+        persistence.raw_data.appendleft(debug)
 
     def validate_url(self):
         uchars = re.compile("^[a-zA-Z0-9_\-\./:]+$")

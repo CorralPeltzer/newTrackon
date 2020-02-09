@@ -6,7 +6,7 @@ from threading import Lock
 from newTrackon.tracker import Tracker
 from newTrackon.scraper import scrape_submitted
 from newTrackon import db
-from newTrackon.persistance import (
+from newTrackon.persistence import (
     submitted_history_file,
     save_deque_to_disk,
     raw_data,
