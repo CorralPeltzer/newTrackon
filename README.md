@@ -1,7 +1,7 @@
 # newTrackon
 
 [![Requirements Status](https://requires.io/github/CorralPeltzer/newTrackon/requirements.svg?branch=master)](https://requires.io/github/CorralPeltzer/newTrackon/requirements/?branch=master)
-[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/corralpeltzer/newtrackon)](https://hub.docker.com/repository/docker/corralpeltzer/newtrackon)
+[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/corralpeltzer/newtrackon)](https://hub.docker.com/r/corralpeltzer/newtrackon)
 
 newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use.
 It also allows to submit new trackers to add them to the list.
