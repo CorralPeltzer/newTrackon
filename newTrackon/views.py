@@ -160,3 +160,11 @@ def favicon(filename, filetype):
 )  # matches browserconfig and manifest that should be in root
 def app_things(filename, filetype):
     return send_from_directory("static/", filename + "." + filetype)
+
+
+@app.before_request
+def reject_announce_requests():
+    if request.args.get("info_hash"):
+        return abort(
+            Response("newTrackon is not a tracker and cannot provide peers", 403)
+        )
