@@ -164,10 +164,7 @@ def app_things(filename, filetype):
 
 @app.before_request
 def reject_announce_requests():
-    if request.args.get('info_hash'):
+    if request.args.get("info_hash"):
         return abort(
-            Response(
-                "newTrackon is not a tracker and cannot provide peers",
-                403
-            )
+            Response("newTrackon is not a tracker and cannot provide peers", 403)
         )
