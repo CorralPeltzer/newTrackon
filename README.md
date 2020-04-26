@@ -49,6 +49,10 @@ python3 run.py
 ```
 You can now access to the main page opening in your browser `http://localhost:8080`.
 
+## Related
+* [electromagnet](https://github.com/sdmtr/electromagnet), a Chrome extension to automatically add stable trackers to magnet links as you browse
+
+
 ## Contributors
 
 Feel free to make suggestions, create pull requests, report issues or any other feedback.
