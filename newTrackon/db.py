@@ -44,27 +44,39 @@ def create_db():
 def update_tracker(tracker):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
+    if tracker.last_uptime >= (tracker.last_checked - 63072000):
+        delete_tracker(c, tracker)
+    else:
+        c.execute(
+            "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
+            " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE url=?",
+            (
+                json.dumps(tracker.ip),
+                tracker.latency,
+                tracker.last_checked,
+                tracker.status,
+                tracker.interval,
+                tracker.uptime,
+                json.dumps(list(tracker.historic)),
+                json.dumps(tracker.country),
+                json.dumps(tracker.country_code),
+                json.dumps(tracker.network),
+                tracker.last_downtime,
+                tracker.last_uptime,
+                tracker.url,
+            ),
+        ).fetchone()
+    conn.commit()
+    conn.close()
+
+
+def delete_tracker(c, tracker):
     c.execute(
-        "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-        " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE url=?",
+        "DELETE FROM status WHERE url=?",
         (
-            json.dumps(tracker.ip),
-            tracker.latency,
-            tracker.last_checked,
-            tracker.status,
-            tracker.interval,
-            tracker.uptime,
-            json.dumps(list(tracker.historic)),
-            json.dumps(tracker.country),
-            json.dumps(tracker.country_code),
-            json.dumps(tracker.network),
-            tracker.last_downtime,
-            tracker.last_uptime,
             tracker.url,
         ),
     ).fetchone()
-    conn.commit()
-    conn.close()
 
 
 def get_all_data():
