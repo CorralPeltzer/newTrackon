@@ -142,7 +142,7 @@ def update_outdated_trackers():
 
             if tracker.last_uptime < (now - 63072000):
                 logger.info(f"Removing {tracker.url}")
-                db.remove(tracker)
+                db.delete_tracker(tracker)
             else:
                 db.update_tracker(tracker)
             save_deque_to_disk(raw_data, raw_history_file)
