@@ -139,7 +139,12 @@ def update_outdated_trackers():
         for tracker in trackers_outdated:
             logger.info(f"Updating {tracker.url}")
             tracker.update_status()
-            db.update_tracker(tracker)
+
+            if tracker.last_uptime < (now - 63072000):
+                logger.info(f"Removing {tracker.url}")
+                db.delete_tracker(tracker)
+            else:
+                db.update_tracker(tracker)
             save_deque_to_disk(raw_data, raw_history_file)
         detect_new_ip_duplicates()
         sleep(5)

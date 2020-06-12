@@ -67,6 +67,14 @@ def update_tracker(tracker):
     conn.close()
 
 
+def delete_tracker(tracker):
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute("DELETE FROM status WHERE url=?", (tracker.url,),).fetchone()
+    conn.commit()
+    conn.close()
+
+
 def get_all_data():
     conn = sqlite3.connect(db_file)
     conn.row_factory = dict_factory
