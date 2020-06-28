@@ -34,7 +34,7 @@ docker run -d -p 8080:8080 corralpeltzer/newtrackon --address=0.0.0.0
 You can now access to the main page opening in your browser `http://localhost:8080`.
 
 ### With pipenv
-After cloning the repo, make sure you have `curl`, `python3.6`, `pip` and `pipenv`.
+After cloning the repo, make sure you have a working Python 3.8 environment and `pipenv`.
 
 Install the pipenv environment and dependencies:
 ```
