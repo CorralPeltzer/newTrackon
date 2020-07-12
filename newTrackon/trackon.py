@@ -116,7 +116,10 @@ def process_new_tracker(tracker_candidate):
         debug.update(
             {
                 "status": 0,
-                "info": [info[0], "Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours"],
+                "info": [
+                    info[0],
+                    "Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours",
+                ],
             }
         )
         submitted_data.appendleft(debug)
