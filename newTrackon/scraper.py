@@ -45,12 +45,12 @@ def scrape_submitted(tracker):
             parsed, raw, ip = announce_udp(udp_version)
             latency = int((time() - t1) * 1000)
             pretty_data = redact_origin(pp.pformat(parsed))
-            debug_udp.update({"info": pretty_data, "status": 1, "ip": ip})
+            debug_udp.update({"info": [pretty_data], "status": 1, "ip": ip})
             submitted_data.appendleft(debug_udp)
             return latency, parsed["interval"], udp_version
         except RuntimeError as e:
-            debug_udp.update({"info": str(e), "status": 0})
-            if debug_udp["info"] != "Can't resolve IP":
+            debug_udp.update({"info": [str(e)], "status": 0})
+            if debug_udp["info"] != ["Can't resolve IP"]:
                 debug_udp["ip"] = failover_ip
             submitted_data.appendleft(debug_udp)
         logger.info(f"{udp_version} UDP failed, trying HTTPS")
@@ -66,11 +66,11 @@ def scrape_submitted(tracker):
         response = announce_http(https_version)
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(response))
-        debug_https.update({"info": pretty_data, "status": 1})
+        debug_https.update({"info": [pretty_data], "status": 1})
         submitted_data.appendleft(debug_https)
         return latency, response["interval"], https_version
     except RuntimeError as e:
-        debug_https.update({"info": str(e), "status": 0})
+        debug_https.update({"info": [str(e)], "status": 0})
         "HTTPS not working, trying HTTP"
         submitted_data.appendleft(debug_https)
 
@@ -85,11 +85,11 @@ def scrape_submitted(tracker):
         response = announce_http(http_version)
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(response))
-        debug_http.update({"info": pretty_data, "status": 1})
+        debug_http.update({"info": [pretty_data], "status": 1})
         submitted_data.appendleft(debug_http)
         return latency, response["interval"], http_version
     except RuntimeError as e:
-        debug_http.update({"info": redact_origin(str(e)), "status": 0})
+        debug_http.update({"info": [redact_origin(str(e))], "status": 0})
         submitted_data.appendleft(debug_http)
     raise RuntimeError
 

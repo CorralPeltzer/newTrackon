@@ -35,7 +35,11 @@
         % else:
             <td class="rejected"><b>Rejected</b></td>
         % endif
-        <td>${response['info'] | h}</td>
+        <td>
+            % for message in response['info']:
+                ${ message| h} <br>
+            % endfor
+        </td>
     </tr>
 % endfor
 
