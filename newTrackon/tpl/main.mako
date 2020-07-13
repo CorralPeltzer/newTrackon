@@ -5,8 +5,9 @@
             "pageLength": 50,
             "order": [[1, 'desc'], [9, 'asc']],
             "columnDefs": [
-                {"type": "natural", targets: [3, 4, 5, 8]},
-                {"type": "date-eu", targets: 9}
+                {"orderable": false, "targets": [3, 5, 6, 7, 8]},
+                {"type": "natural", "targets": 4},
+                {"type": "date-eu", "targets": 9}
             ]
         });
         $(".initially-hidden").css("visibility", "visible");
