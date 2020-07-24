@@ -37,21 +37,27 @@ def attempt_submitted(tracker):
 
     # UDP scrape
     if submitted_url.port:  # If the tracker netloc has a port, try with UDP
-        udp_success, latency, parsed_response, udp_url = attempt_udp(failover_ip, submitted_url.netloc)
+        udp_success, latency, parsed_response, udp_url = attempt_udp(
+            failover_ip, submitted_url.netloc
+        )
         if udp_success:
             return latency, parsed_response["interval"], udp_url
 
         logger.info(f"{udp_url} UDP failed, trying HTTPS")
 
     # HTTPS scrape
-    https_success, https_response, https_url, latency = attempt_https(failover_ip, submitted_url)
+    https_success, https_response, https_url, latency = attempt_https(
+        failover_ip, submitted_url
+    )
     if https_success:
         return latency, https_response["interval"], https_url
 
     logger.info(f"{https_url} HTTPS failed, trying HTTP")
 
     # HTTP scrape
-    debug_success, http_response, http_url, latency = attempt_http(failover_ip, submitted_url)
+    debug_success, http_response, http_url, latency = attempt_http(
+        failover_ip, submitted_url
+    )
     if debug_success:
         return latency, http_response["interval"], http_url
 
@@ -237,7 +243,9 @@ def announce_udp(udp_version):
         raise RuntimeError("UDP error: " + str(err))
     ip_family = sock.family
     sock.close()
-    parsed_response, raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
+    parsed_response, raw_response = udp_parse_announce_response(
+        buf, transaction_id, ip_family
+    )
     logger.info(f"{udp_version} response: {parsed_response}")
     return parsed_response, raw_response, ip
 
