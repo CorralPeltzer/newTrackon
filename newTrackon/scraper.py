@@ -18,7 +18,7 @@ from newTrackon import utils
 HTTP_PORT = 6881
 UDP_PORT = 30461
 SCRAPING_HEADERS = {
-    "User-Agent": "qBittorrent/4.1.5",
+    "User-Agent": "qBittorrent/4.2.5",
     "Accept-Encoding": "gzip",
     "Connection": "close",
 }
@@ -37,11 +37,11 @@ def attempt_submitted(tracker):
 
     # UDP scrape
     if submitted_url.port:  # If the tracker netloc has a port, try with UDP
-        udp_success, latency, parsed_response, udp_url = attempt_udp(
+        udp_success, latency, udp_response, udp_url = attempt_udp(
             failover_ip, submitted_url.netloc
         )
         if udp_success:
-            return latency, parsed_response["interval"], udp_url
+            return latency, udp_response["interval"], udp_url
 
         logger.info(f"{udp_url} UDP failed, trying HTTPS")
 
@@ -61,7 +61,7 @@ def attempt_submitted(tracker):
     if debug_success:
         return latency, http_response["interval"], http_url
 
-    logger.info(f"{http_url} HTTP failed, giving up on tracker {tracker.url}")
+    logger.info(f"{http_url} HTTP failed, giving up on submitted tracker {tracker.url}")
     raise RuntimeError
 
 
@@ -105,7 +105,7 @@ def attempt_udp(failover_ip, tracker_netloc):
     latency = 0
     parsed_response = ""
     try:
-        parsed_response, raw_response, ip = announce_udp(udp_url)
+        parsed_response, ip = announce_udp(udp_url)
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(parsed_response))
         udp_attempt_result.update({"info": [pretty_data], "status": 1, "ip": ip})
@@ -118,7 +118,7 @@ def attempt_udp(failover_ip, tracker_netloc):
 
 
 def announce_http(url):
-    logger.info(f"{url} Scraping HTTP")
+    logger.info(f"{url} Scraping HTTP(S)")
     thash = urandom(20)
     pid = "-qB3360-" + "".join(
         [random.choice(string.ascii_letters + string.digits) for _ in range(12)]
@@ -236,7 +236,7 @@ def announce_udp(udp_version):
         buf, transaction_id, ip_family
     )
     logger.info(f"{udp_version} response: {parsed_response}")
-    return parsed_response, raw_response, ip
+    return parsed_response, ip
 
 
 def udp_create_binary_connection_request():

@@ -98,7 +98,7 @@ class Tracker:
         }
         try:
             if parse.urlparse(self.url).scheme == "udp":
-                response, _, _ = scraper.announce_udp(self.url)
+                response, _ = scraper.announce_udp(self.url)
             else:
                 response = scraper.announce_http(self.url)
 
