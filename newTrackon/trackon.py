@@ -4,7 +4,7 @@ from time import time, sleep
 from urllib.parse import urlparse
 from threading import Lock
 from newTrackon.tracker import Tracker
-from newTrackon.scraper import scrape_submitted
+from newTrackon.scraper import attempt_submitted
 from newTrackon import db
 from newTrackon.persistence import (
     submitted_history_file,
@@ -104,7 +104,7 @@ def process_new_tracker(tracker_candidate):
             tracker_candidate.latency,
             tracker_candidate.interval,
             tracker_candidate.url,
-        ) = scrape_submitted(tracker_candidate)
+        ) = attempt_submitted(tracker_candidate)
     except (RuntimeError, ValueError):
         return
     if (

@@ -18,7 +18,7 @@ from newTrackon import utils
 HTTP_PORT = 6881
 UDP_PORT = 30461
 SCRAPING_HEADERS = {
-    "User-Agent": "qBittorrent/4.1.5",
+    "User-Agent": "qBittorrent/4.2.5",
     "Accept-Encoding": "gzip",
     "Connection": "close",
 }
@@ -28,74 +28,97 @@ logger = getLogger("newtrackon_logger")
 to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
-def scrape_submitted(tracker):
-    pp = pprint.PrettyPrinter(width=999999, compact=True)
-    parsed = urlparse(tracker.url)
-    tnetloc = parsed.netloc
+def attempt_submitted(tracker):
+    submitted_url = urlparse(tracker.url)
     try:
-        failover_ip = socket.getaddrinfo(parsed.hostname, None)[0][4][0]
+        failover_ip = socket.getaddrinfo(submitted_url.hostname, None)[0][4][0]
     except OSError:
         failover_ip = ""
+
     # UDP scrape
-    if parsed.port:  # If the tracker netloc has a port, try with udp
-        udp_version = "udp://" + tnetloc + "/announce"
-        t1 = time()
-        debug_udp = {"url": udp_version, "time": int(t1)}
-        try:
-            parsed, raw, ip = announce_udp(udp_version)
-            latency = int((time() - t1) * 1000)
-            pretty_data = redact_origin(pp.pformat(parsed))
-            debug_udp.update({"info": [pretty_data], "status": 1, "ip": ip})
-            submitted_data.appendleft(debug_udp)
-            return latency, parsed["interval"], udp_version
-        except RuntimeError as e:
-            debug_udp.update({"info": [str(e)], "status": 0})
-            if debug_udp["info"] != ["Can't resolve IP"]:
-                debug_udp["ip"] = failover_ip
-            submitted_data.appendleft(debug_udp)
-        logger.info(f"{udp_version} UDP failed, trying HTTPS")
+    if submitted_url.port:  # If the tracker netloc has a port, try with UDP
+        udp_success, latency, udp_response, udp_url = attempt_udp(
+            failover_ip, submitted_url.netloc
+        )
+        if udp_success:
+            return latency, udp_response["interval"], udp_url
+
+        logger.info(f"{udp_url} UDP failed, trying HTTPS")
 
     # HTTPS scrape
-    if not urlparse(tracker.url).port:
-        https_version = "https://" + tnetloc + ":443/announce"
-    else:
-        https_version = "https://" + tnetloc + "/announce"
-    t1 = time()
-    debug_https = {"url": https_version, "time": int(t1), "ip": failover_ip}
-    try:
-        response = announce_http(https_version)
-        latency = int((time() - t1) * 1000)
-        pretty_data = redact_origin(pp.pformat(response))
-        debug_https.update({"info": [pretty_data], "status": 1})
-        submitted_data.appendleft(debug_https)
-        return latency, response["interval"], https_version
-    except RuntimeError as e:
-        debug_https.update({"info": [str(e)], "status": 0})
-        "HTTPS not working, trying HTTP"
-        submitted_data.appendleft(debug_https)
+    https_success, https_response, https_url, latency = attempt_httpx(
+        failover_ip, submitted_url, tls=True
+    )
+    if https_success:
+        return latency, https_response["interval"], https_url
+
+    logger.info(f"{https_url} HTTPS failed, trying HTTP")
 
     # HTTP scrape
-    if not urlparse(tracker.url).port:
-        http_version = "http://" + tnetloc + ":80/announce"
-    else:
-        http_version = "http://" + tnetloc + "/announce"
-    t1 = time()
-    debug_http = {"url": http_version, "time": int(t1), "ip": failover_ip}
-    try:
-        response = announce_http(http_version)
-        latency = int((time() - t1) * 1000)
-        pretty_data = redact_origin(pp.pformat(response))
-        debug_http.update({"info": [pretty_data], "status": 1})
-        submitted_data.appendleft(debug_http)
-        return latency, response["interval"], http_version
-    except RuntimeError as e:
-        debug_http.update({"info": [redact_origin(str(e))], "status": 0})
-        submitted_data.appendleft(debug_http)
+    debug_success, http_response, http_url, latency = attempt_httpx(
+        failover_ip, submitted_url, tls=False
+    )
+    if debug_success:
+        return latency, http_response["interval"], http_url
+
+    logger.info(f"{http_url} HTTP failed, giving up on submitted tracker {tracker.url}")
     raise RuntimeError
 
 
+def attempt_httpx(failover_ip, submitted_url, tls=True):
+    http_url = build_httpx_url(submitted_url, tls)
+    pp = pprint.PrettyPrinter(width=999999, compact=True)
+    t1 = time()
+    debug_http = {"url": http_url, "time": int(t1), "ip": failover_ip}
+    latency = 0
+    http_response = {}
+    try:
+        http_response = announce_http(http_url)
+        latency = int((time() - t1) * 1000)
+        pretty_data = redact_origin(pp.pformat(http_response))
+        debug_http.update({"info": [pretty_data], "status": 1})
+    except RuntimeError as e:
+        debug_http.update({"info": [redact_origin(str(e))], "status": 0})
+    submitted_data.appendleft(debug_http)
+    return debug_http["status"], http_response, http_url, latency
+
+
+def build_httpx_url(submitted_url, tls):
+    if tls:
+        scheme = "https://"
+        default_port = 443
+    else:
+        scheme = "http://"
+        default_port = 80
+    if not submitted_url.port:
+        http_url = scheme + submitted_url.netloc + ":" + str(default_port) + "/announce"
+    else:
+        http_url = scheme + submitted_url.netloc + "/announce"
+    return http_url
+
+
+def attempt_udp(failover_ip, tracker_netloc):
+    pp = pprint.PrettyPrinter(width=999999, compact=True)
+    udp_url = "udp://" + tracker_netloc + "/announce"
+    t1 = time()
+    udp_attempt_result = {"url": udp_url, "time": int(t1)}
+    latency = 0
+    parsed_response = ""
+    try:
+        parsed_response, ip = announce_udp(udp_url)
+        latency = int((time() - t1) * 1000)
+        pretty_data = redact_origin(pp.pformat(parsed_response))
+        udp_attempt_result.update({"info": [pretty_data], "status": 1, "ip": ip})
+    except RuntimeError as e:
+        udp_attempt_result.update({"info": [str(e)], "status": 0})
+        if udp_attempt_result["info"] != ["Can't resolve IP"]:
+            udp_attempt_result["ip"] = failover_ip
+    submitted_data.appendleft(udp_attempt_result)
+    return udp_attempt_result["status"], latency, parsed_response, udp_url
+
+
 def announce_http(url):
-    logger.info(f"{url} Scraping HTTP")
+    logger.info(f"{url} Scraping HTTP(S)")
     thash = urandom(20)
     pid = "-qB3360-" + "".join(
         [random.choice(string.ascii_letters + string.digits) for _ in range(12)]
@@ -209,9 +232,11 @@ def announce_udp(udp_version):
         raise RuntimeError("UDP error: " + str(err))
     ip_family = sock.family
     sock.close()
-    parsed, raw = udp_parse_announce_response(buf, transaction_id, ip_family)
-    logger.info(f"{udp_version} response: {parsed}")
-    return parsed, raw, ip
+    parsed_response, raw_response = udp_parse_announce_response(
+        buf, transaction_id, ip_family
+    )
+    logger.info(f"{udp_version} response: {parsed_response}")
+    return parsed_response, ip
 
 
 def udp_create_binary_connection_request():
