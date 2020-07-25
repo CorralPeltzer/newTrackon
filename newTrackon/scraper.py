@@ -46,8 +46,8 @@ def attempt_submitted(tracker):
         logger.info(f"{udp_url} UDP failed, trying HTTPS")
 
     # HTTPS scrape
-    https_success, https_response, https_url, latency = attempt_https(
-        failover_ip, submitted_url
+    https_success, https_response, https_url, latency = attempt_httpx(
+        failover_ip, submitted_url, tls=True
     )
     if https_success:
         return latency, https_response["interval"], https_url
@@ -55,8 +55,8 @@ def attempt_submitted(tracker):
     logger.info(f"{https_url} HTTPS failed, trying HTTP")
 
     # HTTP scrape
-    debug_success, http_response, http_url, latency = attempt_http(
-        failover_ip, submitted_url
+    debug_success, http_response, http_url, latency = attempt_httpx(
+        failover_ip, submitted_url, tls=False
     )
     if debug_success:
         return latency, http_response["interval"], http_url
@@ -65,11 +65,8 @@ def attempt_submitted(tracker):
     raise RuntimeError
 
 
-def attempt_http(failover_ip, submitted_url):
-    if not submitted_url.port:
-        http_url = "http://" + submitted_url.netloc + ":80/announce"
-    else:
-        http_url = "http://" + submitted_url.netloc + "/announce"
+def attempt_httpx(failover_ip, submitted_url, tls=True):
+    http_url = build_httpx_url(submitted_url, tls)
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     t1 = time()
     debug_http = {"url": http_url, "time": int(t1), "ip": failover_ip}
@@ -86,26 +83,18 @@ def attempt_http(failover_ip, submitted_url):
     return debug_http["status"], http_response, http_url, latency
 
 
-def attempt_https(failover_ip, submitted_url):
-    if not submitted_url.port:
-        https_url = "https://" + submitted_url.netloc + ":443/announce"
+def build_httpx_url(submitted_url, tls):
+    if tls:
+        scheme = "https://"
+        default_port = 443
     else:
-        https_url = "https://" + submitted_url.netloc + "/announce"
-    pp = pprint.PrettyPrinter(width=999999, compact=True)
-    t1 = time()
-    debug_https = {"url": https_url, "time": int(t1), "ip": failover_ip}
-    latency = 0
-    https_response = {}
-    try:
-        https_response = announce_http(https_url)
-        latency = int((time() - t1) * 1000)
-        pretty_data = redact_origin(pp.pformat(https_response))
-        debug_https.update({"info": [pretty_data], "status": 1})
-    except RuntimeError as e:
-        debug_https.update({"info": [str(e)], "status": 0})
-
-    submitted_data.appendleft(debug_https)
-    return debug_https["status"], https_response, https_url, latency
+        scheme = "http://"
+        default_port = 80
+    if not submitted_url.port:
+        http_url = scheme + submitted_url.netloc + ":" + str(default_port) + "/announce"
+    else:
+        http_url = scheme + submitted_url.netloc + "/announce"
+    return http_url
 
 
 def attempt_udp(failover_ip, tracker_netloc):
