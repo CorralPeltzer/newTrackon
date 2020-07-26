@@ -41,12 +41,23 @@ def attempt_submitted(tracker):
 
     if valid_txt:  # Hostname has a valid TXT record as per BEP34
         if not txt_prefs:
-            logger.info(f"Hostname denies connection from TXT record, giving up on submitted tracker {tracker.url}")
-            submitted_data.appendleft({"url": tracker.url, "time": int(time()), "status": 0,
-                                       "ip": failover_ip, "info": ["Tracker denied connection according to BEP34"]})
+            logger.info(
+                f"Hostname denies connection from TXT record, giving up on submitted tracker {tracker.url}"
+            )
+            submitted_data.appendleft(
+                {
+                    "url": tracker.url,
+                    "time": int(time()),
+                    "status": 0,
+                    "ip": failover_ip,
+                    "info": ["Tracker denied connection according to BEP34"],
+                }
+            )
             raise RuntimeError
         elif txt_prefs:
-            logger.info(f"Tracker {tracker.url} sets protocol and port preferences: {str(txt_prefs)}")
+            logger.info(
+                f"Tracker {tracker.url} sets protocol and port preferences: {str(txt_prefs)}"
+            )
             return attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs)
     else:  # No valid BEP34, attempting all protocols
         return attempt_all_protocols(submitted_url, failover_ip)
@@ -54,7 +65,9 @@ def attempt_submitted(tracker):
 
 def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
     for preference in txt_prefs:
-        preferred_url = submitted_url._replace(netloc="{}:{}".format(submitted_url.hostname, preference[1]))
+        preferred_url = submitted_url._replace(
+            netloc="{}:{}".format(submitted_url.hostname, preference[1])
+        )
         if preference[0] == "UDP":
             udp_success, udp_interval, udp_url, latency = attempt_udp(
                 failover_ip, preferred_url.netloc
@@ -62,11 +75,15 @@ def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
             if udp_success:
                 return udp_interval, udp_url, latency
         elif preference[0] == "TCP":
-            http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, preferred_url)
+            http_success, http_interval, http_url, latency = attempt_https_http(
+                failover_ip, preferred_url
+            )
             if http_success:
                 return http_interval, http_url, latency
 
-    logger.info(f"All DNS TXT protocol preferences failed, giving up on submitted tracker {submitted_url.geturl()}")
+    logger.info(
+        f"All DNS TXT protocol preferences failed, giving up on submitted tracker {submitted_url.geturl()}"
+    )
     raise RuntimeError
 
 
@@ -82,10 +99,14 @@ def attempt_all_protocols(submitted_url, failover_ip):
         logger.info(f"{udp_url} UDP failed")
 
     # HTTPS and HTTP scrape
-    http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, submitted_url)
+    http_success, http_interval, http_url, latency = attempt_https_http(
+        failover_ip, submitted_url
+    )
     if http_success:
         return http_interval, http_url, latency
-    logger.info(f"All protocols failed, giving up on submitted tracker {submitted_url.geturl()}")
+    logger.info(
+        f"All protocols failed, giving up on submitted tracker {submitted_url.geturl()}"
+    )
     raise RuntimeError
 
 
@@ -145,7 +166,12 @@ def attempt_udp(failover_ip, tracker_netloc):
         if udp_attempt_result["info"] != ["Can't resolve IP"]:
             udp_attempt_result["ip"] = failover_ip
     submitted_data.appendleft(udp_attempt_result)
-    return udp_attempt_result["status"], parsed_response.get("interval"), udp_url, latency
+    return (
+        udp_attempt_result["status"],
+        parsed_response.get("interval"),
+        udp_url,
+        latency,
+    )
 
 
 def get_bep_34(hostname):
