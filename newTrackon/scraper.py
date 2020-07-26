@@ -65,7 +65,7 @@ def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
             if http_success:
                 return http_interval, http_url, latency
 
-    logger.info(f"All DNS TXT protocol preferences failed, giving up on submitted tracker {str(submitted_url)}")
+    logger.info(f"All DNS TXT protocol preferences failed, giving up on submitted tracker {submitted_url.geturl()}")
     raise RuntimeError
 
 
