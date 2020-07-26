@@ -143,7 +143,7 @@ class Tracker:
             raise RuntimeError(
                 "Tracker URLs have to start with 'udp://', 'http://' or 'https://'"
             )
-        if uchars.match(url.netloc) and uchars.match(url.path):
+        if uchars.match(url.netloc):
             url = url._replace(path="/announce")
             self.url = url.geturl()
         else:

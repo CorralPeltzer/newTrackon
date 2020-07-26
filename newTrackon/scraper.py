@@ -15,8 +15,7 @@ import requests
 
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
 from newTrackon.persistence import submitted_data
-from newTrackon import utils
-from newTrackon.utils import process_txt_prefs, build_httpx_url
+from newTrackon.utils import process_txt_prefs, build_httpx_url, my_ipv4, my_ipv6
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
@@ -41,11 +40,13 @@ def attempt_submitted(tracker):
     valid_txt, txt_prefs = get_bep_34(submitted_url.hostname)
 
     if valid_txt:  # Hostname has a valid TXT record as per BEP34
-        if not txt_prefs:  # Hostname does not want to be contacted as a tracker
+        if not txt_prefs:
+            logger.info(f"Hostname denies connection from TXT record, giving up on submitted tracker {tracker.url}")
             submitted_data.appendleft({"url": tracker.url, "time": int(time()), "status": 0,
                                        "ip": failover_ip, "info": ["Tracker denied connection according to BEP34"]})
             raise RuntimeError
-        elif txt_prefs:  # Hostname sets tracker protocol & port preferences
+        elif txt_prefs:
+            logger.info(f"Tracker {tracker.url} sets protocol and port preferences: {str(txt_prefs)}")
             return attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs)
     else:  # No valid BEP34, attempting all protocols
         return attempt_all_protocols(submitted_url, failover_ip)
@@ -84,7 +85,7 @@ def attempt_all_protocols(submitted_url, failover_ip):
     http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, submitted_url)
     if http_success:
         return http_interval, http_url, latency
-    logger.info(f"All protocols failed, giving up on submitted tracker {str(submitted_url)}")
+    logger.info(f"All protocols failed, giving up on submitted tracker {submitted_url.geturl()}")
     raise RuntimeError
 
 
@@ -175,8 +176,8 @@ def announce_http(url):
         "downloaded": 0,
         "left": 0,
         "compact": 1,
-        "ipv6": utils.my_ipv6,
-        "ipv4": utils.my_ipv4,
+        "ipv6": my_ipv6,
+        "ipv4": my_ipv4,
     }
     arguments = urlencode(args_dict)
     url = url + "?" + arguments
@@ -386,10 +387,10 @@ def get_server_ip(ip_version):
 
 
 def redact_origin(response):
-    if utils.my_ipv4:
-        response = response.replace(utils.my_ipv4, "v4-redacted")
-    if utils.my_ipv6:
-        response = response.replace(utils.my_ipv6, "v6-redacted")
+    if my_ipv4:
+        response = response.replace(my_ipv4, "v4-redacted")
+    if my_ipv6:
+        response = response.replace(my_ipv6, "v6-redacted")
     for port in to_redact:
         response = response.replace(port, "redacted")
     return response
