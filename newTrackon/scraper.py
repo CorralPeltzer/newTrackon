@@ -8,12 +8,15 @@ from logging import getLogger
 from os import urandom
 from time import time
 from urllib.parse import urlparse, urlencode
+from dns import resolver
+from dns.exception import DNSException
 
 import requests
 
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
 from newTrackon.persistence import submitted_data
 from newTrackon import utils
+from newTrackon.utils import process_txt_prefs, build_httpx_url
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
@@ -35,34 +38,75 @@ def attempt_submitted(tracker):
     except OSError:
         failover_ip = ""
 
+    valid_txt, txt_prefs = get_bep_34(submitted_url.hostname)
+
+    if valid_txt:  # Hostname has a valid TXT record as per BEP34
+        if not txt_prefs:  # Hostname does not want to be contacted as a tracker
+            submitted_data.appendleft({"url": tracker.url, "time": int(time()), "status": 0,
+                                       "ip": failover_ip, "info": ["Tracker denied connection according to BEP34"]})
+            raise RuntimeError
+        elif txt_prefs:  # Hostname sets tracker protocol & port preferences
+            return attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs)
+    else:  # No valid BEP34, attempting all protocols
+        return attempt_all_protocols(submitted_url, failover_ip)
+
+
+def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
+    for preference in txt_prefs:
+        preferred_url = submitted_url._replace(netloc="{}:{}".format(submitted_url.hostname, preference[1]))
+        if preference[0] == "UDP":
+            udp_success, udp_interval, udp_url, latency = attempt_udp(
+                failover_ip, preferred_url.netloc
+            )
+            if udp_success:
+                return udp_interval, udp_url, latency
+        elif preference[0] == "TCP":
+            http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, preferred_url)
+            if http_success:
+                return http_interval, http_url, latency
+
+    logger.info(f"All DNS TXT protocol preferences failed, giving up on submitted tracker {str(submitted_url)}")
+    raise RuntimeError
+
+
+def attempt_all_protocols(submitted_url, failover_ip):
     # UDP scrape
     if submitted_url.port:  # If the tracker netloc has a port, try with UDP
-        udp_success, latency, udp_response, udp_url = attempt_udp(
+        udp_success, udp_interval, udp_url, latency = attempt_udp(
             failover_ip, submitted_url.netloc
         )
         if udp_success:
-            return latency, udp_response["interval"], udp_url
+            return udp_interval, udp_url, latency
 
-        logger.info(f"{udp_url} UDP failed, trying HTTPS")
+        logger.info(f"{udp_url} UDP failed")
 
+    # HTTPS and HTTP scrape
+    http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, submitted_url)
+    if http_success:
+        return http_interval, http_url, latency
+    logger.info(f"All protocols failed, giving up on submitted tracker {str(submitted_url)}")
+    raise RuntimeError
+
+
+def attempt_https_http(failover_ip, url):
     # HTTPS scrape
-    https_success, https_response, https_url, latency = attempt_httpx(
-        failover_ip, submitted_url, tls=True
+    https_success, https_interval, https_url, latency = attempt_httpx(
+        failover_ip, url, tls=True
     )
     if https_success:
-        return latency, https_response["interval"], https_url
+        return https_success, https_interval, https_url, latency
 
-    logger.info(f"{https_url} HTTPS failed, trying HTTP")
+    logger.info(f"{https_url} HTTPS failed")
 
     # HTTP scrape
-    debug_success, http_response, http_url, latency = attempt_httpx(
-        failover_ip, submitted_url, tls=False
+    http_success, http_interval, http_url, latency = attempt_httpx(
+        failover_ip, url, tls=False
     )
-    if debug_success:
-        return latency, http_response["interval"], http_url
+    if http_success:
+        return https_success, http_interval, http_url, latency
 
-    logger.info(f"{http_url} HTTP failed, giving up on submitted tracker {tracker.url}")
-    raise RuntimeError
+    logger.info(f"{http_url} HTTP failed")
+    return None, None, None
 
 
 def attempt_httpx(failover_ip, submitted_url, tls=True):
@@ -80,21 +124,7 @@ def attempt_httpx(failover_ip, submitted_url, tls=True):
     except RuntimeError as e:
         debug_http.update({"info": [redact_origin(str(e))], "status": 0})
     submitted_data.appendleft(debug_http)
-    return debug_http["status"], http_response, http_url, latency
-
-
-def build_httpx_url(submitted_url, tls):
-    if tls:
-        scheme = "https://"
-        default_port = 443
-    else:
-        scheme = "http://"
-        default_port = 80
-    if not submitted_url.port:
-        http_url = scheme + submitted_url.netloc + ":" + str(default_port) + "/announce"
-    else:
-        http_url = scheme + submitted_url.netloc + "/announce"
-    return http_url
+    return debug_http["status"], http_response.get("interval"), http_url, latency
 
 
 def attempt_udp(failover_ip, tracker_netloc):
@@ -103,7 +133,7 @@ def attempt_udp(failover_ip, tracker_netloc):
     t1 = time()
     udp_attempt_result = {"url": udp_url, "time": int(t1)}
     latency = 0
-    parsed_response = ""
+    parsed_response = {}
     try:
         parsed_response, ip = announce_udp(udp_url)
         latency = int((time() - t1) * 1000)
@@ -114,7 +144,20 @@ def attempt_udp(failover_ip, tracker_netloc):
         if udp_attempt_result["info"] != ["Can't resolve IP"]:
             udp_attempt_result["ip"] = failover_ip
     submitted_data.appendleft(udp_attempt_result)
-    return udp_attempt_result["status"], latency, parsed_response, udp_url
+    return udp_attempt_result["status"], parsed_response.get("interval"), udp_url, latency
+
+
+def get_bep_34(hostname):
+    """Querying for http://bittorrent.org/beps/bep_0034.html"""
+    try:
+        answers = resolver.resolve(hostname, "TXT")
+        for record in answers:
+            record_text = str(record)[1:-1]
+            if record_text.startswith("BITTORRENT"):
+                return True, process_txt_prefs(record_text)
+    except DNSException:
+        pass
+    return False, None
 
 
 def announce_http(url):

@@ -101,9 +101,9 @@ def process_new_tracker(tracker_candidate):
     tracker_candidate.last_checked = int(time())
     try:
         (
-            tracker_candidate.latency,
             tracker_candidate.interval,
             tracker_candidate.url,
+            tracker_candidate.latency,
         ) = attempt_submitted(tracker_candidate)
     except (RuntimeError, ValueError):
         return

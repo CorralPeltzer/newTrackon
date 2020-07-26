@@ -97,3 +97,28 @@ def format_list(raw_list):
         url_string = url[0]
         formatted_list += url_string + "\n" + "\n"
     return formatted_list
+
+
+def process_txt_prefs(txt_record):
+    words = txt_record.split()
+    txt_preferences = []
+    for word in words[1:11]:  # Get only the first 10 advertised trackers to avoid DoS
+        if word.startswith("UDP:") and word[4:].isdigit():
+            txt_preferences.append(("UDP", int(word[4:])))
+        elif word.startswith("TCP:") and word[4:].isdigit():
+            txt_preferences.append(("TCP", int(word[4:])))
+    return txt_preferences
+
+
+def build_httpx_url(submitted_url, tls):
+    if tls:
+        scheme = "https://"
+        default_port = 443
+    else:
+        scheme = "http://"
+        default_port = 80
+    if not submitted_url.port:
+        http_url = scheme + submitted_url.netloc + ":" + str(default_port) + "/announce"
+    else:
+        http_url = scheme + submitted_url.netloc + "/announce"
+    return http_url
