@@ -128,7 +128,7 @@ def attempt_https_http(failover_ip, url):
         return https_success, http_interval, http_url, latency
 
     logger.info(f"{http_url} HTTP failed")
-    return None, None, None
+    return None, None, None, None
 
 
 def attempt_httpx(failover_ip, submitted_url, tls=True):
