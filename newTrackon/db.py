@@ -19,8 +19,8 @@ def create_db():
     c = conn.cursor()
     c.execute(
         """CREATE TABLE `status` (
-        `url`	TEXT NOT NULL,
         `host`	TEXT NOT NULL,
+        `url`	TEXT NOT NULL,
         `ip`	TEXT,
         `latency`	INTEGER,
         `last_checked`	INTEGER,
@@ -34,7 +34,7 @@ def create_db():
         `historic`	TEXT,
         `last_downtime` INTEGER,
         `last_uptime`	INTEGER,
-        PRIMARY KEY(`url`)
+        PRIMARY KEY(`host`)
         );"""
     )
     conn.commit()
@@ -46,7 +46,7 @@ def update_tracker(tracker):
     c = conn.cursor()
     c.execute(
         "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-        " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE url=?",
+        " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE host=?",
         (
             json.dumps(tracker.ip),
             tracker.latency,
@@ -60,7 +60,7 @@ def update_tracker(tracker):
             json.dumps(tracker.network),
             tracker.last_downtime,
             tracker.last_uptime,
-            tracker.url,
+            tracker.host,
         ),
     ).fetchone()
     conn.commit()
@@ -70,7 +70,7 @@ def update_tracker(tracker):
 def delete_tracker(tracker):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute("DELETE FROM status WHERE url=?", (tracker.url,),).fetchone()
+    c.execute("DELETE FROM status WHERE host=?", (tracker.host,),).fetchone()
     conn.commit()
     conn.close()
 
@@ -82,8 +82,8 @@ def get_all_data():
     trackers_from_db = []
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
         tracker_in_db = Tracker(
-            url=row.get("url"),
             host=row.get("host"),
+            url=row.get("url"),
             ip=json.loads(row.get("ip")),
             latency=row.get("latency"),
             last_checked=row.get("last_checked"),
@@ -136,8 +136,8 @@ def insert_new_tracker(tracker):
     c.execute(
         "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
-            tracker.url,
             tracker.host,
+            tracker.url,
             json.dumps(tracker.ip),
             tracker.latency,
             tracker.last_checked,

@@ -37,10 +37,10 @@ def attempt_submitted(tracker):
     except OSError:
         failover_ip = ""
 
-    valid_txt, txt_prefs = get_bep_34(submitted_url.hostname)
+    valid_bep_34, bep_34_info = get_bep_34(submitted_url.hostname)
 
-    if valid_txt:  # Hostname has a valid TXT record as per BEP34
-        if not txt_prefs:
+    if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
+        if not bep_34_info:
             logger.info(
                 f"Hostname denies connection from TXT record, giving up on submitted tracker {tracker.url}"
             )
@@ -54,11 +54,11 @@ def attempt_submitted(tracker):
                 }
             )
             raise RuntimeError
-        elif txt_prefs:
+        elif bep_34_info:
             logger.info(
-                f"Tracker {tracker.url} sets protocol and port preferences: {str(txt_prefs)}"
+                f"Tracker {tracker.url} sets protocol and port preferences: {str(bep_34_info)}"
             )
-            return attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs)
+            return attempt_from_txt_prefs(submitted_url, failover_ip, bep_34_info)
     else:  # No valid BEP34, attempting all protocols
         return attempt_all_protocols(submitted_url, failover_ip)
 
