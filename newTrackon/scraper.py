@@ -147,7 +147,7 @@ def announce_http(url):
         raise RuntimeError("HTTP connection failed")
     except requests.RequestException:
         raise RuntimeError("Ambiguous HTTP error")
-    if response.status_code is not 200:
+    if response.status_code != 200:
         raise RuntimeError("HTTP %s status code returned" % response.status_code)
 
     elif not response.content:
