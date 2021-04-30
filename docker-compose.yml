@@ -1,0 +1,12 @@
+services:
+  newtrackon:
+    container_name: newtrackon
+    ports:
+      - 8080:8080
+    volumes:
+    ### Modify newTrackon data folder (example will store all data inside actual user folder "~/newTrackon-data", change as required)
+      - ~/newTrackon-data:/app/newTrackon/data
+    image: corralpeltzer/newtrackon:latest
+
+    ### If you have full IPv4 & IPv6 use as-is, otherwise add --ignore-ipv4 or --ignore-ipv6 as required:
+    command: --address=0.0.0.0

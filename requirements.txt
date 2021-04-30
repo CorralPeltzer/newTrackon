@@ -1,5 +1,5 @@
 Flask_Mako==0.4
-requests==2.24.0
-tornado==6.0.4
+requests==2.25.1
+tornado==6.1
 Flask==1.1.2
 dnspython==2.0.0
