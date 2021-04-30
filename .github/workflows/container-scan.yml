@@ -1,18 +1,12 @@
-name: "Container Scan"
+name: "Azure Container Scan"
 
-on:
-  push:
-  pull_request:
-  
+on: [ push, pull_request ]
+
 jobs:
   Azure-container-scan:
     runs-on: ubuntu-latest
     steps:
-    - name: Anchore Scan
-      uses: anchore/scan-action@v2
-      with:
-        image: "corralpeltzer/newtrackon"
-    - name: Azure Scan
-      uses: azure/container-scan@v0
-      with:
-        image-name: "corralpeltzer/newtrackon"
+      - name: Azure Scan
+        uses: azure/container-scan@v0
+        with:
+          image-name: "corralpeltzer/newtrackon"
