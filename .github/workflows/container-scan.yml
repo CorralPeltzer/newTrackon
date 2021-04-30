@@ -1,25 +1,31 @@
 name: "Container Scan"
 
-on: [push, pull_request]
-  
+on: [ push, pull_request ]
+
 jobs:
   Azure-container-scan:
     runs-on: ubuntu-latest
     steps:
-    - name: Azure Scan
-      uses: azure/container-scan@v0
-      with:
-        image-name: "corralpeltzer/newtrackon"
+      - name: Azure Scan
+        uses: azure/container-scan@v0
+        with:
+          image-name: "corralpeltzer/newtrackon"
   Anchore-scan:
     runs-on: ubuntu-latest
     steps:
-    - name: Anchore Scan
-      uses: anchore/scan-action@v2
-      id: scan
-      with:
-        image: "corralpeltzer/newtrackon"
-        acs-report-enable: true
-    - name: upload Anchore scan SARIF report
-      uses: github/codeql-action/upload-sarif@v1
-      with:
-        sarif_file: ${{ steps.scan.outputs.sarif }}
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          # We must fetch at least the immediate parents so that if this is
+          # a pull request then we can checkout the head.
+          fetch-depth: 2
+      - name: Anchore Scan
+        uses: anchore/scan-action@v2
+        id: scan
+        with:
+          image: "corralpeltzer/newtrackon"
+          acs-report-enable: true
+      - name: upload Anchore scan SARIF report
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
