@@ -70,7 +70,10 @@ def update_tracker(tracker):
 def delete_tracker(tracker):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute("DELETE FROM status WHERE host=?", (tracker.host,),).fetchone()
+    c.execute(
+        "DELETE FROM status WHERE host=?",
+        (tracker.host,),
+    ).fetchone()
     conn.commit()
     conn.close()
 
