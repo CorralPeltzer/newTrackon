@@ -1,2 +1,13 @@
-- name: Container image scan
-  uses: Azure/container-scan@v0
+name: "Azure Container Scan"
+
+on:
+  push:
+  pull_request:
+  
+jobs:
+  Azure-container-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: azure/container-scan@v0
+      with:
+        image-name: corralpeltzer/newtrackon
