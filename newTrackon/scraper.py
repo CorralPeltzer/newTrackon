@@ -381,9 +381,7 @@ def udp_parse_announce_response(buf, sent_transaction_id, ip_family):
         )
     if action == 0x1:
         ret = dict()
-        offset = (
-            8
-        )  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
+        offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
         ret["interval"] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
         ret["leechers"] = struct.unpack_from("!i", buf, offset)[0]
