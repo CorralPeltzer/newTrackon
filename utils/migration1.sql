@@ -16,7 +16,7 @@ CREATE TABLE status_copy(
                             last_uptime	INTEGER,
                             PRIMARY KEY(host)
 );
-INSERT INTO status_copy (host, url, ip, latency, last_checked, interval, status, uptime, country, country_code, network, added, historic, last_downtime, last_uptime)
-SELECT url, host, ip, latency, last_checked, interval, status, uptime, country, country_code, network, added, historic, last_downtime, last_uptime FROM status;
+INSERT INTO status_copy
+SELECT host, url, ip, latency, last_checked, interval, status, uptime, country, country_code, network, added, historic, last_downtime, last_uptime FROM status;
 DROP TABLE status;
 ALTER TABLE status_copy RENAME TO status;
