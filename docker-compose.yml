@@ -4,7 +4,7 @@ services:
     ports:
       - 8080:8080
     volumes:
-    ### Modify newTrackon data folder (example will store all data inside actual user folder "~/newTrackon-data", change as required)
+      ### Modify newTrackon data folder (example will store all data inside actual user folder "~/newTrackon-data", change as required)
       - ~/newTrackon-data:/app/newTrackon/data
     image: corralpeltzer/newtrackon:latest
 
