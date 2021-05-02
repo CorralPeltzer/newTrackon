@@ -24,6 +24,8 @@ logger = logging.getLogger("newtrackon_logger")
 
 
 def enqueue_new_trackers(input_string):
+    if not isinstance(input_string, str):
+        return
     input_string = input_string.lower()
     if len(input_string) > max_input_length:
         return
