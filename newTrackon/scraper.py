@@ -68,13 +68,13 @@ def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
         preferred_url = submitted_url._replace(
             netloc="{}:{}".format(submitted_url.hostname, preference[1])
         )
-        if preference[0] == "UDP":
+        if preference[0] == "udp":
             udp_success, udp_interval, udp_url, latency = attempt_udp(
                 failover_ip, preferred_url.netloc
             )
             if udp_success:
                 return udp_interval, udp_url, latency
-        elif preference[0] == "TCP":
+        elif preference[0] == "tcp":
             http_success, http_interval, http_url, latency = attempt_https_http(
                 failover_ip, preferred_url
             )

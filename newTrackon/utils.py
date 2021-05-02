@@ -104,9 +104,9 @@ def process_txt_prefs(txt_record):
     txt_preferences = []
     for word in words[1:11]:  # Get only the first 10 advertised trackers to avoid DoS
         if word.startswith("UDP:") and word[4:].isdigit():
-            txt_preferences.append(("UDP", int(word[4:])))
+            txt_preferences.append(("udp", int(word[4:])))
         elif word.startswith("TCP:") and word[4:].isdigit():
-            txt_preferences.append(("TCP", int(word[4:])))
+            txt_preferences.append(("udp", int(word[4:])))
     return txt_preferences
 
 
