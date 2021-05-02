@@ -20,7 +20,7 @@ from newTrackon.utils import process_txt_prefs, build_httpx_url, my_ipv4, my_ipv
 HTTP_PORT = 6881
 UDP_PORT = 30461
 SCRAPING_HEADERS = {
-    "User-Agent": "qBittorrent/4.2.5",
+    "User-Agent": "qBittorrent/4.3.4.1",
     "Accept-Encoding": "gzip",
     "Connection": "close",
 }
