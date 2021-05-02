@@ -71,8 +71,6 @@ class Tracker:
         logger.info(f"Preprocessing {url}")
         tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
-        if not tracker.ip:
-            raise RuntimeError("Can't resolve IP")
         tracker.historic = deque(maxlen=1000)
         date = datetime.now()
         tracker.added = "{}-{}-{}".format(date.day, date.month, date.year)
@@ -80,11 +78,10 @@ class Tracker:
 
     def update_status(self):
         try:
+            self.update_from_bep_34()
             self.update_ips()
-        except RuntimeError:
-            self.ip = None
-        if not self.ip:
-            self.clear_tracker_without_ip()
+        except RuntimeError as reason:
+            self.clear_tracker(reason=str(reason))
             return
 
         self.update_ipapi_data()
@@ -119,7 +116,30 @@ class Tracker:
             self.interval = 10800
         self.update_uptime()
 
-    def clear_tracker_without_ip(self):
+    def update_from_bep_34(self):
+        valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
+        if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
+            if not bep_34_info:
+                logger.info(
+                    f"Hostname denies connection from TXT record, setting tracker as DOWN {self.url}"
+                )
+                raise RuntimeError("Tracker denied connection according to BEP34")
+            elif bep_34_info:
+                logger.info(
+                    f"Tracker {self.url} sets protocol and port preferences: {str(bep_34_info)}"
+                )
+                parsed_url = parse.urlparse(self.url)
+                # Update tracker with the first protocol and URL set by TXT record
+                first_bep_34_result = bep_34_info[0]
+                self.url = parsed_url._replace(
+                    scheme=first_bep_34_result[0].lower(),
+                    netloc="{}:{}".format(parsed_url.hostname, first_bep_34_result[1]),
+                ).geturl()
+                return
+        else:  # No valid BEP34, attempting existing URL
+            return
+
+    def clear_tracker(self, reason):
         self.country, self.network, self.country_code = None, None, None
         self.latency = None
         self.last_checked = int(time())
@@ -132,7 +152,7 @@ class Tracker:
             "ip": None,
             "time": strftime("%H:%M:%S UTC", gmtime(time())),
             "status": 0,
-            "info": "Can't resolve IP",
+            "info": reason,
         }
         persistence.raw_data.appendleft(debug)
 
@@ -170,6 +190,7 @@ class Tracker:
             [self.ip.append(str(ip)) for ip in parsed_ips if ip.version == 4]
         elif not self.ip:
             self.ip = None
+            raise RuntimeError("Can't resolve IP")
 
     def update_ipapi_data(self):
         self.country, self.network, self.country_code = [], [], []

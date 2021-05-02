@@ -45,9 +45,10 @@ def update_tracker(tracker):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
-        "UPDATE status SET ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
+        "UPDATE status SET url=?, ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
         " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE host=?",
         (
+            tracker.url,
             json.dumps(tracker.ip),
             tracker.latency,
             tracker.last_checked,
