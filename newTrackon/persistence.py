@@ -6,7 +6,6 @@ submitted_trackers = deque(maxlen=10000)
 raw_history_file = "data/raw_data.json"
 submitted_history_file = "data/submitted_data.json"
 
-
 if path.exists(raw_history_file):
     raw_data = deque(json.load(open(raw_history_file, "r")), maxlen=600)
 else:

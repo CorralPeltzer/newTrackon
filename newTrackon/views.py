@@ -15,7 +15,6 @@ from werkzeug.routing import BaseConverter
 
 from newTrackon import db, utils, trackon
 
-
 mako = MakoTemplates()
 app = Flask(__name__)
 app.template_folder = "tpl"
