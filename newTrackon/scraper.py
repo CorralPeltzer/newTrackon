@@ -125,7 +125,7 @@ def attempt_https_http(failover_ip, url):
         failover_ip, url, tls=False
     )
     if http_success:
-        return https_success, http_interval, http_url, latency
+        return http_success, http_interval, http_url, latency
 
     logger.info(f"{http_url} HTTP failed")
     return None, None, None, None
