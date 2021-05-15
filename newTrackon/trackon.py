@@ -15,7 +15,7 @@ from newTrackon.persistence import (
     submitted_data,
 )
 
-max_input_length = 20000
+max_input_length = 50000
 processing_trackers = False
 deque_lock = Lock()
 list_lock = Lock()
