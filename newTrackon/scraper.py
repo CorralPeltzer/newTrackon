@@ -15,10 +15,12 @@ import requests
 
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
 from newTrackon.persistence import submitted_data
-from newTrackon.utils import process_txt_prefs, build_httpx_url, my_ipv4, my_ipv6
+from newTrackon.utils import process_txt_prefs, build_httpx_url
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
+my_ipv4 = None
+my_ipv6 = None
 SCRAPING_HEADERS = {
     "User-Agent": "qBittorrent/4.3.4.1",
     "Accept-Encoding": "gzip",
