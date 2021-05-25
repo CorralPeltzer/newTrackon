@@ -1,7 +1,7 @@
 import argparse
 from newTrackon.views import app
 from newTrackon.scraper import get_server_ip
-from newTrackon import trackerlist_project, trackon, utils, db
+from newTrackon import trackerlist_project, trackon, scraper, db
 from tornado.ioloop import IOLoop
 from tornado.httpserver import HTTPServer
 from tornado.wsgi import WSGIContainer
@@ -34,9 +34,9 @@ if __name__ == "__main__":
     db.ensure_db_existence()
 
     if not args.ignore_ipv4:
-        utils.my_ipv4 = get_server_ip("4")
+        scraper.my_ipv4 = get_server_ip("4")
     if not args.ignore_ipv6:
-        utils.my_ipv6 = get_server_ip("6")
+        scraper.my_ipv6 = get_server_ip("6")
 
     http_server = HTTPServer(WSGIContainer(app))
 
