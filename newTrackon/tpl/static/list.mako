@@ -58,19 +58,21 @@
     <h2>List of stable trackers</h2>
     <p>This is a list of trackers with more than 95% of uptime, considered stable. You can copy the
         list and add it to your torrents or directly to your BitTorrent client.</p>
-    <p>
     <div class="row">
         <div class="col-lg-3">
-            <button class="btn btn-primary" data-clipboard-action="copy" data-clipboard-target="#tocopy">Copy <b
-                    id="size"></b>
-                trackers to clipboard
-            </button>
+            <p>
+                <button class="btn btn-primary" data-clipboard-action="copy" data-clipboard-target="#tocopy">Copy <b
+                        id="size"></b>
+                    trackers to clipboard
+                </button>
+            </p>
         </div>
         <div class="col-lg-9">
-            <label class="btn btn-default"><input type="checkbox" id="ipv6only"> Include IPv6-only trackers</label>
+            <p>
+                <label class="btn btn-default"><input type="checkbox" id="ipv6only"> Include IPv6-only trackers</label>
+            </p>
         </div>
     </div>
-    </p>
     <div id="list">
         <pre id="tocopy">Loading...</pre>
     </div>
