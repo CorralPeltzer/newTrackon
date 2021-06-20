@@ -22,7 +22,7 @@ UDP_PORT = 30461
 my_ipv4 = None
 my_ipv6 = None
 SCRAPING_HEADERS = {
-    "User-Agent": "qBittorrent/4.3.4.1",
+    "User-Agent": "qBittorrent/4.3.5",
     "Accept-Encoding": "gzip",
     "Connection": "close",
 }
