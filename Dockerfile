@@ -1,4 +1,4 @@
-FROM python:3.9.5-alpine
+FROM python:3.9.6-alpine
 
 COPY requirements.txt /
 RUN apk add --no-cache curl && pip install --no-cache-dir -r requirements.txt
