@@ -25,20 +25,14 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v3.5.0
-        with:
-          images: |
-            corralpeltzer/newtrackon
-            ghcr.io/${{ github.repository }}
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v2.7.0
         with:
           context: .
           push: true
-          tags: corralpeltzer/newtrackon:latest
+          tags: |
+            corralpeltzer/newtrackon:latest
+            ghcr.io/corralpeltzer/newtrackon:latest
