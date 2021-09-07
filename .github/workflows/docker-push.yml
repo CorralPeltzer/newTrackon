@@ -41,3 +41,4 @@ jobs:
         with:
           context: .
           push: true
+          tags: corralpeltzer/newtrackon:latest
