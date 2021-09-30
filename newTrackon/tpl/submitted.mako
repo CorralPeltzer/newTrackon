@@ -9,7 +9,7 @@
         update interval is between 5 minutes and 3 hours,
         it gets added to the list. If no port is specified, the tracker is tried only with HTTPS on port 443 and HTTP on
         port 80. For HTTP/S, trackers must return a
-        <a href="http://www.bittorrent.org/beps/bep_0023.html">compact peer list</a>.</p>
+        <a href="https://www.bittorrent.org/beps/bep_0023.html">compact peer list</a>.</p>
     <p>The queue is processed at about 10 seconds per URL tried.</p>
     <p><b>Number of trackers in the queue: ${size}</b></p>
 </div>
