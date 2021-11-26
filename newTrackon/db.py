@@ -125,16 +125,18 @@ def get_api_data(query, uptime=0, include_ipv6_only=True, include_ipv4_only=True
             "SELECT URL, IP FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC",
             (uptime,),
         )
-    raw_list = c.fetchall()
+    urls_and_ips = c.fetchall()
     conn.close()
 
+    urls_and_ips = [(url, json.loads(ips)) for url, ips in urls_and_ips]
+
     if not include_ipv6_only:
-        raw_list = remove_ipvx_only_trackers(raw_list, version=6)
+        urls_and_ips = remove_ipvx_only_trackers(urls_and_ips, version=6)
 
     if not include_ipv4_only:
-        raw_list = remove_ipvx_only_trackers(raw_list, version=4)
+        urls_and_ips = remove_ipvx_only_trackers(urls_and_ips, version=4)
 
-    return format_list(raw_list)
+    return format_list(urls_and_ips)
 
 
 def insert_new_tracker(tracker):

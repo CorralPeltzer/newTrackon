@@ -76,14 +76,13 @@ def format_time(last_time):
         return str(years) + " years"
 
 
-def remove_ipvx_only_trackers(raw_list, version):
+def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: int):
     if version == 6:
         ip_type_to_keep = IPv4Address
     else:
         ip_type_to_keep = IPv6Address
     cleaned_list = []
     for url, ips_list in raw_list:
-        ips_list = json.loads(ips_list)
         if ips_list:
             ips_parsed = [ip_address(ip) for ip in ips_list]
             if any(isinstance(ip, ip_type_to_keep) for ip in ips_parsed):
