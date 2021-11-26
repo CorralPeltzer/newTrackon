@@ -1,4 +1,3 @@
-import json
 import sys
 from ipaddress import ip_address, IPv4Address, IPv6Address
 from time import time

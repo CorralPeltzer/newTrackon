@@ -107,7 +107,9 @@ def api_percentage(percentage):
         else True
     )
     if 0 <= percentage <= 100:
-        formatted_list = db.get_api_data("percentage", percentage, include_upv6_only, include_upv4_only)
+        formatted_list = db.get_api_data(
+            "percentage", percentage, include_upv6_only, include_upv4_only
+        )
         resp = make_response(formatted_list)
         resp = utils.add_api_headers(resp)
         return resp

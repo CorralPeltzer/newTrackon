@@ -131,7 +131,7 @@ class Tracker:
                 parsed_url = parse.urlparse(self.url)
                 # Update tracker with the first protocol and URL set by TXT record
                 first_bep_34_result = bep_34_info[0]
-                new_scheme = 'https' if first_bep_34_result[0] == 'tcp' else 'udp'
+                new_scheme = "https" if first_bep_34_result[0] == "tcp" else "udp"
                 self.url = parsed_url._replace(
                     scheme=new_scheme,
                     netloc="{}:{}".format(parsed_url.hostname, first_bep_34_result[1]),
