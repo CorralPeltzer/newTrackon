@@ -102,7 +102,7 @@ def process_txt_prefs(txt_record):
         if word.startswith("UDP:") and word[4:].isdigit():
             txt_preferences.append(("udp", int(word[4:])))
         elif word.startswith("TCP:") and word[4:].isdigit():
-            txt_preferences.append(("udp", int(word[4:])))
+            txt_preferences.append(("tcp", int(word[4:])))
     return txt_preferences
 
 
