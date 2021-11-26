@@ -1,5 +1,8 @@
 <%inherit file="../base.mako"/>
 <script>
+
+    var selectedList = 'api/stable?include_ipv4_only_trackers=1&include_ipv6_only_trackers=0'
+
     $('button').tooltip({
         trigger: 'click',
         placement: 'bottom'
@@ -31,13 +34,23 @@
     }
 
     $(document).ready(function () {
-        getTrackers('api/stable?include_ipv6_only_trackers=0');
-        $('#ipv6only').change(function () {
-            console.log('test');
+        getTrackers(selectedList);
+        $('#include_ipv6_only').change(function () {
             if (this.checked) {
-                getTrackers('api/stable');
+                selectedList = selectedList.replace('include_ipv6_only_trackers=0','include_ipv6_only_trackers=1');
+                getTrackers(selectedList);
             } else {
-                getTrackers('api/stable?include_ipv6_only_trackers=0');
+                selectedList = selectedList.replace('include_ipv6_only_trackers=1','include_ipv6_only_trackers=0');
+                getTrackers(selectedList);
+            }
+        });
+        $('#include_ipv4_only').change(function () {
+            if (this.checked) {
+                selectedList = selectedList.replace('include_ipv4_only_trackers=0','include_ipv4_only_trackers=1');
+                getTrackers(selectedList);
+            } else {
+                selectedList = selectedList.replace('include_ipv4_only_trackers=1','include_ipv4_only_trackers=0');
+                getTrackers(selectedList);
             }
         });
     });
@@ -67,9 +80,14 @@
                 </button>
             </p>
         </div>
-        <div class="col-lg-9">
+        <div class="col-lg-3">
             <p>
-                <label class="btn btn-default"><input type="checkbox" id="ipv6only"> Include IPv6-only trackers</label>
+                <label class="btn btn-default"><input type="checkbox" id="include_ipv4_only" checked> Include IPv4-only trackers</label>
+            </p>
+        </div>
+        <div class="col-lg-3">
+            <p>
+                <label class="btn btn-default"><input type="checkbox" id="include_ipv6_only"> Include IPv6-only trackers</label>
             </p>
         </div>
     </div>
