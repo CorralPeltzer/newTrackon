@@ -4,7 +4,7 @@ from collections import deque
 from os import path
 
 from newTrackon.tracker import Tracker
-from newTrackon.utils import dict_factory, remove_ipv6_only_trackers, format_list
+from newTrackon.utils import dict_factory, remove_ipvx_only_trackers, format_list
 
 db_file = "data/trackon.db"
 
@@ -107,7 +107,7 @@ def get_all_data():
     return trackers_from_db
 
 
-def get_api_data(query, uptime=0, include_ipv6_only=True):
+def get_api_data(query, uptime=0, include_ipv6_only=True, include_ipv4_only=True):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     if query == "/api/http":
@@ -129,7 +129,10 @@ def get_api_data(query, uptime=0, include_ipv6_only=True):
     conn.close()
 
     if not include_ipv6_only:
-        raw_list = remove_ipv6_only_trackers(raw_list)
+        raw_list = remove_ipvx_only_trackers(raw_list, version=6)
+
+    if not include_ipv4_only:
+        raw_list = remove_ipvx_only_trackers(raw_list, version=4)
 
     return format_list(raw_list)
 

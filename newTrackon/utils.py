@@ -1,6 +1,6 @@
 import json
 import sys
-from ipaddress import ip_address, IPv4Address
+from ipaddress import ip_address, IPv4Address, IPv6Address
 from time import time
 
 
@@ -76,13 +76,17 @@ def format_time(last_time):
         return str(years) + " years"
 
 
-def remove_ipv6_only_trackers(raw_list):
+def remove_ipvx_only_trackers(raw_list, version):
+    if version == 6:
+        ip_type_to_keep = IPv4Address
+    else:
+        ip_type_to_keep = IPv6Address
     cleaned_list = []
     for url, ips_list in raw_list:
         ips_list = json.loads(ips_list)
         if ips_list:
-            ips_built = [ip_address(ip) for ip in ips_list]
-            if any(isinstance(one_ip, IPv4Address) for one_ip in ips_built):
+            ips_parsed = [ip_address(ip) for ip in ips_list]
+            if any(isinstance(ip, ip_type_to_keep) for ip in ips_parsed):
                 cleaned_list.append((url, ips_list))
     return cleaned_list
 

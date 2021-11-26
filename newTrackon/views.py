@@ -101,8 +101,13 @@ def api_percentage(percentage):
         if request.args.get("include_ipv6_only_trackers") in ("False", "0")
         else True
     )
+    include_upv4_only = (
+        False
+        if request.args.get("include_ipv4_only_trackers") in ("False", "0")
+        else True
+    )
     if 0 <= percentage <= 100:
-        formatted_list = db.get_api_data("percentage", percentage, include_upv6_only)
+        formatted_list = db.get_api_data("percentage", percentage, include_upv6_only, include_upv4_only)
         resp = make_response(formatted_list)
         resp = utils.add_api_headers(resp)
         return resp
