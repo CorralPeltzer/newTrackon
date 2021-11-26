@@ -18,15 +18,15 @@ class Tracker:
         self,
         url,
         host,
-        ip,
+        ips,
         latency,
         last_checked,
         interval,
         status,
         uptime,
-        country,
-        country_code,
-        network,
+        countries,
+        country_codes,
+        networks,
         historic,
         added,
         last_downtime,
@@ -34,15 +34,15 @@ class Tracker:
     ):
         self.url = url
         self.host = host
-        self.ip = ip
+        self.ips = ips
         self.latency = latency
         self.last_checked = last_checked
         self.interval = interval
         self.status = status
         self.uptime = uptime
-        self.country = country
-        self.country_code = country_code
-        self.network = network
+        self.countries = countries
+        self.country_codes = country_codes
+        self.networks = networks
         self.historic = historic
         self.added = added
         self.last_downtime = last_downtime
@@ -90,7 +90,7 @@ class Tracker:
         t1 = time()
         debug = {
             "url": self.url,
-            "ip": list(self.ip)[0],
+            "ip": list(self.ips)[0],
             "time": strftime("%H:%M:%S UTC", gmtime(t1)),
         }
         try:
@@ -141,7 +141,7 @@ class Tracker:
             return
 
     def clear_tracker(self, reason):
-        self.country, self.network, self.country_code = None, None, None
+        self.countries, self.networks, self.country_codes = None, None, None
         self.latency = None
         self.last_checked = int(time())
         self.is_down()
@@ -177,7 +177,7 @@ class Tracker:
         self.uptime = (uptime / len(self.historic)) * 100
 
     def update_ips(self):
-        self.ip = []
+        self.ips = []
         temp_ips = set()
         try:
             for res in socket.getaddrinfo(self.host, None):
@@ -187,20 +187,20 @@ class Tracker:
         if temp_ips:  # Order IPs per protocol, IPv6 first
             parsed_ips = []
             [parsed_ips.append(ip_address(ip)) for ip in temp_ips]
-            [self.ip.append(str(ip)) for ip in parsed_ips if ip.version == 6]
-            [self.ip.append(str(ip)) for ip in parsed_ips if ip.version == 4]
-        elif not self.ip:
-            self.ip = None
+            [self.ips.append(str(ip)) for ip in parsed_ips if ip.version == 6]
+            [self.ips.append(str(ip)) for ip in parsed_ips if ip.version == 4]
+        elif not self.ips:
+            self.ips = None
             raise RuntimeError("Can't resolve IP")
 
     def update_ipapi_data(self):
-        self.country, self.network, self.country_code = [], [], []
-        for ip in self.ip:
+        self.countries, self.networks, self.country_codes = [], [], []
+        for ip in self.ips:
             ip_data = self.ip_api(ip).splitlines()
             if len(ip_data) == 3:
-                self.country.append(ip_data[0])
-                self.country_code.append(ip_data[1].lower())
-                self.network.append(ip_data[2])
+                self.countries.append(ip_data[0])
+                self.country_codes.append(ip_data[1].lower())
+                self.networks.append(ip_data[2])
 
     def is_up(self):
         self.status = 1

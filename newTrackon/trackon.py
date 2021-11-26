@@ -60,7 +60,7 @@ def add_one_tracker_to_submitted_deque(url):
         logger.info(f"Tracker {url} preprocessing failed, reason: {str(e)}")
         return
     all_ips_tracked = get_all_ips_tracked()
-    exists_ip = set(tracker_candidate.ip).intersection(all_ips_tracked)
+    exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
     if exists_ip:
         logger.info(f"Tracker {url} denied, IP of the tracker is already in the list")
         return
@@ -85,7 +85,7 @@ def process_submitted_deque():
 def process_new_tracker(tracker_candidate):
     logger.info(f"Processing new tracker: {tracker_candidate.url}")
     all_ips_tracked = get_all_ips_tracked()
-    exists_ip = set(tracker_candidate.ip).intersection(all_ips_tracked)
+    exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
     if exists_ip:
         logger.info(
             f"Tracker {tracker_candidate.url} denied, IP of the tracker is already in the list"
@@ -168,7 +168,7 @@ def get_all_ips_tracked():
     all_ips_of_all_trackers = []
     all_data = db.get_all_data()
     for tracker_in_list in all_data:
-        if tracker_in_list.ip:
-            for ip in tracker_in_list.ip:
+        if tracker_in_list.ips:
+            for ip in tracker_in_list.ips:
                 all_ips_of_all_trackers.append(ip)
     return all_ips_of_all_trackers

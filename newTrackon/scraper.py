@@ -189,9 +189,8 @@ def get_bep_34(hostname):
     return False, None
 
 
-def announce_http(url):
+def announce_http(url, thash=urandom(20)):
     logger.info(f"{url} Scraping HTTP(S)")
-    thash = urandom(20)
     pid = "-qB3360-" + "".join(
         [random.choice(string.ascii_letters + string.digits) for _ in range(12)]
     )
@@ -244,10 +243,9 @@ def announce_http(url):
     return tracker_response
 
 
-def announce_udp(udp_version):
-    thash = urandom(20)
-    parsed_tracker = urlparse(udp_version)
-    logger.info(f"{udp_version} Scraping UDP")
+def announce_udp(udp_url, thash=urandom(20)):
+    parsed_tracker = urlparse(udp_url)
+    logger.info(f"{udp_url} Scraping UDP")
     sock = None
     ip = None
     getaddr_responses = []
@@ -307,7 +305,7 @@ def announce_udp(udp_version):
     parsed_response, raw_response = udp_parse_announce_response(
         buf, transaction_id, ip_family
     )
-    logger.info(f"{udp_version} response: {parsed_response}")
+    logger.info(f"{udp_url} response: {parsed_response}")
     return parsed_response, ip
 
 

@@ -72,8 +72,8 @@
     <td><span data-livestamp="${t.last_checked}"></span></td>
     <td>~${t.interval//60} min (${t.interval} sec)</td>
     <td>
-        % if t.ip:
-            % for ip in t.ip:
+        % if t.ips:
+            % for ip in t.ips:
             ${ip}<br>
             % endfor
         % else:
@@ -81,17 +81,17 @@
         % endif
     </td>
 <td>
-%if t.country:
+%if t.countries:
 <% index = 0 %>
-% for country in t.country:
-    <span class="flag-icon flag-icon-${t.country_code[index]}"></span> ${country}<br>
+% for country in t.countries:
+    <span class="flag-icon flag-icon-${t.country_codes[index]}"></span> ${country}<br>
 <%index += 1 %>
 % endfor
 %endif
 </td>
     <td>
-        %if t.network:
-            % for network in t.network:
+        %if t.networks:
+            % for network in t.networks:
             ${network}<br>
             % endfor
         %endif
