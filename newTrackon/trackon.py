@@ -15,7 +15,6 @@ from newTrackon.persistence import (
     submitted_data,
 )
 
-max_input_length = 50000
 processing_trackers = False
 deque_lock = Lock()
 list_lock = Lock()
@@ -27,8 +26,6 @@ def enqueue_new_trackers(input_string):
     if not isinstance(input_string, str):
         return
     input_string = input_string.lower()
-    if len(input_string) > max_input_length:
-        return
     new_trackers_list = input_string.split()
     for url in new_trackers_list:
         logger.info(f"Tracker {url} submitted to the queue")

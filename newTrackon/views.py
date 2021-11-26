@@ -15,6 +15,8 @@ from werkzeug.routing import BaseConverter
 
 from newTrackon import db, utils, trackon
 
+max_input_length = 1000000
+
 mako = MakoTemplates()
 app = Flask(__name__)
 app.template_folder = "tpl"
@@ -48,6 +50,8 @@ def main():
 @app.route("/", methods=["POST"])
 def new_trackers():
     new_ts = request.form.get("new_trackers")
+    if len(new_ts) > max_input_length:
+        abort(413)
     check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
@@ -57,6 +61,8 @@ def new_trackers():
 @app.route("/api/add", methods=["POST"])
 def new_trackers_api():
     new_ts = request.form.get("new_trackers")
+    if len(new_ts) > max_input_length:
+        abort(413)
     check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_ts,))
     check_all_trackers.daemon = True
     check_all_trackers.start()

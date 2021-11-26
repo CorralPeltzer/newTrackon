@@ -26,7 +26,7 @@
     <form method="POST" action="/">
         <div class="form-group">
             <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
-            <span class="help-block">You can submit multiple trackers separated by whitespaces, newline, etc. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
+            <span class="help-block">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
        or check the <a href="/submitted">Submitted</a> section.</span>
         </div>
         <div class="form-group">
