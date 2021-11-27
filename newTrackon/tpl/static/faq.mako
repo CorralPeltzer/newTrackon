@@ -18,9 +18,8 @@
         </li>
     </ol>
     <h4>I am the maintainer of a tracker and I want to change/delete the URL in the list</h4>
-    You can use <a href="https://www.bittorrent.org/beps/bep_0034.html">BEP34</a> to state the port and
-    protocol of your tracker, and newTrackon will update the URL automatically.
-    For other changes, contact me as stated in the <a href="/about">About</a> section
+    You can use <a href="https://www.bittorrent.org/beps/bep_0034.html">BEP34</a> to delete your tracker from newTrackon,
+    or change the port and protocol. For other changes, contact me as stated in the <a href="/about">About</a> section
 
     <h4>How do I add a tracker to my torrents?</h4>
     Go to the list section, copy the trackers and paste them in your BitTorrent client.

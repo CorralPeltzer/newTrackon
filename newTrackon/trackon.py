@@ -141,7 +141,7 @@ def update_outdated_trackers():
             logger.info(f"Updating {tracker.url}")
             tracker.update_status()
 
-            if tracker.last_uptime < (now - 47304000):
+            if tracker.to_be_deleted:
                 logger.info(f"Removing {tracker.url}")
                 db.delete_tracker(tracker)
             else:

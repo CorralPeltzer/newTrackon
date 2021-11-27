@@ -12,6 +12,8 @@ from newTrackon import scraper, persistence
 
 logger = getLogger("newtrackon_logger")
 
+max_downtime = 47304000  # 1.5 years
+
 
 class Tracker:
     def __init__(
@@ -47,6 +49,7 @@ class Tracker:
         self.added = added
         self.last_downtime = last_downtime
         self.last_uptime = last_uptime
+        self.to_be_deleted = False
 
     @classmethod
     def from_url(cls, url):
@@ -78,6 +81,11 @@ class Tracker:
 
     def update_status(self):
         try:
+            now = int(time())
+            if self.last_uptime < (now - max_downtime):
+                self.to_be_deleted = True
+                raise RuntimeError("Tracker unresponsive for too long, removed")
+
             self.update_from_bep_34()
             self.update_ips()
         except RuntimeError as reason:
@@ -121,9 +129,12 @@ class Tracker:
         if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
             if not bep_34_info:
                 logger.info(
-                    f"Hostname denies connection via BEP34, setting tracker as DOWN {self.url}"
+                    f"Hostname denies connection via BEP34, removing tracker {self.url}"
                 )
-                raise RuntimeError("Tracker denied connection according to BEP34")
+                self.to_be_deleted = True
+                raise RuntimeError(
+                    "Tracker denied connection according to BEP34, removed"
+                )
             elif bep_34_info:
                 logger.info(
                     f"Tracker {self.url} sets protocol and port preferences from BEP34: {str(bep_34_info)}"
