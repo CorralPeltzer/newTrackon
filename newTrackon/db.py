@@ -107,7 +107,7 @@ def get_all_data():
     return trackers_from_db
 
 
-def get_api_data(query, uptime=0, include_ipv6_only=True, include_ipv4_only=True):
+def get_api_data(query, uptime=0, include_ipv4_only=True, include_ipv6_only=True):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     if query == "/api/http":
@@ -130,11 +130,11 @@ def get_api_data(query, uptime=0, include_ipv6_only=True, include_ipv4_only=True
 
     urls_and_ips = [(url, json.loads(ips)) for url, ips in urls_and_ips]
 
-    if not include_ipv6_only:
-        urls_and_ips = remove_ipvx_only_trackers(urls_and_ips, version=6)
-
     if not include_ipv4_only:
         urls_and_ips = remove_ipvx_only_trackers(urls_and_ips, version=4)
+
+    if not include_ipv6_only:
+        urls_and_ips = remove_ipvx_only_trackers(urls_and_ips, version=6)
 
     return format_list(urls_and_ips)
 
