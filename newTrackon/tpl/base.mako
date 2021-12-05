@@ -56,8 +56,10 @@
                 crossorigin="anonymous"></script>
     % endif
     % if active == 'api':
-        <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 characters -->
-        <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+        <meta charset="utf-8"> <!-- Rapi-doc uses utf8 characters -->
+        <script src="https://unpkg.com/rapidoc@9.1.3/dist/rapidoc-min.js"
+                integrity="sha512-JUltvkIv3Pvd9Kq/1ZpbO9AnRe/hzaGr06qrTgHzNkS+2wTeg56YNVyonzMOpQYL3W3MejAhZTK4sOP4lHx7vQ=="
+                crossorigin="anonymous"></script>
     % endif
 </head>
 
