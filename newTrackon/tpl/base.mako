@@ -55,6 +55,10 @@
                 integrity="sha512-C3RIeaJCWeK5MLPSSrVssDBvSwamZW7Ugygc4r21guVqkeroy9wRBDaugQssAQ+m3HZsMWVvEigcNMr7juGXKA=="
                 crossorigin="anonymous"></script>
     % endif
+    % if active == 'api':
+        <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 characters -->
+        <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+    % endif
 </head>
 
 <body>

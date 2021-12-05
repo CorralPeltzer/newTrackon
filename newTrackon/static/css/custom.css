@@ -20,6 +20,11 @@ body {
   overflow-y: scroll;
 }
 
+.rapidoc {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 .footer {
   position: absolute;
   bottom: 0;
