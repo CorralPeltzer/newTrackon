@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: newTrackon API
+  version: 1.0.0
+  description: API for retrieving and submitting trackers to newTrackon
+  contact:
+    name: Miguel Angel Corral
+    url: https://keybase.io/corralpeltzer
+    email: corral.miguelangel@gmail.com
+  license:
+    name: MIT
+    url: https://github.com/CorralPeltzer/newTrackon/blob/master/LICENSE.txt
+servers:
+  - url: https://newtrackon.com/api
+
+paths:
+  /stable:
+    parameters:
+      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
+      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+    get:
+      summary: Get stable trackers
+      tags:
+        - Tracker operations
+      description: Returns a two line delimited list of trackers that have an uptime of equal or more than 95%
+      responses:
+        "200":
+          description: Stable trackers
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/Trackers"
+  /{uptime}:
+    parameters:
+      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
+      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+      - name: uptime
+        in: path
+        description: Uptime percentage
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+    get:
+      summary: Get trackers with given uptime
+      tags:
+        - Tracker operations
+      description: Returns a two line delimited list of trackers that have an uptime of equal or more than the given percentage
+      responses:
+        "200":
+          description: Stable trackers
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/Trackers"
+        "400":
+          description: Invalid percentage
+  /live:
+    parameters:
+      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
+      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+    get:
+      summary: Get working trackers
+      tags:
+        - Tracker operations
+      description: Returns a two line delimited list of currently active and responding trackers
+      responses:
+        "200":
+          description: Working trackers
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/Trackers"
+  /udp:
+    parameters:
+      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
+      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+    get:
+      summary: Get stable UDP trackers
+      tags:
+        - Tracker operations
+      description: Returns a two line delimited list of stable UDP trackers
+      responses:
+        "200":
+          description: UDP trackers
+          content:
+            text/plain:
+              example: |
+                udp://example1.com:8080/announce
+
+                udp://example2.com:8080/announce
+
+                udp://example3.com:8080/announce
+              schema:
+                $ref: "#/components/schemas/Trackers"
+  /http:
+    parameters:
+      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
+      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+    get:
+      summary: Get stable HTTP/HTTPS trackers
+      tags:
+        - Tracker operations
+      description: Returns a two line delimited list of stable and HTTP/HTTPS trackers
+      responses:
+        "200":
+          description: HTTP/HTTPS trackers
+          content:
+            text/plain:
+              example: |
+                https://example1.com:8080/announce
+
+                https://example2.com:8080/announce
+
+                http://example3.com:8080/announce
+              schema:
+                $ref: "#/components/schemas/Trackers"
+
+  /all:
+    parameters:
+      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
+      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+    get:
+      summary: Get all trackers
+      tags:
+        - Tracker operations
+      description: Returns a two line delimited list of all monitored trackers, dead or alive
+      responses:
+        "200":
+          description: All trackers
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/Trackers"
+  /add:
+    post:
+      summary: Submit new trackers
+      tags:
+        - Tracker operations
+      description: Submits new trackers to be checked and either accepted or discarded
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/NewTrackers"
+      responses:
+        "204":
+          description: Trackers added to the queue
+        "413":
+          description: Too many trackers submitted
+
+components:
+  schemas:
+    Trackers:
+      type: string
+      additionalProperties: false
+      example: |
+        udp://example1.com:8080/announce
+
+        https://example2.com:8080/announce
+
+        http://example3.com:8080/announce
+      maxLength: 1000000
+    NewTrackers:
+      type: object
+      additionalProperties: false
+      properties:
+        new_trackers:
+          $ref: "#/components/schemas/Trackers"
+
+  parameters:
+    IncludeIPv4OnlyTrackers:
+      in: query
+      name: include_ipv4_only_trackers
+      schema:
+        type: boolean
+        default: true
+    IncludeIPv6OnlyTrackers:
+      in: query
+      name: include_ipv6_only_trackers
+      schema:
+        type: boolean
+        default: true

@@ -105,7 +105,7 @@ def api_percentage(percentage):
     include_upv4_only = (
         False
         if request.args.get("include_ipv4_only_trackers", default="true").lower()
-           in ("false", "0")
+        in ("false", "0")
         else True
     )
     include_upv6_only = (
@@ -172,6 +172,11 @@ def favicon(filename, filetype):
 )  # matches browserconfig and manifest that should be in root
 def app_things(filename, filetype):
     return send_from_directory("static/", filename + "." + filetype)
+
+
+@app.route("/api.yml")
+def openapi_def():
+    return send_from_directory(".", "newtrackon-api.yml")
 
 
 @app.before_request
