@@ -173,7 +173,8 @@ def favicon(filename, filetype):
 def app_things(filename, filetype):
     return send_from_directory("static/", filename + "." + filetype)
 
-@app.route('/api.yml')
+
+@app.route("/api.yml")
 def openapi_def():
     return send_from_directory(".", "newtrackon-api.yml")
 
