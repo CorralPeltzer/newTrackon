@@ -6,7 +6,7 @@ RUN apk add --no-cache curl && pip install --no-cache-dir -r requirements.txt
 RUN addgroup --system newtrackon && adduser -S -H -G newtrackon newtrackon
 USER newtrackon
 
-COPY . /app/newTrackon
+COPY --chown=newtrackon:newtrackon . /app/newTrackon
 VOLUME /app/newTrackon/data
 WORKDIR /app/newTrackon
 
