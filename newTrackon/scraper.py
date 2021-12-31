@@ -191,7 +191,7 @@ def get_bep_34(hostname):
 
 def announce_http(url, thash=urandom(20)):
     logger.info(f"{url} Scraping HTTP(S)")
-    pid = "-qB3360-" + "".join(
+    pid = "-qB4390-" + "".join(
         [random.choice(string.ascii_letters + string.digits) for _ in range(12)]
     )
 
