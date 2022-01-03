@@ -7,7 +7,7 @@ name = "pypi"
 
 [packages]
 
-requests = "==2.26.0"
+requests = "==2.27.0"
 tornado = "==6.1"
 Flask-Mako = "==0.4"
 Flask = "==2.0.2"
