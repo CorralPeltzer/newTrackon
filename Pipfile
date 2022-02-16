@@ -10,7 +10,7 @@ name = "pypi"
 requests = "==2.27.1"
 tornado = "==6.1"
 Flask-Mako = "==0.4"
-Flask = "==2.0.2"
+Flask = "==2.0.3"
 dnspython = "==2.2.0"
 
 
