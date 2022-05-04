@@ -106,23 +106,15 @@ def process_new_tracker(tracker_candidate):
         ) = attempt_submitted(tracker_candidate)
     except (RuntimeError, ValueError):
         return
+    if not tracker_candidate.interval:
+        return deny_wrong_interval("missing interval field")
     if (
         300 > tracker_candidate.interval or tracker_candidate.interval > 10800
     ):  # trackers with an update interval
         # less than 5' and more than 3h
-        debug = submitted_data.popleft()
-        info = debug["info"]
-        debug.update(
-            {
-                "status": 0,
-                "info": [
-                    info[0],
-                    "Tracker rejected for having an interval shorter than 5 minutes or longer than 3 hours",
-                ],
-            }
+        return deny_wrong_interval(
+            reason="having an interval shorter than 5 minutes or longer than 3 hours"
         )
-        submitted_data.appendleft(debug)
-        return
     tracker_candidate.update_ipapi_data()
     tracker_candidate.is_up()
     tracker_candidate.update_uptime()
@@ -149,6 +141,21 @@ def update_outdated_trackers():
             save_deque_to_disk(raw_data, raw_history_file)
         detect_new_ip_duplicates()
         sleep(5)
+
+
+def deny_wrong_interval(reason):
+    debug = submitted_data.popleft()
+    info = debug["info"]
+    debug.update(
+        {
+            "status": 0,
+            "info": [
+                info[0],
+                f"Tracker rejected for {reason}",
+            ],
+        }
+    )
+    submitted_data.appendleft(debug)
 
 
 def detect_new_ip_duplicates():
