@@ -133,7 +133,7 @@ class Tracker:
                 )
                 self.to_be_deleted = True
                 raise RuntimeError(
-                    "Tracker denied connection according to BEP34, removed"
+                    "Host denied connection according to BEP34, removed"
                 )
             elif bep_34_info:
                 logger.info(

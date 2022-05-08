@@ -52,7 +52,7 @@ def attempt_submitted(tracker):
                     "time": int(time()),
                     "status": 0,
                     "ip": failover_ip,
-                    "info": ["Tracker denied connection according to BEP34"],
+                    "info": ["Host denied connection according to BEP34"],
                 }
             )
             raise RuntimeError
