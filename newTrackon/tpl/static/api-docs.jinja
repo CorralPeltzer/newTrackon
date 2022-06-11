@@ -1,4 +1,5 @@
-<%inherit file="../base.mako"/>
+{% extends "base.jinja" %}
+{% block body %}
 <div class="container rapidoc">
 <rapi-doc
     spec-url="api.yml"
@@ -14,4 +15,5 @@
 >
 </rapi-doc>
 </div>
-<%def name="title()">API - newTrackon</%def>
+{% endblock %}
+{% set title = "API - newTrackon" %}
