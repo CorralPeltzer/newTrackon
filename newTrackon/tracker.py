@@ -132,9 +132,7 @@ class Tracker:
                     f"Hostname denies connection via BEP34, removing tracker {self.url}"
                 )
                 self.to_be_deleted = True
-                raise RuntimeError(
-                    "Host denied connection according to BEP34, removed"
-                )
+                raise RuntimeError("Host denied connection according to BEP34, removed")
             elif bep_34_info:
                 logger.info(
                     f"Tracker {self.url} sets protocol and port preferences from BEP34: {str(bep_34_info)}"

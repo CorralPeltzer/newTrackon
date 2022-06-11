@@ -1,7 +1,6 @@
 {% extends "base.jinja" %}
 {% block body %}
-<script>
-
+    <script>
     var selectedList = 'api/stable?include_ipv4_only_trackers=1&include_ipv6_only_trackers=0'
 
     $('button').tooltip({
@@ -67,34 +66,44 @@
         setTooltip(e.trigger, 'Failed!');
         hideTooltip(e.trigger);
     });
-</script>
-<div class="container">
-    <h2>List of stable trackers</h2>
-    <p>This is a list of trackers with more than 95% of uptime, considered stable. You can copy the
-        list and add it to your torrents or directly to your BitTorrent client.</p>
-    <div class="row">
-        <div class="col-lg-3">
-            <p>
-                <button class="btn btn-primary" data-clipboard-action="copy" data-clipboard-target="#tocopy">Copy <b
-                        id="size"></b>
-                    trackers to clipboard
-                </button>
-            </p>
+    </script>
+    <div class="container">
+        <h2>List of stable trackers</h2>
+        <p>
+            This is a list of trackers with more than 95% of uptime, considered stable. You can copy the
+            list and add it to your torrents or directly to your BitTorrent client.
+        </p>
+        <div class="row">
+            <div class="col-lg-3">
+                <p>
+                    <button class="btn btn-primary"
+                            data-clipboard-action="copy"
+                            data-clipboard-target="#tocopy">
+                        Copy <b id="size"></b>
+                        trackers to clipboard
+                    </button>
+                </p>
+            </div>
+            <div class="col-lg-3">
+                <p>
+                    <label class="btn btn-default">
+                        <input type="checkbox" id="include_ipv4_only" checked>
+                        Include IPv4-only trackers
+                    </label>
+                </p>
+            </div>
+            <div class="col-lg-3">
+                <p>
+                    <label class="btn btn-default">
+                        <input type="checkbox" id="include_ipv6_only">
+                        Include IPv6-only trackers
+                    </label>
+                </p>
+            </div>
         </div>
-        <div class="col-lg-3">
-            <p>
-                <label class="btn btn-default"><input type="checkbox" id="include_ipv4_only" checked> Include IPv4-only trackers</label>
-            </p>
-        </div>
-        <div class="col-lg-3">
-            <p>
-                <label class="btn btn-default"><input type="checkbox" id="include_ipv6_only"> Include IPv6-only trackers</label>
-            </p>
+        <div id="list">
+            <pre id="tocopy">Loading...</pre>
         </div>
     </div>
-    <div id="list">
-        <pre id="tocopy">Loading...</pre>
-    </div>
-</div>
 {% endblock %}
 {% set title = "Stable Trackers List - newTrackon" %}
