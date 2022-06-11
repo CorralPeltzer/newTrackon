@@ -1,4 +1,5 @@
-<%inherit file="../base.mako"/>
+{% extends "base.jinja" %}
+{% block body %}
 <script>
 
     var selectedList = 'api/stable?include_ipv4_only_trackers=1&include_ipv6_only_trackers=0'
@@ -95,4 +96,5 @@
         <pre id="tocopy">Loading...</pre>
     </div>
 </div>
-<%def name="title()">Stable Trackers List - newTrackon</%def>
+{% endblock %}
+{% set title = "Stable Trackers List - newTrackon" %}

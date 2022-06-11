@@ -1,4 +1,5 @@
-<%inherit file="base.mako"/>
+{% extends "base.jinja" %}
+{% block body %}
 <script>
     $(document).ready(function () {
         $('#trackon_table').DataTable({
@@ -53,61 +54,58 @@
     </tr>
     </thead>
 
-<% lt = dt = 0 %>
-% if trackers:
-% for t in trackers:
+{% set lt, dt = namespace(value=0), namespace(value=0) %}
+{% if trackers %}
+{% for t in trackers %}
 <tr>
-% if not t:
-    <% continue %>
-% endif
-    <td>${t.url}</td>
-    <td>${"%.2f" % t.uptime}%</td>
-% if t.status == 1:
-    <td data-sort="${t.status_epoch}" class="up"><b>${t.status_readable}</b></td>
-<% lt += 1 %>
-% else:
-    <td data-sort="${t.status_epoch}" class="down"><b>${t.status_readable}</b></td>
-<% dt += 1 %>
-% endif
-    <td><span data-livestamp="${t.last_checked}"></span></td>
-    <td>~${t.interval//60} min (${t.interval} sec)</td>
+    <td>{{ t.url }}</td>
+    <td>{{ "%.2f" % t.uptime }}%</td>
+{% if t.status == 1 %}
+    <td data-sort="{{ t.status_epoch }}" class="up"><b>{{ t.status_readable }}</b></td>
+    {% set lt.value = lt.value + 1 %}
+{% else %}
+    <td data-sort="{{ t.status_epoch }}" class="down"><b>{{ t.status_readable }}</b></td>
+    {% set dt.value = dt.value + 1 %}
+{% endif %}
+    <td><span data-livestamp="{{ t.last_checked }}"></span></td>
+    <td>~{{ t.interval//60 }} min ({{ t.interval }} sec)</td>
     <td>
-        % if t.ips:
-            % for ip in t.ips:
-            ${ip}<br>
-            % endfor
-        % else:
+        {% if t.ips %}
+            {% for ip in t.ips %}
+            {{ ip }}<br>
+            {% endfor %}
+        {% else %}
             Can't resolve IP
-        % endif
+        {% endif %}
     </td>
 <td>
-%if t.countries:
-<% index = 0 %>
-% for country in t.countries:
-    <span class="flag-icon flag-icon-${t.country_codes[index]}"></span> ${country}<br>
-<%index += 1 %>
-% endfor
-%endif
+{% if t.countries %}
+{% set index = namespace(value=0) %}
+{% for country in t.countries %}
+    <span class="flag-icon flag-icon-{{ t.country_codes[index.value] }}"></span> {{ country }}<br>
+{% set index.value = index.value + 1 %}
+{% endfor %}
+{% endif %}
 </td>
     <td>
-        %if t.networks:
-            % for network in t.networks:
-            ${network}<br>
-            % endfor
-        %endif
+        {% if t.networks %}
+            {% for network in t.networks %}
+            {{ network }}<br>
+            {% endfor %}
+        {% endif %}
 
     </td>
     <td class="right">
-        %if t.latency:
-        ${t.latency} ms
-        %endif
+        {% if t.latency %}
+        {{ t.latency }} ms
+        {% endif %}
     </td>
-    <td class="right">${t.added}</td>
+    <td class="right">{{ t.added }}</td>
 </tr>
-% endfor
-% endif
-    <caption style="text-align: right;"><b>Live trackers</b>: ${lt} / <b>Trackers down</b>: ${dt} / <b>Total
-        trackers</b>: ${len(trackers)}</caption>
+{% endfor %}
+{% endif %}
+    <caption style="text-align: right;"><b>Live trackers</b>: {{ lt.value }} / <b>Trackers down</b>: {{ dt.value }} / <b>Total
+        trackers</b>: {{ trackers | count }}</caption>
 </table>
     <noscript>
         <style>#trackon_table {
@@ -117,4 +115,5 @@
     <p style="text-align: right;">* Based on the last 1000 checks. The time depends on the update interval set by the
         tracker, and can vary from 6 to 40 days.</p>
 </div>
-<%def name="title()">newtrackon, Tracking the Trackers</%def>
+{% endblock %}
+{% set title = "newtrackon, Tracking the Trackers" %}

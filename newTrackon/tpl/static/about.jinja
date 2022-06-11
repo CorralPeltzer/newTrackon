@@ -1,4 +1,5 @@
-<%inherit file="../base.mako"/>
+{% extends "base.jinja" %}
+{% block body %}
 <div class="container">
 
     <h2>About newTrackon.com</h2>
@@ -24,4 +25,5 @@
         <li>And many others!</li>
     </ul>
 </div>
-<%def name="title()">About - newTrackon</%def>
+{% endblock %}
+{% set title = "About - newTrackon" %}

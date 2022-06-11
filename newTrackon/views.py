@@ -9,19 +9,16 @@ from flask import (
     redirect,
     make_response,
     abort,
+    render_template,
 )
-from flask_mako import MakoTemplates, render_template
 from werkzeug.routing import BaseConverter
 
 from newTrackon import db, utils, trackon
 
 max_input_length = 1000000
 
-mako = MakoTemplates()
 app = Flask(__name__)
 app.template_folder = "tpl"
-app.config["MAKO_DEFAULT_FILTERS"] = ["h"]
-mako.init_app(app)
 
 
 class RegexConverter(BaseConverter):
@@ -44,7 +41,7 @@ logger.info("Server started")
 def main():
     trackers_list = db.get_all_data()
     trackers_list = utils.format_uptime_and_downtime_time(trackers_list)
-    return render_template("main.mako", trackers=trackers_list, active="main")
+    return render_template("main.jinja", trackers=trackers_list, active="main")
 
 
 @app.route("/", methods=["POST"])
@@ -73,7 +70,7 @@ def new_trackers_api():
 @app.route("/submitted")
 def submitted():
     return render_template(
-        "submitted.mako",
+        "submitted.jinja",
         data=trackon.submitted_data,
         size=len(trackon.submitted_trackers),
         active="submitted",
@@ -82,22 +79,22 @@ def submitted():
 
 @app.route("/faq")
 def faq():
-    return render_template("/static/faq.mako", active="faq")
+    return render_template("/static/faq.jinja", active="faq")
 
 
 @app.route("/list")
 def list_stable():
-    return render_template("/static/list.mako", active="list")
+    return render_template("/static/list.jinja", active="list")
 
 
 @app.route("/api")
 def api_docs():
-    return render_template("/static/api-docs.mako", active="api")
+    return render_template("/static/api-docs.jinja", active="api")
 
 
 @app.route("/raw")
 def raw():
-    return render_template("raw.mako", data=trackon.raw_data, active="raw")
+    return render_template("raw.jinja", data=trackon.raw_data, active="raw")
 
 
 @app.route("/api/<int:percentage>")
@@ -157,7 +154,7 @@ def api_multiple():
 
 @app.route("/about")
 def about():
-    return render_template("/static/about.mako", active="about")
+    return render_template("/static/about.jinja", active="about")
 
 
 @app.route(

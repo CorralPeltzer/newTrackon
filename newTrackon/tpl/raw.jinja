@@ -1,6 +1,5 @@
-<%! from time import time %>
-<%inherit file="base.mako"/>
-
+{% extends "base.jinja" %}
+{% block body %}
 <div class="container">
     <h2>Raw data</h2>
 
@@ -11,7 +10,7 @@
 
 </div>
 
-% if data:
+{% if data %}
     <div class="container-fluid">
         <div class="table-responsive">
             <table class="sortable table table-responsive table-striped table-bordered">
@@ -24,25 +23,26 @@
                     <th>Response/Error</th>
                 </tr>
                 </thead>
-                % for response in data:
+                {% for response in data %}
                     <tr>
-                        <td>${response.get('time')}</td>
-                        <td>${response.get('url')}</td>
+                        <td>{{ response.get('time') }}</td>
+                        <td>{{ response.get('url') }}</td>
                         <td>
-                            % if response.get('ip'):
-            ${response.get('ip')}
-                            % endif
+                            {% if response.get('ip') %}
+            {{ response.get('ip') }}
+                            {% endif %}
                         </td>
-                        % if response.get('status') == 1:
+                        {% if response.get('status') == 1 %}
                             <td class="up"><b>Working</b></td>
-                        % else:
+                        {% else %}
                             <td class="down"><b>Down</b></td>
-                        % endif
-                        <td>${response.get('info') | h}</td>
+                        {% endif %}
+                        <td>{{ response.get('info') | e }}</td>
                     </tr>
-                % endfor
+                {% endfor %}
             </table>
         </div>
     </div>
-% endif
-<%def name="title()">Raw Data - newTrackon</%def>
+{% endif %}
+{% endblock %}
+{% set title = "Raw Data - newTrackon" %}
