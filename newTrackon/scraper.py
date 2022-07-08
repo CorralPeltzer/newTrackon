@@ -417,7 +417,7 @@ def safe_get(url):
     content = None
     content = response.raw.read(MAX_RESPONSE_SIZE+1, decode_content=True)
     if len(content) > MAX_RESPONSE_SIZE:
-        raise RuntimeError('Response size above 1 MB')
+        raise RuntimeError('HTTP response size above 1 MB')
     return response, content
 
 
