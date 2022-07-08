@@ -412,12 +412,13 @@ def get_server_ip(ip_version):
         .strip()
     )
 
+
 def safe_get(url):
     response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10, stream=True)
     content = None
-    content = response.raw.read(MAX_RESPONSE_SIZE+1, decode_content=True)
+    content = response.raw.read(MAX_RESPONSE_SIZE + 1, decode_content=True)
     if len(content) > MAX_RESPONSE_SIZE:
-        raise RuntimeError('HTTP response size above 1 MB')
+        raise RuntimeError("HTTP response size above 1 MB")
     return response, content
 
 
