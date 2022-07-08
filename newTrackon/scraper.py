@@ -26,6 +26,7 @@ SCRAPING_HEADERS = {
     "Accept-Encoding": "gzip",
     "Connection": "close",
 }
+MAX_RESPONSE_SIZE = 1024 * 1024  # 1MB
 
 logger = getLogger("newtrackon_logger")
 
@@ -209,7 +210,9 @@ def announce_http(url, thash=urandom(20)):
     arguments = urlencode(args_dict)
     url = url + "?" + arguments
     try:
-        response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10)
+        response, content = safe_get(url)
+    except RuntimeError as too_big:
+        raise too_big
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
     except requests.HTTPError:
@@ -221,12 +224,12 @@ def announce_http(url, thash=urandom(20)):
     if response.status_code != 200:
         raise RuntimeError("HTTP %s status code returned" % response.status_code)
 
-    elif not response.content:
+    elif not content:
         raise RuntimeError("Got empty HTTP response")
 
     else:
         try:
-            tracker_response = bdecode(response.content)
+            tracker_response = bdecode(content)
         except:
             raise RuntimeError("Can't bdecode the response")
 
@@ -408,6 +411,15 @@ def get_server_ip(ip_version):
         .decode("utf-8")
         .strip()
     )
+
+
+def safe_get(url):
+    response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10, stream=True)
+    content = None
+    content = response.raw.read(MAX_RESPONSE_SIZE + 1, decode_content=True)
+    if len(content) > MAX_RESPONSE_SIZE:
+        raise RuntimeError("HTTP response size above 1 MB")
+    return response, content
 
 
 def redact_origin(response):
