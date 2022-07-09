@@ -216,10 +216,10 @@ def announce_http(url, thash=urandom(20)):
         raise too_big
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
-    except HTTPError as e:
-        raise RuntimeError(f"HTTP Error: {e}")
-    except requests.RequestException as e:
-        raise RuntimeError(f"HTTP error: {e}")
+    except requests.ConnectionError:
+        raise RuntimeError("HTTP connection failed")
+    except (HTTPError, requests.RequestException) as e:
+        raise RuntimeError("Unhandled HTTP error")
     if response.status_code != 200:
         raise RuntimeError(f"HTTP {response.status_code} status code returned")
 
