@@ -218,7 +218,7 @@ def announce_http(url, thash=urandom(20)):
         raise RuntimeError("HTTP timeout")
     except requests.ConnectionError:
         raise RuntimeError("HTTP connection failed")
-    except (HTTPError, requests.RequestException) as e:
+    except (HTTPError, requests.RequestException):
         raise RuntimeError("Unhandled HTTP error")
     if response.status_code != 200:
         raise RuntimeError(f"HTTP {response.status_code} status code returned")
