@@ -16,6 +16,7 @@ import requests
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
 from newTrackon.persistence import submitted_data
 from newTrackon.utils import process_txt_prefs, build_httpx_url
+from urllib3.exceptions import HTTPError
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
@@ -210,19 +211,17 @@ def announce_http(url, thash=urandom(20)):
     arguments = urlencode(args_dict)
     url = url + "?" + arguments
     try:
-        response, content = safe_get(url)
+        response, content = memory_limited_get(url)
     except RuntimeError as too_big:
         raise too_big
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
-    except requests.HTTPError:
-        raise RuntimeError("HTTP error")
-    except requests.ConnectionError:
-        raise RuntimeError("HTTP connection failed")
-    except requests.RequestException:
-        raise RuntimeError("Ambiguous HTTP error")
+    except HTTPError as e:
+        raise RuntimeError(f"HTTP Error: {e}")
+    except requests.RequestException as e:
+        raise RuntimeError(f"HTTP error: {e}")
     if response.status_code != 200:
-        raise RuntimeError("HTTP %s status code returned" % response.status_code)
+        raise RuntimeError(f"HTTP {response.status_code} status code returned")
 
     elif not content:
         raise RuntimeError("Got empty HTTP response")
@@ -235,12 +234,11 @@ def announce_http(url, thash=urandom(20)):
 
     if "failure reason" in tracker_response:
         raise RuntimeError(
-            'Tracker error message: "%s"' % (tracker_response["failure reason"])
+            f'Tracker error message: {tracker_response["failure reason"]}'
         )
     if "peers" not in tracker_response and "peers6" not in tracker_response:
         raise RuntimeError(
-            "Invalid response, both 'peers' and 'peers6' field are missing: "
-            + str(tracker_response)
+            f"Invalid response, both 'peers' and 'peers6' field are missing: {str(tracker_response)}"
         )
     logger.info(f"{url} response: {tracker_response}")
     return tracker_response
@@ -324,7 +322,7 @@ def udp_create_binary_connection_request():
 
 def udp_parse_connection_response(buf, sent_transaction_id):
     if len(buf) < 16:
-        raise RuntimeError("Wrong response length getting connection id: %s" % len(buf))
+        raise RuntimeError(f"Wrong response length getting connection id: {len(buf)}")
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
 
     res_transaction_id = struct.unpack_from("!i", buf, 4)[
@@ -332,8 +330,7 @@ def udp_parse_connection_response(buf, sent_transaction_id):
     ]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError(
-            "Transaction ID doesn't match in connection response. Expected %s, got %s"
-            % (sent_transaction_id, res_transaction_id)
+            f"Transaction ID doesn't match in connection response. Expected {sent_transaction_id}, got {res_transaction_id}"
         )
 
     if action == 0x0:
@@ -344,7 +341,7 @@ def udp_parse_connection_response(buf, sent_transaction_id):
     elif action == 0x3:
         error = struct.unpack_from("!s", buf, 8)
         raise RuntimeError(
-            "Error while trying to get a connection response: %s" % error
+            f"Error while trying to get a connection response: {error}"
         )
 
 
@@ -372,15 +369,14 @@ def udp_create_announce_request(connection_id, thash):
 
 def udp_parse_announce_response(buf, sent_transaction_id, ip_family):
     if len(buf) < 20:
-        raise RuntimeError("Wrong response length while announcing: %s" % len(buf))
+        raise RuntimeError(f"Wrong response length while announcing: {len(buf)}")
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
     res_transaction_id = struct.unpack_from("!i", buf, 4)[
         0
     ]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError(
-            "Transaction ID doesnt match in announce response! Expected %s, got %s"
-            % (sent_transaction_id, res_transaction_id)
+            f"Transaction ID doesnt match in announce response! Expected {sent_transaction_id}, got {res_transaction_id}"
         )
     if action == 0x1:
         ret = dict()
@@ -396,7 +392,7 @@ def udp_parse_announce_response(buf, sent_transaction_id, ip_family):
     else:
         # an error occured, try and extract the error string
         error = struct.unpack_from("!s", buf, 8)
-        raise RuntimeError("Error while annoucing: %s" % error)
+        raise RuntimeError(f"Error while annoucing: {error}")
 
 
 def udp_get_transaction_id():
@@ -413,7 +409,7 @@ def get_server_ip(ip_version):
     )
 
 
-def safe_get(url):
+def memory_limited_get(url):
     response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10, stream=True)
     content = None
     content = response.raw.read(MAX_RESPONSE_SIZE + 1, decode_content=True)
