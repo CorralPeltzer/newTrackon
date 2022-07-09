@@ -60,7 +60,7 @@ def attempt_submitted(tracker):
             raise RuntimeError
         elif bep_34_info:
             logger.info(
-                f"Tracker {tracker.url} sets protocol and port preferences from BEP34: {str(bep_34_info)}"
+                f"Tracker {tracker.url} sets protocol and port preferences from BEP34: {bep_34_info}"
             )
             return attempt_from_txt_prefs(submitted_url, failover_ip, bep_34_info)
     else:  # No valid BEP34, attempting all protocols
@@ -238,7 +238,7 @@ def announce_http(url, thash=urandom(20)):
         )
     if "peers" not in tracker_response and "peers6" not in tracker_response:
         raise RuntimeError(
-            f"Invalid response, both 'peers' and 'peers6' field are missing: {str(tracker_response)}"
+            f"Invalid response, both 'peers' and 'peers6' field are missing: {tracker_response}"
         )
     logger.info(f"{url} response: {tracker_response}")
     return tracker_response
@@ -256,7 +256,7 @@ def announce_udp(udp_url, thash=urandom(20)):
         ):
             getaddr_responses.append(res)
     except OSError as err:
-        raise RuntimeError("UDP error: " + str(err))
+        raise RuntimeError(f"UDP error: {err}")
 
     for res in getaddr_responses:
         af, socktype, proto, _, sa = res
@@ -287,7 +287,7 @@ def announce_udp(udp_url, thash=urandom(20)):
     except socket.timeout:
         raise RuntimeError("UDP timeout")
     except OSError as err:
-        raise RuntimeError("UDP error: " + str(err))
+        raise RuntimeError(f"UDP error: {err}")
 
     connection_id = udp_parse_connection_response(buf, transaction_id)
     # Scrape away
@@ -300,7 +300,7 @@ def announce_udp(udp_url, thash=urandom(20)):
     except socket.timeout:
         raise RuntimeError("UDP timeout")
     except OSError as err:
-        raise RuntimeError("UDP error: " + str(err))
+        raise RuntimeError(f"UDP error: {err}")
     ip_family = sock.family
     sock.close()
     parsed_response, raw_response = udp_parse_announce_response(
