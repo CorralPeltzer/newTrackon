@@ -41,7 +41,9 @@ logger.info("Server started")
 def main(form_feedback=None):
     trackers_list = db.get_all_data()
     trackers_list = utils.format_uptime_and_downtime_time(trackers_list)
-    return render_template("main.jinja", form_feedback=form_feedback, trackers=trackers_list, active="Home")
+    return render_template(
+        "main.jinja", form_feedback=form_feedback, trackers=trackers_list, active="Home"
+    )
 
 
 @app.route("/", methods=["POST"])
@@ -51,10 +53,12 @@ def new_trackers():
         abort(400)
     elif len(new_trackers) > max_input_length:
         abort(413)
-    elif new_trackers == '':
+    elif new_trackers == "":
         return main(form_feedback="EMPTY")
     else:
-        check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_trackers,))
+        check_all_trackers = Thread(
+            target=trackon.enqueue_new_trackers, args=(new_trackers,)
+        )
         check_all_trackers.daemon = True
         check_all_trackers.start()
     return main(form_feedback="SUCCESS")
@@ -67,7 +71,9 @@ def new_trackers_api():
         abort(400)
     if len(new_trackers) > max_input_length:
         abort(413)
-    check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_trackers,))
+    check_all_trackers = Thread(
+        target=trackon.enqueue_new_trackers, args=(new_trackers,)
+    )
     check_all_trackers.daemon = True
     check_all_trackers.start()
     resp = Response(status=204, headers={"Access-Control-Allow-Origin": "*"})
