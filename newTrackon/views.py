@@ -49,7 +49,7 @@ def main(form_feedback=None):
 @app.route("/", methods=["POST"])
 def new_trackers():
     new_trackers = request.form.get("new_trackers")
-    if new_trackers == None:
+    if new_trackers is None:
         abort(400)
     elif len(new_trackers) > max_input_length:
         abort(413)
