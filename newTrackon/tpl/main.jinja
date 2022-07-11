@@ -29,6 +29,19 @@
     <form method="POST" action="/">
         <div class="form-group">
             <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
+            <p>
+                {% if form_feedback == "EMPTY" %}
+                    <div class="alert alert-warning" role="alert">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        <span class="sr-only">Error:</span>
+                        No trackers were submitted
+                    </div>
+                {% elif form_feedback == "SUCCESS" %}
+                    <div class="alert alert-info" role="alert">
+                        Received, see the progress in the <strong><a style="color:white" href="/submitted">Submitted</a></strong> section
+                    </div>
+                {% endif %}
+            </p>
             <span class="help-block">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
             or check the <a href="/submitted">Submitted</a> section.</span>
         </div>

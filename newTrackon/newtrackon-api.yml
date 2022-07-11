@@ -148,6 +148,8 @@ paths:
       responses:
         "204":
           description: Trackers added to the queue
+        "400":
+          description: No trackers provided
         "413":
           description: Too many trackers submitted
 
