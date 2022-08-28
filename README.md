@@ -1,7 +1,6 @@
 # newTrackon
 
 [![Requirements Status](https://requires.io/github/CorralPeltzer/newTrackon/requirements.svg?branch=master)](https://requires.io/github/CorralPeltzer/newTrackon/requirements/?branch=master)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/CorralPeltzer/newTrackon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/CorralPeltzer/newTrackon/context:python)
 
 newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. It
 also allows to submit new trackers to add them to the list.
