@@ -167,7 +167,7 @@ def detect_new_ip_duplicates():
         if ip not in non_duplicates:
             non_duplicates.add(ip)
         else:
-            logger.info(f"IP {ip} is duplicated, manual action required")
+            logger.warning(f"IP {ip} is duplicated, manual action required")
 
 
 def get_all_ips_tracked():
