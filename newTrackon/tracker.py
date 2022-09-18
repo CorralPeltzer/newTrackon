@@ -10,7 +10,7 @@ from urllib import request, parse
 
 from newTrackon import scraper, persistence
 
-logger = getLogger("newtrackon_logger")
+logger = getLogger("newtrackon")
 
 max_downtime = 47304000  # 1.5 years
 

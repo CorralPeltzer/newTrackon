@@ -31,10 +31,10 @@ class RegexConverter(BaseConverter):
 app.url_map.converters["regex"] = RegexConverter
 basicConfig(
     level=INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
     stream=stdout,
 )
-logger = getLogger("newtrackon_logger")
+logger = getLogger("newtrackon")
 logger.info("Server started")
 
 

@@ -29,7 +29,7 @@ SCRAPING_HEADERS = {
 }
 MAX_RESPONSE_SIZE = 1024 * 1024  # 1MB
 
-logger = getLogger("newtrackon_logger")
+logger = getLogger("newtrackon")
 
 to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 

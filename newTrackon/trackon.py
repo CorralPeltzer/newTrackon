@@ -19,7 +19,7 @@ processing_trackers = False
 deque_lock = Lock()
 list_lock = Lock()
 
-logger = logging.getLogger("newtrackon_logger")
+logger = logging.getLogger("newtrackon")
 
 
 def enqueue_new_trackers(input_string):
