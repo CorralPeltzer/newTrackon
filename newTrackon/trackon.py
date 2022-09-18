@@ -141,7 +141,7 @@ def update_outdated_trackers():
             else:
                 db.update_tracker(tracker)
             save_deque_to_disk(raw_data, raw_history_file)
-        detect_new_ip_duplicates()
+        warn_of_duplicate_ips()
         sleep(5)
 
 
@@ -160,14 +160,16 @@ def log_wrong_interval_denial(reason):
     submitted_data.appendleft(debug)
 
 
-def detect_new_ip_duplicates():
+def warn_of_duplicate_ips():
     all_ips = get_all_ips_tracked()
-    non_duplicates = set()
+    seen, duplicates = set(), set()
     for ip in all_ips:
-        if ip not in non_duplicates:
-            non_duplicates.add(ip)
+        if ip not in seen:
+            seen.add(ip)
         else:
-            logger.info(f"IP {ip} is duplicated, manual action required")
+            duplicates.add(ip)
+    for duplicate_ip in duplicates:
+        logger.warning(f"IP {duplicate_ip} is duplicated, manual action required")
 
 
 def get_all_ips_tracked():
