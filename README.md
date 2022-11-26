@@ -1,7 +1,5 @@
 # newTrackon
 
-[![Requirements Status](https://requires.io/github/CorralPeltzer/newTrackon/requirements.svg?branch=master)](https://requires.io/github/CorralPeltzer/newTrackon/requirements/?branch=master)
-
 newTrackon is a service to monitor the status and health of existing open and public trackers that anyone can use. It
 also allows to submit new trackers to add them to the list.
 
