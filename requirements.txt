@@ -1,4 +1,4 @@
 requests==2.28.1
 tornado==6.2
 Flask==2.2.2
-dnspython==2.2.1
+dnspython==2.3.0
