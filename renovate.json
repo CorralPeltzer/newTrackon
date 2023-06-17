@@ -2,5 +2,10 @@
     "extends": [
         "config:base",
         ":disableDependencyDashboard"
-    ]
+    ],
+    "html": {
+        "fileMatch": [
+            "^(newTrackon/tpl)/[^/]+\.jinja$"
+        ]
+    }
 }
