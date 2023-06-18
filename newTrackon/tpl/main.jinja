@@ -1,4 +1,24 @@
 {% extends "base.jinja" %}
+{% block head %}
+        <link rel="stylesheet"
+                href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"/>
+        <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css"
+                integrity="sha512-Cv93isQdFwaKBV+Z4X8kaVBYWHST58Xb/jVOcV9aRsGSArZsgAnFIhMpDoMDcFNoUtday1hdjn0nGp3+KZyyFw=="
+                crossorigin="anonymous"/>
+        <script src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"></script>
+        <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/natural.js"></script>
+        <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/date-eu.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"
+                integrity="sha512-+H4iLjY3JsKiF2V6N366in5IQHj2uEsGV7Pp/GRcm0fn76aPAk5V8xB6n8fQhhSonTqTXs/klFz4D0GIn6Br9g=="
+                crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js"
+                integrity="sha512-C3RIeaJCWeK5MLPSSrVssDBvSwamZW7Ugygc4r21guVqkeroy9wRBDaugQssAQ+m3HZsMWVvEigcNMr7juGXKA=="
+                crossorigin="anonymous"></script>
+        <noscript>
+            <style>#trackon_table {visibility: visible}</style>
+        </noscript>
+{% endblock head %}
 {% block body %}
     <script>
     $(document).ready(function () {

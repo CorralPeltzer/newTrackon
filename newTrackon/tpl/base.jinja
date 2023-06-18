@@ -11,56 +11,17 @@
         <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
         <link rel="manifest" href="/manifest.json">
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#25802c">
-        <link rel="stylesheet" href="/static/css/theme.css"/>
-        <link rel="stylesheet" href="/static/css/custom.css"/>
+        <link rel="stylesheet" href="/static/css/theme.css">
+        <link rel="stylesheet" href="/static/css/custom.css">
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css?family=Roboto"/>
         <link rel="stylesheet"
               href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
               integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
               crossorigin="anonymous"/>
-        {% if active == 'Home' %}
-            <link rel="stylesheet"
-                  href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"/>
-            <link rel="stylesheet"
-                  href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css"
-                  integrity="sha512-Cv93isQdFwaKBV+Z4X8kaVBYWHST58Xb/jVOcV9aRsGSArZsgAnFIhMpDoMDcFNoUtday1hdjn0nGp3+KZyyFw=="
-                  crossorigin="anonymous"/>
-        {% endif %}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha512-oBTprMeNEKCnqfuqKd6sbvFzmFQtlXS3e0C/RGFV0hD6QzhHV+ODfaQbAlmY6/q0ubbwlAM/nCJjkrgA3waLzg==" crossorigin="anonymous"></script>
-        {% if active == 'Home' %}
-            <script src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"></script>
-            <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/natural.js"></script>
-            <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/date-eu.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"
-                    integrity="sha512-+H4iLjY3JsKiF2V6N366in5IQHj2uEsGV7Pp/GRcm0fn76aPAk5V8xB6n8fQhhSonTqTXs/klFz4D0GIn6Br9g=="
-                    crossorigin="anonymous"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js"
-                    integrity="sha512-C3RIeaJCWeK5MLPSSrVssDBvSwamZW7Ugygc4r21guVqkeroy9wRBDaugQssAQ+m3HZsMWVvEigcNMr7juGXKA=="
-                    crossorigin="anonymous"></script>
-            <noscript>
-                <style>#trackon_table {visibility: visible}</style>
-            </noscript>
-        {% endif %}
-        {% if active == 'List' %}
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"
-                    integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw=="
-                    crossorigin="anonymous"></script>
-        {% endif %}
-        {% if active == 'Submitted' %}
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"
-                    integrity="sha512-+H4iLjY3JsKiF2V6N366in5IQHj2uEsGV7Pp/GRcm0fn76aPAk5V8xB6n8fQhhSonTqTXs/klFz4D0GIn6Br9g=="
-                    crossorigin="anonymous"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js"
-                    integrity="sha512-C3RIeaJCWeK5MLPSSrVssDBvSwamZW7Ugygc4r21guVqkeroy9wRBDaugQssAQ+m3HZsMWVvEigcNMr7juGXKA=="
-                    crossorigin="anonymous"></script>
-        {% endif %}
-        {% if active == 'API' %}
-            <script src="https://cdn.jsdelivr.net/npm/rapidoc@9.3.3/dist/rapidoc-min.js"
-                    integrity="sha512-IqwxAUOKeDBseg67em0HTCqiklC6Bhu8E74aNEiM/1CqvozxFFiuMrcWhbn31Wbh8liSSoERRvP8tFqI2M9e4g=="
-                    crossorigin="anonymous"></script>
-        {% endif %}
+        {% block head %} {% endblock head %}
     </head>
     <body>
         <div class="navbar navbar-default navbar-fixed-top">
@@ -106,7 +67,7 @@
                 </div>
             </div>
         </div>
-        {% block body %}{% endblock %}
+        {% block body %} {% endblock body %}
         <footer class="footer">
             <p class="text-center">
                 A <a href="https://twitter.com/CorralPeltzer">@CorralPeltzer</a> creation based on an <a href="http://uriel.cat-v.org/">Uriel</a> project
