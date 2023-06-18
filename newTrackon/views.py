@@ -43,7 +43,7 @@ def main(form_feedback=None):
     trackers_list = db.get_all_data()
     trackers_list = utils.format_uptime_and_downtime_time(trackers_list)
     return render_template(
-        "main.jinja", form_feedback=form_feedback, trackers=trackers_list
+        "main.jinja", form_feedback=form_feedback, trackers=trackers_list, active="Home"
     )
 
 
@@ -86,28 +86,29 @@ def submitted():
     return render_template(
         "submitted.jinja",
         data=trackon.submitted_data,
-        size=len(trackon.submitted_trackers)
+        size=len(trackon.submitted_trackers),
+        active="Submitted",
     )
 
 
 @app.route("/faq")
 def faq():
-    return render_template("/static/faq.jinja")
+    return render_template("/static/faq.jinja", active="FAQ")
 
 
 @app.route("/list")
 def list_stable():
-    return render_template("/static/list.jinja")
+    return render_template("/static/list.jinja", active="List")
 
 
 @app.route("/api")
 def api_docs():
-    return render_template("/static/api-docs.jinja")
+    return render_template("/static/api-docs.jinja", active="API")
 
 
 @app.route("/raw")
 def raw():
-    return render_template("raw.jinja", data=trackon.raw_data)
+    return render_template("raw.jinja", data=trackon.raw_data, active="Raw data")
 
 
 @app.route("/api/<int:percentage>")
