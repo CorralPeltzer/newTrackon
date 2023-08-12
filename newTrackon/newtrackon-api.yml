@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: newTrackon API
-  version: 1.0.0
+  version: 1.0.1
   description: API for retrieving and submitting trackers to newTrackon
   contact:
     name: Miguel Angel Corral
@@ -57,9 +57,6 @@ paths:
         "400":
           description: Invalid percentage
   /live:
-    parameters:
-      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
-      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
     get:
       summary: Get working trackers
       tags:
@@ -73,9 +70,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trackers"
   /udp:
-    parameters:
-      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
-      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
     get:
       summary: Get stable UDP trackers
       tags:
@@ -95,9 +89,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trackers"
   /http:
-    parameters:
-      - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
-      - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
     get:
       summary: Get stable HTTP/HTTPS trackers
       tags:
