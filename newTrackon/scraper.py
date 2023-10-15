@@ -7,7 +7,7 @@ import subprocess
 from logging import getLogger
 from os import urandom
 from time import time
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlparse, urlencode, ParseResult
 from dns import resolver
 from dns.exception import DNSException
 
@@ -35,7 +35,7 @@ to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
 def attempt_submitted(tracker):
-    submitted_url = urlparse(tracker.url)
+    submitted_url: ParseResult = urlparse(tracker.url)
     try:
         failover_ip = socket.getaddrinfo(submitted_url.hostname, None)[0][4][0]
     except OSError:
@@ -70,7 +70,7 @@ def attempt_submitted(tracker):
 def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
     for preference in txt_prefs:
         preferred_url = submitted_url._replace(
-            netloc="{}:{}".format(submitted_url.hostname, preference[1])
+            netloc=f"{submitted_url.hostname}:{preference[1]}"
         )
         if preference[0] == "udp":
             udp_success, udp_interval, udp_url, latency = attempt_udp(
@@ -181,9 +181,9 @@ def attempt_udp(failover_ip, tracker_netloc):
 def get_bep_34(hostname):
     """Querying for http://bittorrent.org/beps/bep_0034.html"""
     try:
-        answers = resolver.resolve(hostname, "TXT")
-        for record in answers:
-            record_text = str(record)[1:-1]
+        txt_info = resolver.resolve(hostname, "TXT").response.answer[0]
+        for record in txt_info:
+            record_text = str(record)
             if record_text.startswith("BITTORRENT"):
                 return True, process_txt_prefs(record_text)
     except DNSException:
@@ -284,7 +284,7 @@ def announce_udp(udp_url, thash=urandom(20)):
         buf = sock.recv(2048)
     except ConnectionRefusedError:
         raise RuntimeError("UDP connection failed")
-    except socket.timeout:
+    except TimeoutError:
         raise RuntimeError("UDP timeout")
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")
@@ -297,7 +297,7 @@ def announce_udp(udp_url, thash=urandom(20)):
         buf = sock.recv(2048)
     except ConnectionRefusedError:
         raise RuntimeError("UDP connection failed")
-    except socket.timeout:
+    except TimeoutError:
         raise RuntimeError("UDP timeout")
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")

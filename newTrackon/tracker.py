@@ -76,7 +76,7 @@ class Tracker:
         tracker.update_ips()
         tracker.historic = deque(maxlen=1000)
         date = datetime.now()
-        tracker.added = "{}-{}-{}".format(date.day, date.month, date.year)
+        tracker.added = f"{date.day}-{date.month}-{date.year}"
         return tracker
 
     def update_status(self):
@@ -98,7 +98,7 @@ class Tracker:
         t1 = time()
         debug = {
             "url": self.url,
-            "ip": list(self.ips)[0],
+            "ip": list(self.ips)[0] if self.ips else None,
             "time": strftime("%H:%M:%S UTC", gmtime(t1)),
         }
         try:
@@ -143,7 +143,7 @@ class Tracker:
                 new_scheme = "https" if first_bep_34_result[0] == "tcp" else "udp"
                 self.url = parsed_url._replace(
                     scheme=new_scheme,
-                    netloc="{}:{}".format(parsed_url.hostname, first_bep_34_result[1]),
+                    netloc=f"{parsed_url.hostname}:{first_bep_34_result[1]}",
                 ).geturl()
                 return
         else:  # No valid BEP34, attempting existing URL
@@ -167,7 +167,7 @@ class Tracker:
         persistence.raw_data.appendleft(debug)
 
     def validate_url(self):
-        uchars = re.compile("^[a-zA-Z0-9_\-\./:]+$")
+        uchars = re.compile(r"^[a-zA-Z0-9_\-\./:]+$")
         url = parse.urlparse(self.url)
         if url.scheme not in ["udp", "http", "https"]:
             raise RuntimeError(
@@ -191,7 +191,7 @@ class Tracker:
         try:
             for res in socket.getaddrinfo(self.host, None):
                 temp_ips.add(res[4][0])
-        except socket.error:
+        except OSError:
             pass
         if temp_ips:  # Order IPs per protocol, IPv6 first
             parsed_ips = []
@@ -204,12 +204,13 @@ class Tracker:
 
     def update_ipapi_data(self):
         self.countries, self.networks, self.country_codes = [], [], []
-        for ip in self.ips:
-            ip_data = self.ip_api(ip).splitlines()
-            if len(ip_data) == 3:
-                self.countries.append(ip_data[0])
-                self.country_codes.append(ip_data[1].lower())
-                self.networks.append(ip_data[2])
+        if self.ips:
+            for ip in self.ips:
+                ip_data = self.ip_api(ip).splitlines()
+                if len(ip_data) == 3:
+                    self.countries.append(ip_data[0])
+                    self.country_codes.append(ip_data[1].lower())
+                    self.networks.append(ip_data[2])
 
     def is_up(self):
         self.status = 1
@@ -229,6 +230,6 @@ class Tracker:
             )
             tracker_info = response.read().decode("utf-8")
             sleep(1.35)  # Respect the queries per minute limit of IP-API
-        except IOError:
+        except OSError:
             tracker_info = "Error"
         return tracker_info

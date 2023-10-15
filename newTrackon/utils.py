@@ -97,7 +97,7 @@ def format_list(raw_list):
     return formatted_list
 
 
-def process_txt_prefs(txt_record):
+def process_txt_prefs(txt_record: str):
     words = txt_record.split()
     txt_preferences = []
     for word in words[1:11]:  # Get only the first 10 advertised trackers to avoid DoS
