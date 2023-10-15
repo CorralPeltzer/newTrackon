@@ -41,7 +41,7 @@ def create_db():
     conn.close()
 
 
-def update_tracker(tracker):
+def update_tracker(tracker: Tracker):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
@@ -68,7 +68,7 @@ def update_tracker(tracker):
     conn.close()
 
 
-def delete_tracker(tracker):
+def delete_tracker(tracker: Tracker):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
@@ -79,7 +79,7 @@ def delete_tracker(tracker):
     conn.close()
 
 
-def get_all_data():
+def get_all_data() -> list[Tracker]:
     conn = sqlite3.connect(db_file)
     conn.row_factory = dict_factory
     c = conn.cursor()
@@ -139,7 +139,7 @@ def get_api_data(query, uptime=0, include_ipv4_only=True, include_ipv6_only=True
     return format_list(urls_and_ips)
 
 
-def insert_new_tracker(tracker):
+def insert_new_tracker(tracker: Tracker):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(

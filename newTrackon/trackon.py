@@ -6,6 +6,7 @@ from threading import Lock
 from newTrackon.tracker import Tracker
 from newTrackon.scraper import attempt_submitted
 from newTrackon import db
+from typing import Optional
 from newTrackon.persistence import (
     submitted_history_file,
     save_deque_to_disk,
@@ -22,7 +23,7 @@ list_lock = Lock()
 logger = logging.getLogger("newtrackon")
 
 
-def enqueue_new_trackers(input_string):
+def enqueue_new_trackers(input_string: str):
     if not isinstance(input_string, str):
         return
     input_string = input_string.lower()
@@ -34,11 +35,13 @@ def enqueue_new_trackers(input_string):
         process_submitted_deque()
 
 
-def add_one_tracker_to_submitted_deque(url):
+def add_one_tracker_to_submitted_deque(url: str):
     try:
-        ip_address(urlparse(url).hostname)
-        logger.info(f"Tracker {url} denied, hostname is IP")
-        return
+        parsed_url = urlparse(url)
+        if parsed_url.hostname:
+            ip_address(parsed_url.hostname)
+            logger.info(f"Tracker {url} denied, hostname is IP")
+            return
     except ValueError:
         pass
     with deque_lock:
@@ -57,10 +60,13 @@ def add_one_tracker_to_submitted_deque(url):
         logger.info(f"Tracker {url} preprocessing failed, reason: {str(e)}")
         return
     all_ips_tracked = get_all_ips_tracked()
-    exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
-    if exists_ip:
-        logger.info(f"Tracker {url} denied, IP of the tracker is already in the list")
-        return
+    if tracker_candidate.ips and all_ips_tracked:
+        exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
+        if exists_ip:
+            logger.info(
+                f"Tracker {url} denied, IP of the tracker is already in the list"
+            )
+            return
     with deque_lock:
         submitted_trackers.append(tracker_candidate)
     logger.info(f"Tracker {url} added to the submitted queue")
@@ -79,31 +85,34 @@ def process_submitted_deque():
     processing_trackers = False
 
 
-def process_new_tracker(tracker_candidate):
+def process_new_tracker(tracker_candidate: Tracker):
     logger.info(f"Processing new tracker: {tracker_candidate.url}")
     all_ips_tracked = get_all_ips_tracked()
-    exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
-    if exists_ip:
-        logger.info(
-            f"Tracker {tracker_candidate.url} denied, IP of the tracker is already in the list"
-        )
-        return
-    with list_lock:
-        for tracker in db.get_all_data():
-            if tracker.host == urlparse(tracker_candidate.url).hostname:
-                logger.info(
-                    f"Tracker {tracker_candidate.url} denied, already being tracked"
-                )
-                return
+    if tracker_candidate.ips and all_ips_tracked:
+        exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
+        if exists_ip:
+            logger.info(
+                f"Tracker {tracker_candidate.url} denied, IP of the tracker is already in the list"
+            )
+            return
+        with list_lock:
+            for tracker in db.get_all_data():
+                if tracker.host == urlparse(tracker_candidate.url).hostname:
+                    logger.info(
+                        f"Tracker {tracker_candidate.url} denied, already being tracked"
+                    )
+                    return
 
     tracker_candidate.last_downtime = int(time())
     tracker_candidate.last_checked = int(time())
     try:
-        (
-            tracker_candidate.interval,
-            tracker_candidate.url,
-            tracker_candidate.latency,
-        ) = attempt_submitted(tracker_candidate)
+        attempt_results = attempt_submitted(tracker_candidate)
+        if attempt_results:
+            (
+                tracker_candidate.interval,
+                tracker_candidate.url,
+                tracker_candidate.latency,
+            ) = attempt_results
     except (RuntimeError, ValueError):
         return
     if not tracker_candidate.interval:
@@ -162,17 +171,18 @@ def log_wrong_interval_denial(reason):
 
 def warn_of_duplicate_ips():
     all_ips = get_all_ips_tracked()
-    seen, duplicates = set(), set()
-    for ip in all_ips:
-        if ip not in seen:
-            seen.add(ip)
-        else:
-            duplicates.add(ip)
-    for duplicate_ip in duplicates:
-        logger.warning(f"IP {duplicate_ip} is duplicated, manual action required")
+    if all_ips:
+        seen, duplicates = set(), set()
+        for ip in all_ips:
+            if ip not in seen:
+                seen.add(ip)
+            else:
+                duplicates.add(ip)
+        for duplicate_ip in duplicates:
+            logger.warning(f"IP {duplicate_ip} is duplicated, manual action required")
 
 
-def get_all_ips_tracked():
+def get_all_ips_tracked() -> Optional[list[str]]:
     all_ips_of_all_trackers = []
     all_data = db.get_all_data()
     for tracker_in_list in all_data:

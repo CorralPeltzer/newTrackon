@@ -98,7 +98,7 @@ class Tracker:
         t1 = time()
         debug = {
             "url": self.url,
-            "ip": list(self.ips)[0],
+            "ip": list(self.ips)[0] if self.ips else None,
             "time": strftime("%H:%M:%S UTC", gmtime(t1)),
         }
         try:
@@ -204,12 +204,13 @@ class Tracker:
 
     def update_ipapi_data(self):
         self.countries, self.networks, self.country_codes = [], [], []
-        for ip in self.ips:
-            ip_data = self.ip_api(ip).splitlines()
-            if len(ip_data) == 3:
-                self.countries.append(ip_data[0])
-                self.country_codes.append(ip_data[1].lower())
-                self.networks.append(ip_data[2])
+        if self.ips:
+            for ip in self.ips:
+                ip_data = self.ip_api(ip).splitlines()
+                if len(ip_data) == 3:
+                    self.countries.append(ip_data[0])
+                    self.country_codes.append(ip_data[1].lower())
+                    self.networks.append(ip_data[2])
 
     def is_up(self):
         self.status = 1

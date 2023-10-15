@@ -7,7 +7,7 @@ import subprocess
 from logging import getLogger
 from os import urandom
 from time import time
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlparse, urlencode, ParseResult
 from dns import resolver
 from dns.exception import DNSException
 
@@ -35,7 +35,7 @@ to_redact = [str(HTTP_PORT), str(UDP_PORT)]
 
 
 def attempt_submitted(tracker):
-    submitted_url = urlparse(tracker.url)
+    submitted_url: ParseResult = urlparse(tracker.url)
     try:
         failover_ip = socket.getaddrinfo(submitted_url.hostname, None)[0][4][0]
     except OSError:
@@ -181,9 +181,9 @@ def attempt_udp(failover_ip, tracker_netloc):
 def get_bep_34(hostname):
     """Querying for http://bittorrent.org/beps/bep_0034.html"""
     try:
-        answers = resolver.resolve(hostname, "TXT")
-        for record in answers:
-            record_text = str(record)[1:-1]
+        txt_info = resolver.resolve(hostname, "TXT").response.answer[0]
+        for record in txt_info:
+            record_text = str(record)
             if record_text.startswith("BITTORRENT"):
                 return True, process_txt_prefs(record_text)
     except DNSException:
