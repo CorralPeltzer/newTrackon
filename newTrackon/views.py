@@ -24,7 +24,7 @@ app.template_folder = "tpl"
 
 class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
-        super(RegexConverter, self).__init__(url_map)
+        super().__init__(url_map)
         self.regex = items[0]
 
 
@@ -172,14 +172,14 @@ def about():
 
 
 @app.route(
-    '/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>'
+    r'/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>'
 )  # matches all favicons that should be in root
 def favicon(filename, filetype):
     return send_from_directory("static/imgs/", filename + "." + filetype)
 
 
 @app.route(
-    '/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>'
+    r'/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>'
 )  # matches browserconfig and manifest that should be in root
 def app_things(filename, filetype):
     return send_from_directory("static/", filename + "." + filetype)

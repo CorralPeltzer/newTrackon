@@ -182,7 +182,7 @@ def warn_of_duplicate_ips():
             logger.warning(f"IP {duplicate_ip} is duplicated, manual action required")
 
 
-def get_all_ips_tracked() -> Optional[list[str]]:
+def get_all_ips_tracked() -> list[str] | None:
     all_ips_of_all_trackers = []
     all_data = db.get_all_data()
     for tracker_in_list in all_data:

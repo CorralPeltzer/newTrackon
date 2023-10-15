@@ -34,7 +34,7 @@ You can now access to the main page opening in your browser `http://localhost:80
 
 ### With pipenv
 
-After cloning the repo, make sure you have a working Python 3.11 environment and `pipenv`.
+After cloning the repo, make sure you have a working Python 3.12 environment and `pipenv`.
 
 Install the pipenv environment and dependencies:
 

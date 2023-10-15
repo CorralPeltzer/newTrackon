@@ -70,7 +70,7 @@ def attempt_submitted(tracker):
 def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
     for preference in txt_prefs:
         preferred_url = submitted_url._replace(
-            netloc="{}:{}".format(submitted_url.hostname, preference[1])
+            netloc=f"{submitted_url.hostname}:{preference[1]}"
         )
         if preference[0] == "udp":
             udp_success, udp_interval, udp_url, latency = attempt_udp(
@@ -284,7 +284,7 @@ def announce_udp(udp_url, thash=urandom(20)):
         buf = sock.recv(2048)
     except ConnectionRefusedError:
         raise RuntimeError("UDP connection failed")
-    except socket.timeout:
+    except TimeoutError:
         raise RuntimeError("UDP timeout")
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")
@@ -297,7 +297,7 @@ def announce_udp(udp_url, thash=urandom(20)):
         buf = sock.recv(2048)
     except ConnectionRefusedError:
         raise RuntimeError("UDP connection failed")
-    except socket.timeout:
+    except TimeoutError:
         raise RuntimeError("UDP timeout")
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")
