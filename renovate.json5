@@ -1,4 +1,6 @@
 {
+    "minimumReleaseAge": "2 weeks",
+    "schedule": ["every month"],
     "extends": [
         "config:base",
         ":disableDependencyDashboard"
