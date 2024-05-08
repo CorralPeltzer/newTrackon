@@ -3,8 +3,8 @@
         <link rel="stylesheet"
                 href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"/>
         <link rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css"
-                integrity="sha512-Cv93isQdFwaKBV+Z4X8kaVBYWHST58Xb/jVOcV9aRsGSArZsgAnFIhMpDoMDcFNoUtday1hdjn0nGp3+KZyyFw=="
+                href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.2.1/css/flag-icons.min.css"
+                integrity="sha512-bZBu2H0+FGFz/stDN/L0k8J0G8qVsAL0ht1qg5kTwtAheiXwiRKyCq1frwfbSFSJN3jooR5kauE0YjtPzhZtJQ=="
                 crossorigin="anonymous"/>
         <script src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"></script>
         <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/natural.js"></script>
@@ -124,7 +124,7 @@
                         {% if t.countries %}
                             {% set index = namespace(value=0) %}
                             {% for country in t.countries %}
-                                <span class="flag-icon flag-icon-{{ t.country_codes[index.value] }}"></span> {{ country }}
+                                <span class="fi fi-{{ t.country_codes[index.value] }}"></span> {{ country }}
                                 <br>
                                 {% set index.value = index.value + 1 %}
                             {% endfor %}
