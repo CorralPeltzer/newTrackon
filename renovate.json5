@@ -1,6 +1,7 @@
 {
     "minimumReleaseAge": "2 weeks",
     "schedule": ["every month"],
+    "prCreation": "status-success",
     "extends": [
         "config:base",
         ":disableDependencyDashboard"
