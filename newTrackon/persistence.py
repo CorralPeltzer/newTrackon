@@ -2,7 +2,7 @@ from os import path
 from collections import deque
 import json
 
-submitted_trackers = deque(maxlen=10000)
+submitted_trackers: deque = deque(maxlen=10000)
 raw_history_file = "data/raw_data.json"
 submitted_history_file = "data/submitted_data.json"
 

@@ -76,6 +76,7 @@ def format_time(last_time):
 
 
 def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: int):
+    ip_type_to_keep: type[IPv4Address | IPv6Address]
     if version == 6:
         ip_type_to_keep = IPv4Address
     else:
