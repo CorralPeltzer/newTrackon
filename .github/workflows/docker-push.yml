@@ -35,7 +35,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker images
-        uses: docker/build-push-action@v6.4.1
+        uses: docker/build-push-action@v6.7.0
         with:
           context: .
           platforms: linux/amd64,linux/arm64
