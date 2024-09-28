@@ -183,7 +183,7 @@ def get_bep_34(hostname):
     try:
         txt_info = resolver.resolve(hostname, "TXT").response.answer[0]
         for record in txt_info:
-            record_text = str(record)
+            record_text = str(record).strip('\"')
             if record_text.startswith("BITTORRENT"):
                 return True, process_txt_prefs(record_text)
     except DNSException:
