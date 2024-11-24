@@ -136,7 +136,7 @@ def process_new_tracker(tracker_candidate: Tracker):
 def update_outdated_trackers():
     while True:
         now = int(time())
-        trackers_outdated = []
+        trackers_outdated: list[Tracker] = []
         for tracker in db.get_all_data():
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)
