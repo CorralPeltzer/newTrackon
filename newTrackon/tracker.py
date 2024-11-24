@@ -86,7 +86,7 @@ class Tracker:
                 self.to_be_deleted = True
                 raise RuntimeError("Tracker unresponsive for too long, removed")
 
-            self.update_from_bep_34()
+            self.update_scheme_from_bep_34()
             self.update_ips()
         except RuntimeError as reason:
             self.clear_tracker(reason=str(reason))
@@ -124,7 +124,7 @@ class Tracker:
             self.interval = 10800
         self.update_uptime()
 
-    def update_from_bep_34(self):
+    def update_scheme_from_bep_34(self):
         valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
         if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
             if not bep_34_info:
@@ -139,11 +139,14 @@ class Tracker:
                 )
                 parsed_url = parse.urlparse(self.url)
                 # Update tracker with the first protocol and URL set by TXT record
-                first_bep_34_result = bep_34_info[0]
-                new_scheme = "https" if first_bep_34_result[0] == "tcp" else "udp"
+                first_bep_34_protocol, first_bep_34_port = bep_34_info[0]
+                existing_scheme = parsed_url.scheme
+                new_scheme = (
+                    "udp" if first_bep_34_protocol == "udp" else existing_scheme
+                )
                 self.url = parsed_url._replace(
                     scheme=new_scheme,
-                    netloc=f"{parsed_url.hostname}:{first_bep_34_result[1]}",
+                    netloc=f"{parsed_url.hostname}:{first_bep_34_port}",
                 ).geturl()
                 return
         else:  # No valid BEP34, attempting existing URL
