@@ -141,7 +141,9 @@ class Tracker:
                 # Update tracker with the first protocol and URL set by TXT record
                 first_bep_34_protocol, first_bep_34_port = bep_34_info[0]
                 existing_scheme = parsed_url.scheme
-                new_scheme = "udp" if first_bep_34_protocol == "udp" else existing_scheme
+                new_scheme = (
+                    "udp" if first_bep_34_protocol == "udp" else existing_scheme
+                )
                 self.url = parsed_url._replace(
                     scheme=new_scheme,
                     netloc=f"{parsed_url.hostname}:{first_bep_34_port}",
