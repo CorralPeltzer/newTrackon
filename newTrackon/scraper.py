@@ -183,7 +183,7 @@ def get_bep_34(hostname):
     try:
         txt_info = resolver.resolve(hostname, "TXT").response.answer[0]
         for record in txt_info:
-            record_text = str(record).strip('\"')
+            record_text = str(record).strip('"')
             if record_text.startswith("BITTORRENT"):
                 return True, process_txt_prefs(record_text)
     except DNSException:
@@ -229,8 +229,8 @@ def announce_http(url, thash=urandom(20)):
     else:
         try:
             tracker_response = bdecode(content)
-        except:
-            raise RuntimeError("Can't bdecode the response")
+        except Exception as e:
+            raise RuntimeError(f"Failed bdecoding HTTP response: {e}")
 
     if "failure reason" in tracker_response:
         raise RuntimeError(
@@ -340,9 +340,7 @@ def udp_parse_connection_response(buf, sent_transaction_id):
         return connection_id
     elif action == 0x3:
         error = struct.unpack_from("!s", buf, 8)
-        raise RuntimeError(
-            f"Error while trying to get a connection response: {error}"
-        )
+        raise RuntimeError(f"Error while trying to get a connection response: {error}")
 
 
 def udp_create_announce_request(connection_id, thash):
