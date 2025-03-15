@@ -408,7 +408,7 @@ def get_server_ip(ip_version):
 
 
 def memory_limited_get(url):
-    response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10, stream=True)
+    response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10, stream=True, allow_redirects=False)
     content = None
     content = response.raw.read(MAX_RESPONSE_SIZE + 1, decode_content=True)
     if len(content) > MAX_RESPONSE_SIZE:
