@@ -128,22 +128,16 @@ class Tracker:
         valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
         if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
             if not bep_34_info:
-                logger.info(
-                    f"Hostname denies connection via BEP34, removing tracker {self.url}"
-                )
+                logger.info(f"Hostname denies connection via BEP34, removing tracker {self.url}")
                 self.to_be_deleted = True
                 raise RuntimeError("Host denied connection according to BEP34, removed")
             elif bep_34_info:
-                logger.info(
-                    f"Tracker {self.url} sets protocol and port preferences from BEP34: {str(bep_34_info)}"
-                )
+                logger.info(f"Tracker {self.url} sets protocol and port preferences from BEP34: {str(bep_34_info)}")
                 parsed_url = parse.urlparse(self.url)
                 # Update tracker with the first protocol and URL set by TXT record
                 first_bep_34_protocol, first_bep_34_port = bep_34_info[0]
                 existing_scheme = parsed_url.scheme
-                new_scheme = (
-                    "udp" if first_bep_34_protocol == "udp" else existing_scheme
-                )
+                new_scheme = "udp" if first_bep_34_protocol == "udp" else existing_scheme
                 self.url = parsed_url._replace(
                     scheme=new_scheme,
                     netloc=f"{parsed_url.hostname}:{first_bep_34_port}",
@@ -173,9 +167,7 @@ class Tracker:
         uchars = re.compile(r"^[a-zA-Z0-9_\-\./:]+$")
         url = parse.urlparse(self.url)
         if url.scheme not in ["udp", "http", "https"]:
-            raise RuntimeError(
-                "Tracker URLs have to start with 'udp://', 'http://' or 'https://'"
-            )
+            raise RuntimeError("Tracker URLs have to start with 'udp://', 'http://' or 'https://'")
         if uchars.match(url.netloc):
             url = url._replace(path="/announce")
             self.url = url.geturl()
@@ -228,9 +220,7 @@ class Tracker:
     @staticmethod
     def ip_api(ip):
         try:
-            response = request.urlopen(
-                "http://ip-api.com/line/" + ip + "?fields=country,countryCode,isp"
-            )
+            response = request.urlopen("http://ip-api.com/line/" + ip + "?fields=country,countryCode,isp")
             tracker_info = response.read().decode("utf-8")
             sleep(1.35)  # Respect the queries per minute limit of IP-API
         except OSError:

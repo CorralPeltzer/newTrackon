@@ -14,9 +14,7 @@ def bdecode(data: bytes) -> dict[str, Any]:
     bdecoded_response = Decoder(data).decode()
     response = {}
     if not isinstance(bdecoded_response, OrderedDict):
-        raise RuntimeError(
-            "Could not extract the bencoded dict, probably invalid format"
-        )
+        raise RuntimeError("Could not extract the bencoded dict, probably invalid format")
     for key, value in bdecoded_response.items():
         if isinstance(key, bytes):
             response[key.decode()] = value
@@ -45,9 +43,7 @@ def bdecode(data: bytes) -> dict[str, Any]:
     return response
 
 
-def decode_binary_peers_list(
-    buf: bytes, offset: int, ip_family: int
-) -> list[dict[str, str | int]]:
+def decode_binary_peers_list(buf: bytes, offset: int, ip_family: int) -> list[dict[str, str | int]]:
     peers = []
     x = 0
     while offset != len(buf):

@@ -111,13 +111,9 @@ def get_api_data(query, uptime=0, include_ipv4_only=True, include_ipv6_only=True
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     if query == "/api/http":
-        c.execute(
-            'SELECT URL, IP FROM STATUS WHERE URL LIKE "http%" AND UPTIME >= 95 ORDER BY UPTIME DESC'
-        )
+        c.execute('SELECT URL, IP FROM STATUS WHERE URL LIKE "http%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
     elif query == "/api/udp":
-        c.execute(
-            'SELECT URL, IP FROM STATUS WHERE URL LIKE "udp://%" AND UPTIME >= 95 ORDER BY UPTIME DESC'
-        )
+        c.execute('SELECT URL, IP FROM STATUS WHERE URL LIKE "udp://%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
     elif query == "/api/live":
         c.execute("SELECT URL, IP FROM STATUS WHERE STATUS = 1 ORDER BY UPTIME DESC")
     elif query == "percentage":

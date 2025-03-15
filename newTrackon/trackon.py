@@ -6,7 +6,6 @@ from threading import Lock
 from newTrackon.tracker import Tracker
 from newTrackon.scraper import attempt_submitted
 from newTrackon import db
-from typing import Optional
 from newTrackon.persistence import (
     submitted_history_file,
     save_deque_to_disk,
@@ -63,9 +62,7 @@ def add_one_tracker_to_submitted_deque(url: str):
     if tracker_candidate.ips and all_ips_tracked:
         exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
         if exists_ip:
-            logger.info(
-                f"Tracker {url} denied, IP of the tracker is already in the list"
-            )
+            logger.info(f"Tracker {url} denied, IP of the tracker is already in the list")
             return
     with deque_lock:
         submitted_trackers.append(tracker_candidate)
@@ -91,16 +88,12 @@ def process_new_tracker(tracker_candidate: Tracker):
     if tracker_candidate.ips and all_ips_tracked:
         exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
         if exists_ip:
-            logger.info(
-                f"Tracker {tracker_candidate.url} denied, IP of the tracker is already in the list"
-            )
+            logger.info(f"Tracker {tracker_candidate.url} denied, IP of the tracker is already in the list")
             return
         with list_lock:
             for tracker in db.get_all_data():
                 if tracker.host == urlparse(tracker_candidate.url).hostname:
-                    logger.info(
-                        f"Tracker {tracker_candidate.url} denied, already being tracked"
-                    )
+                    logger.info(f"Tracker {tracker_candidate.url} denied, already being tracked")
                     return
 
     tracker_candidate.last_downtime = int(time())
@@ -118,13 +111,9 @@ def process_new_tracker(tracker_candidate: Tracker):
     if not tracker_candidate.interval:
         log_wrong_interval_denial("missing interval field")
         return
-    if (
-        300 > tracker_candidate.interval or tracker_candidate.interval > 10800
-    ):  # trackers with an update interval
+    if 300 > tracker_candidate.interval or tracker_candidate.interval > 10800:  # trackers with an update interval
         # less than 5' and more than 3h
-        log_wrong_interval_denial(
-            reason="having an interval shorter than 5 minutes or longer than 3 hours"
-        )
+        log_wrong_interval_denial(reason="having an interval shorter than 5 minutes or longer than 3 hours")
         return
     tracker_candidate.update_ipapi_data()
     tracker_candidate.is_up()

@@ -45,9 +45,7 @@ def attempt_submitted(tracker):
 
     if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
         if not bep_34_info:
-            logger.info(
-                f"Hostname denies connection via BEP34, giving up on submitted tracker {tracker.url}"
-            )
+            logger.info(f"Hostname denies connection via BEP34, giving up on submitted tracker {tracker.url}")
             submitted_data.appendleft(
                 {
                     "url": tracker.url,
@@ -59,9 +57,7 @@ def attempt_submitted(tracker):
             )
             raise RuntimeError
         elif bep_34_info:
-            logger.info(
-                f"Tracker {tracker.url} sets protocol and port preferences from BEP34: {bep_34_info}"
-            )
+            logger.info(f"Tracker {tracker.url} sets protocol and port preferences from BEP34: {bep_34_info}")
             return attempt_from_txt_prefs(submitted_url, failover_ip, bep_34_info)
     else:  # No valid BEP34, attempting all protocols
         return attempt_all_protocols(submitted_url, failover_ip)
@@ -69,65 +65,47 @@ def attempt_submitted(tracker):
 
 def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
     for preference in txt_prefs:
-        preferred_url = submitted_url._replace(
-            netloc=f"{submitted_url.hostname}:{preference[1]}"
-        )
+        preferred_url = submitted_url._replace(netloc=f"{submitted_url.hostname}:{preference[1]}")
         if preference[0] == "udp":
-            udp_success, udp_interval, udp_url, latency = attempt_udp(
-                failover_ip, preferred_url.netloc
-            )
+            udp_success, udp_interval, udp_url, latency = attempt_udp(failover_ip, preferred_url.netloc)
             if udp_success:
                 return udp_interval, udp_url, latency
         elif preference[0] == "tcp":
-            http_success, http_interval, http_url, latency = attempt_https_http(
-                failover_ip, preferred_url
-            )
+            http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, preferred_url)
             if http_success:
                 return http_interval, http_url, latency
 
-    logger.info(
-        f"All DNS TXT protocol preferences failed, giving up on submitted tracker {submitted_url.geturl()}"
-    )
+    logger.info(f"All DNS TXT protocol preferences failed, giving up on submitted tracker {submitted_url.geturl()}")
     raise RuntimeError
 
 
 def attempt_all_protocols(submitted_url, failover_ip):
     # UDP scrape
     if submitted_url.port:  # If the tracker netloc has a port, try with UDP
-        udp_success, udp_interval, udp_url, latency = attempt_udp(
-            failover_ip, submitted_url.netloc
-        )
+        udp_success, udp_interval, udp_url, latency = attempt_udp(failover_ip, submitted_url.netloc)
         if udp_success:
             return udp_interval, udp_url, latency
 
         logger.info(f"{udp_url} UDP failed")
 
     # HTTPS and HTTP scrape
-    http_success, http_interval, http_url, latency = attempt_https_http(
-        failover_ip, submitted_url
-    )
+    http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, submitted_url)
     if http_success:
         return http_interval, http_url, latency
-    logger.info(
-        f"All protocols failed, giving up on submitted tracker {submitted_url.geturl()}"
-    )
+    logger.info(f"All protocols failed, giving up on submitted tracker {submitted_url.geturl()}")
     raise RuntimeError
 
 
 def attempt_https_http(failover_ip, url):
     # HTTPS scrape
-    https_success, https_interval, https_url, latency = attempt_httpx(
-        failover_ip, url, tls=True
-    )
+    https_success, https_interval, https_url, latency = attempt_httpx(failover_ip, url, tls=True)
     if https_success:
         return https_success, https_interval, https_url, latency
 
     logger.info(f"{https_url} HTTPS failed")
 
     # HTTP scrape
-    http_success, http_interval, http_url, latency = attempt_httpx(
-        failover_ip, url, tls=False
-    )
+    http_success, http_interval, http_url, latency = attempt_httpx(failover_ip, url, tls=False)
     if http_success:
         return http_success, http_interval, http_url, latency
 
@@ -193,9 +171,7 @@ def get_bep_34(hostname):
 
 def announce_http(url, thash=urandom(20)):
     logger.info(f"{url} Scraping HTTP(S)")
-    pid = "-qB4390-" + "".join(
-        [random.choice(string.ascii_letters + string.digits) for _ in range(12)]
-    )
+    pid = "-qB4390-" + "".join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
 
     args_dict = {
         "info_hash": thash,
@@ -233,13 +209,9 @@ def announce_http(url, thash=urandom(20)):
             raise RuntimeError(f"Failed bdecoding HTTP response: {e}")
 
     if "failure reason" in tracker_response:
-        raise RuntimeError(
-            f'Tracker error message: {tracker_response["failure reason"]}'
-        )
+        raise RuntimeError(f"Tracker error message: {tracker_response['failure reason']}")
     if "peers" not in tracker_response and "peers6" not in tracker_response:
-        raise RuntimeError(
-            f"Invalid response, both 'peers' and 'peers6' field are missing: {tracker_response}"
-        )
+        raise RuntimeError(f"Invalid response, both 'peers' and 'peers6' field are missing: {tracker_response}")
     logger.info(f"{url} response: {tracker_response}")
     return tracker_response
 
@@ -251,9 +223,7 @@ def announce_udp(udp_url, thash=urandom(20)):
     ip = None
     getaddr_responses = []
     try:
-        for res in socket.getaddrinfo(
-            parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM
-        ):
+        for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM):
             getaddr_responses.append(res)
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")
@@ -303,9 +273,7 @@ def announce_udp(udp_url, thash=urandom(20)):
         raise RuntimeError(f"UDP error: {err}")
     ip_family = sock.family
     sock.close()
-    parsed_response, raw_response = udp_parse_announce_response(
-        buf, transaction_id, ip_family
-    )
+    parsed_response, raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
     logger.info(f"{udp_url} response: {parsed_response}")
     return parsed_response, ip
 
@@ -325,18 +293,14 @@ def udp_parse_connection_response(buf, sent_transaction_id):
         raise RuntimeError(f"Wrong response length getting connection id: {len(buf)}")
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
 
-    res_transaction_id = struct.unpack_from("!i", buf, 4)[
-        0
-    ]  # next 4 bytes is transaction id
+    res_transaction_id = struct.unpack_from("!i", buf, 4)[0]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError(
             f"Transaction ID doesn't match in connection response. Expected {sent_transaction_id}, got {res_transaction_id}"
         )
 
     if action == 0x0:
-        connection_id = struct.unpack_from("!q", buf, 8)[
-            0
-        ]  # unpack 8 bytes from byte 8, should be the connection_id
+        connection_id = struct.unpack_from("!q", buf, 8)[0]  # unpack 8 bytes from byte 8, should be the connection_id
         return connection_id
     elif action == 0x3:
         error = struct.unpack_from("!s", buf, 8)
@@ -355,9 +319,7 @@ def udp_create_announce_request(connection_id, thash):
     buf += struct.pack("!q", 0x0)  # number of bytes left
     buf += struct.pack("!q", 0x0)  # number of bytes uploaded
     buf += struct.pack("!i", 0x2)  # event 0 denotes start of downloading
-    buf += struct.pack(
-        "!i", 0x0
-    )  # IP address set to 0. Response received to the sender of this packet
+    buf += struct.pack("!i", 0x0)  # IP address set to 0. Response received to the sender of this packet
     key = udp_get_transaction_id()  # Unique key randomized by client
     buf += struct.pack("!i", key)
     buf += struct.pack("!i", -1)  # Number of peers required. Set to -1 for default
@@ -369,9 +331,7 @@ def udp_parse_announce_response(buf, sent_transaction_id, ip_family):
     if len(buf) < 20:
         raise RuntimeError(f"Wrong response length while announcing: {len(buf)}")
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
-    res_transaction_id = struct.unpack_from("!i", buf, 4)[
-        0
-    ]  # next 4 bytes is transaction id
+    res_transaction_id = struct.unpack_from("!i", buf, 4)[0]  # next 4 bytes is transaction id
     if res_transaction_id != sent_transaction_id:
         raise RuntimeError(
             f"Transaction ID doesnt match in announce response! Expected {sent_transaction_id}, got {res_transaction_id}"
@@ -398,13 +358,7 @@ def udp_get_transaction_id():
 
 
 def get_server_ip(ip_version):
-    return (
-        subprocess.check_output(
-            ["curl", "-s", "-" + ip_version, "https://icanhazip.com/"]
-        )
-        .decode("utf-8")
-        .strip()
-    )
+    return subprocess.check_output(["curl", "-s", "-" + ip_version, "https://icanhazip.com/"]).decode("utf-8").strip()
 
 
 def memory_limited_get(url):

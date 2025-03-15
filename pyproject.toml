@@ -1,0 +1,6 @@
+[tool.ruff]
+line-length = 130
+
+[tool.mypy]
+python_version = "3.12"
+# strict = true
