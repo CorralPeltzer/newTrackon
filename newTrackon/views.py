@@ -79,7 +79,8 @@ def new_trackers_api():
 def submitted():
     return render_template(
         "submitted.jinja",
-        data=trackon.submitted_data,
+        # Iterating a deque while rendering can cause RuntimeError: deque mutated during iteration, so we cast it to a list
+        data=list(trackon.submitted_data),
         size=len(trackon.submitted_trackers),
         active="Submitted",
     )
@@ -102,7 +103,8 @@ def api_docs():
 
 @app.route("/raw")
 def raw():
-    return render_template("raw.jinja", data=trackon.raw_data, active="Raw data")
+    # Iterating a deque while rendering can cause RuntimeError: deque mutated during iteration, so we cast it to a list
+    return render_template("raw.jinja", data=list(trackon.raw_data), active="Raw data")
 
 
 @app.route("/api/<int:percentage>")
