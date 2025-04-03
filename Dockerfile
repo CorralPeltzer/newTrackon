@@ -1,14 +1,13 @@
-FROM python:3.12-alpine
-
-COPY requirements.txt /
-RUN apk add --no-cache curl && pip install --no-cache-dir -r requirements.txt
-
-RUN addgroup --system newtrackon && adduser -S -H -G newtrackon newtrackon
-USER newtrackon
+FROM python:3.13-alpine
 
 COPY --chown=newtrackon:newtrackon . /app/newTrackon
-VOLUME /app/newTrackon/data
 WORKDIR /app/newTrackon
+RUN apk add --no-cache curl && pip install --no-cache-dir .
+
+VOLUME /app/newTrackon/data
+RUN addgroup --system newtrackon && adduser -S -H -G newtrackon newtrackon
+RUN mkdir -p /app/newTrackon/data && chown -R newtrackon:newtrackon /app/newTrackon/data
+USER newtrackon
 
 EXPOSE 8080
 

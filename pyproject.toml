@@ -16,6 +16,9 @@ dev = [
     "types-requests==2.32.0.20250328",
 ]
 
+[tool.setuptools.packages.find]
+exclude = ["data*"]
+
 [tool.ruff]
 line-length = 130
 
