@@ -20,7 +20,7 @@ optional arguments:
 * `--ignore-ipv4`      Ignore newTrackon server IPv4 detection
 * `--ignore-ipv6`      Ignore newTrackon server IPv6 detection
 
-## Installation
+## Running
 
 ### With Docker
 
@@ -32,19 +32,19 @@ docker run -d -p 8080:8080 corralpeltzer/newtrackon --address=0.0.0.0
 
 You can now access to the main page opening in your browser `http://localhost:8080`.
 
-### With pipenv
+### With python
 
-After cloning the repo, make sure you have a working Python 3.12 environment and `pipenv`.
+After cloning the repo, make sure you have a working Python 3.13 environment.
 
-Install the pipenv environment and dependencies:
+Install dependencies with pip:
 
 ```
-pipenv install
-pipenv shell
+pip install .
 ```
-
-This will install requests, Flask, tornado, and Flask-Mako.
-
+or with uv:
+```
+uv sync
+```
 Finally, run
 
 ```
