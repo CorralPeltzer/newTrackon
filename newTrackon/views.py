@@ -1,4 +1,4 @@
-from logging import basicConfig, getLogger, INFO
+from logging import basicConfig, getLogger, INFO, ERROR
 from sys import stdout
 from threading import Thread
 
@@ -35,6 +35,7 @@ basicConfig(
     stream=stdout,
 )
 logger = getLogger("newtrackon")
+getLogger("urllib3").setLevel(ERROR)  # Suppress urllib3 warnings, some weird servers can trigger them
 logger.info("Server started")
 
 

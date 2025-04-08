@@ -90,7 +90,7 @@ class Decoder:
         elif c == TOK_END:
             return None
         else:
-            raise RuntimeError()
+            raise RuntimeError("Could not bdecode data, probably invalid format")
 
     # get the next byte
     def peek(self) -> bytes | None:
