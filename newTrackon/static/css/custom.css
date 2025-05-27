@@ -1,3 +1,32 @@
+:root {
+  --bs-primary: rgb(8, 127, 35);
+  --bs-primary-rgb: 8, 127, 35;
+  --bs-success: rgb(215, 204, 200);
+  --bs-success-rgb: 215, 204, 200;
+  --bs-info: rgb(52, 152, 219);
+  --bs-info-rgb: 52, 152, 219;
+  --bs-warning: rgb(243, 156, 18);
+  --bs-warning-rgb: 243, 156, 18;
+  --bs-danger: rgb(231, 76, 60);
+  --bs-danger-rgb: 231, 76, 60;
+}
+
+/* Override default Bootstrap link color to match the theme */
+a {
+   color: var(--bs-primary);
+}
+a:hover {
+   color: rgb(6, 100, 28); /* Manually darkened version of --bs-primary */
+}
+
+/* Style table header to match old theme and new theme color */
+.table > thead > tr > th, /* Targeting DataTables header as well */
+table.dataTable thead th {
+   background-color: var(--bs-primary) !important; /* Added important to override DataTables potentially */
+   color: white !important;
+}
+
+
 table {
   white-space: nowrap !important;
   width: auto;
@@ -15,9 +44,12 @@ html {
 }
 
 body {
-  padding-top: 50px;
-  margin-bottom: 60px;
+  padding-top: 60px; /* Adjust if navbar height differs */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; 
   overflow-y: scroll;
+  /* margin-bottom is removed to let flexbox handle footer positioning */
 }
 
 .rapidoc {
@@ -25,21 +57,14 @@ body {
   padding-bottom: 10px;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 60px;
-  background-color: #ECF0F1;
-  line-height: 60px;
-}
-
-.footer p {
+/* Old .footer CSS is removed as Bootstrap 5 utilities are used in base.jinja */
+.footer p { /* This style from old .footer can be kept if needed for the new footer */
   margin: 0;
 }
 
-th {
-  background-color: grey;
+
+th { /* This is a general th style, might be overridden by .table > thead > tr > th for B5 tables */
+  background-color: grey; /* Fallback, but B5 specific one above should take precedence */
   color: white;
 }
 
@@ -64,10 +89,11 @@ td.rejected {
   visibility: hidden;
 }
 
-.navbar-fixed-top {
-  font-size: 17px;
+/* Update navbar font size if it was applied to .navbar-fixed-top */
+.navbar.fixed-top { 
+  font-size: 17px; 
 }
 
 .right {
-  text-align: right;
+  text-align: end; /* Bootstrap 5 uses text-end for right alignment */
 }
