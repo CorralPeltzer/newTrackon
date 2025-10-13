@@ -1,7 +1,7 @@
 [project]
 name = "newTrackon"
 version = "1.0.0"
-requires-python = ">=3.13"
+requires-python = "==3.14.*"
 dependencies = [
     "requests==2.32.4",
     "tornado==6.5.1",
@@ -11,9 +11,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "ruff==0.11.2",
-    "mypy==1.15.0",
-    "types-requests==2.32.4.20250611",
+    "ruff",
+    "basedpyright",
 ]
 
 [tool.setuptools.packages.find]
@@ -22,6 +21,6 @@ exclude = ["data*"]
 [tool.ruff]
 line-length = 130
 
-[tool.mypy]
-python_version = "3.13"
-# strict = true
+[tool.pyright]
+typeCheckingMode = "basic"
+include = ["newTrackon"]
