@@ -1,5 +1,5 @@
 import sys
-from ipaddress import ip_address, IPv4Address, IPv6Address
+from ipaddress import IPv4Address, IPv6Address, ip_address
 from time import time
 
 
@@ -41,9 +41,9 @@ def format_time(last_time):
     relative = now - int(last_time)
     if relative < 60:
         if relative == 1:
-            return str(int(round(relative))) + " second"
+            return str(round(relative)) + " second"
         else:
-            return str(int(round(relative))) + " seconds"
+            return str(round(relative)) + " seconds"
     minutes = round(relative / 60)
     if minutes < 60:
         if minutes == 1:

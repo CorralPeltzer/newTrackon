@@ -20,6 +20,12 @@ exclude = ["data*"]
 
 [tool.ruff]
 line-length = 130
+fix = true
+unsafe-fixes = true
+
+[tool.ruff.lint]
+extend-select = ["I", "UP", "Q", "G", "PLE", "PLC", "RUF"]
+
 
 [tool.pyright]
 typeCheckingMode = "basic"

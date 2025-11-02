@@ -1,20 +1,20 @@
-from logging import basicConfig, getLogger, INFO, ERROR
+from logging import ERROR, INFO, basicConfig, getLogger
 from sys import stdout
 from threading import Thread
 
 from flask import (
     Flask,
-    send_from_directory,
-    request,
     Response,
-    redirect,
-    make_response,
     abort,
+    make_response,
+    redirect,
     render_template,
+    request,
+    send_from_directory,
 )
 from werkzeug.routing import BaseConverter
 
-from newTrackon import db, utils, trackon
+from newTrackon import db, trackon, utils
 
 max_input_length = 1000000
 

@@ -1,12 +1,13 @@
 import argparse
-from newTrackon.views import app
-from newTrackon.scraper import get_server_ip
-from newTrackon import trackerlist_project, trackon, scraper, db
-from tornado.ioloop import IOLoop
-from tornado.httpserver import HTTPServer
-from tornado.wsgi import WSGIContainer
 from threading import Thread
 
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer
+
+from newTrackon import db, scraper, trackerlist_project, trackon
+from newTrackon.scraper import get_server_ip
+from newTrackon.views import app
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

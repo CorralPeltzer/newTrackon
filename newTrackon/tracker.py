@@ -5,10 +5,10 @@ from collections import deque
 from datetime import datetime
 from ipaddress import ip_address
 from logging import getLogger
-from time import time, sleep, gmtime, strftime
-from urllib import request, parse
+from time import gmtime, sleep, strftime, time
+from urllib import parse, request
 
-from newTrackon import scraper, persistence
+from newTrackon import persistence, scraper
 
 logger = getLogger("newtrackon")
 
@@ -71,7 +71,7 @@ class Tracker:
             None,
         )
         tracker.validate_url()
-        logger.info(f"Preprocessing {url}")
+        logger.info("Preprocessing %s", url)
         tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
         tracker.historic = deque(maxlen=1000)
@@ -98,7 +98,7 @@ class Tracker:
         t1 = time()
         debug = {
             "url": self.url,
-            "ip": list(self.ips)[0] if self.ips else None,
+            "ip": next(iter(self.ips)) if self.ips else None,
             "time": strftime("%H:%M:%S UTC", gmtime(t1)),
         }
         try:
@@ -114,9 +114,9 @@ class Tracker:
             self.latency = int((time() - t1) * 1000)
             self.is_up()
             debug["status"] = 1
-            logger.info(f"{self.url} status is UP")
+            logger.info("%s status is UP", self.url)
         except RuntimeError as e:
-            logger.info(f"{self.url} status is DOWN. Cause: {str(e)}")
+            logger.info("%s status is DOWN. Cause: %s", self.url, e)
             debug.update({"info": str(e), "status": 0})
             persistence.raw_data.appendleft(debug)
             self.is_down()
@@ -128,11 +128,15 @@ class Tracker:
         valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
         if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
             if not bep_34_info:
-                logger.info(f"Hostname denies connection via BEP34, removing tracker {self.url}")
+                logger.info("Hostname denies connection via BEP34, removing tracker %s", self.url)
                 self.to_be_deleted = True
                 raise RuntimeError("Host denied connection according to BEP34, removed")
             elif bep_34_info:
-                logger.info(f"Tracker {self.url} sets protocol and port preferences from BEP34: {str(bep_34_info)}")
+                logger.info(
+                    "Tracker %s sets protocol and port preferences from BEP34: %s",
+                    self.url,
+                    bep_34_info,
+                )
                 parsed_url = parse.urlparse(self.url)
                 # Update tracker with the first protocol and URL set by TXT record
                 first_bep_34_protocol, first_bep_34_port = bep_34_info[0]

@@ -4,7 +4,7 @@ from collections import deque
 from os import path
 
 from newTrackon.tracker import Tracker
-from newTrackon.utils import dict_factory, remove_ipvx_only_trackers, format_list
+from newTrackon.utils import dict_factory, format_list, remove_ipvx_only_trackers
 
 db_file = "data/trackon.db"
 

@@ -7,16 +7,16 @@ import subprocess
 from logging import getLogger
 from os import urandom
 from time import time
-from urllib.parse import urlparse, urlencode, ParseResult
-from dns import resolver
-from dns.exception import DNSException
+from urllib.parse import ParseResult, urlencode, urlparse
 
 import requests
+from dns import resolver
+from dns.exception import DNSException
+from urllib3.exceptions import HTTPError
 
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
 from newTrackon.persistence import submitted_data
-from newTrackon.utils import process_txt_prefs, build_httpx_url
-from urllib3.exceptions import HTTPError
+from newTrackon.utils import build_httpx_url, process_txt_prefs
 
 HTTP_PORT = 6881
 UDP_PORT = 30461
@@ -45,7 +45,10 @@ def attempt_submitted(tracker):
 
     if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
         if not bep_34_info:
-            logger.info(f"Hostname denies connection via BEP34, giving up on submitted tracker {tracker.url}")
+            logger.info(
+                "Hostname denies connection via BEP34, giving up on submitted tracker %s",
+                tracker.url,
+            )
             submitted_data.appendleft(
                 {
                     "url": tracker.url,
@@ -57,7 +60,11 @@ def attempt_submitted(tracker):
             )
             raise RuntimeError
         elif bep_34_info:
-            logger.info(f"Tracker {tracker.url} sets protocol and port preferences from BEP34: {bep_34_info}")
+            logger.info(
+                "Tracker %s sets protocol and port preferences from BEP34: %s",
+                tracker.url,
+                bep_34_info,
+            )
             return attempt_from_txt_prefs(submitted_url, failover_ip, bep_34_info)
     else:  # No valid BEP34, attempting all protocols
         return attempt_all_protocols(submitted_url, failover_ip)
@@ -75,7 +82,10 @@ def attempt_from_txt_prefs(submitted_url, failover_ip, txt_prefs):
             if http_success:
                 return http_interval, http_url, latency
 
-    logger.info(f"All DNS TXT protocol preferences failed, giving up on submitted tracker {submitted_url.geturl()}")
+    logger.info(
+        "All DNS TXT protocol preferences failed, giving up on submitted tracker %s",
+        submitted_url.geturl(),
+    )
     raise RuntimeError
 
 
@@ -86,13 +96,16 @@ def attempt_all_protocols(submitted_url, failover_ip):
         if udp_success:
             return udp_interval, udp_url, latency
 
-        logger.info(f"{udp_url} UDP failed")
+        logger.info("%s UDP failed", udp_url)
 
     # HTTPS and HTTP scrape
     http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, submitted_url)
     if http_success:
         return http_interval, http_url, latency
-    logger.info(f"All protocols failed, giving up on submitted tracker {submitted_url.geturl()}")
+    logger.info(
+        "All protocols failed, giving up on submitted tracker %s",
+        submitted_url.geturl(),
+    )
     raise RuntimeError
 
 
@@ -102,14 +115,14 @@ def attempt_https_http(failover_ip, url):
     if https_success:
         return https_success, https_interval, https_url, latency
 
-    logger.info(f"{https_url} HTTPS failed")
+    logger.info("%s HTTPS failed", https_url)
 
     # HTTP scrape
     http_success, http_interval, http_url, latency = attempt_httpx(failover_ip, url, tls=False)
     if http_success:
         return http_success, http_interval, http_url, latency
 
-    logger.info(f"{http_url} HTTP failed")
+    logger.info("%s HTTP failed", http_url)
     return None, None, None, None
 
 
@@ -170,7 +183,7 @@ def get_bep_34(hostname):
 
 
 def announce_http(url, thash=urandom(20)):
-    logger.info(f"{url} Scraping HTTP(S)")
+    logger.info("%s Scraping HTTP(S)", url)
     pid = "-qB4390-" + "".join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
 
     args_dict = {
@@ -212,13 +225,13 @@ def announce_http(url, thash=urandom(20)):
         raise RuntimeError(f"Tracker error message: {tracker_response['failure reason']}")
     if "peers" not in tracker_response and "peers6" not in tracker_response:
         raise RuntimeError(f"Invalid response, both 'peers' and 'peers6' field are missing: {tracker_response}")
-    logger.info(f"{url} response: {tracker_response}")
+    logger.info("%s response: %s", url, tracker_response)
     return tracker_response
 
 
 def announce_udp(udp_url, thash=urandom(20)):
     parsed_tracker = urlparse(udp_url)
-    logger.info(f"{udp_url} Scraping UDP")
+    logger.info("%s Scraping UDP", udp_url)
     sock = None
     ip = None
     getaddr_responses = []
@@ -273,8 +286,8 @@ def announce_udp(udp_url, thash=urandom(20)):
         raise RuntimeError(f"UDP error: {err}")
     ip_family = sock.family
     sock.close()
-    parsed_response, raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
-    logger.info(f"{udp_url} response: {parsed_response}")
+    parsed_response, _raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
+    logger.info("%s response: %s", udp_url, parsed_response)
     return parsed_response, ip
 
 
