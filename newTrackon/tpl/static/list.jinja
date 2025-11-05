@@ -8,20 +8,30 @@
     <script>
     var selectedList = 'api/stable?include_ipv4_only_trackers=1&include_ipv6_only_trackers=0'
 
-    $('button').tooltip({
-        trigger: 'click',
-        placement: 'bottom'
+    // Initialize Bootstrap 5 tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            trigger: 'click',
+            placement: 'bottom'
+        })
     });
 
     function setTooltip(btn, message) {
-        $(btn).tooltip('hide')
-                .attr('data-original-title', message)
-                .tooltip('show');
+        var tooltip = bootstrap.Tooltip.getInstance(btn);
+        if (tooltip) {
+            tooltip.hide();
+            btn.setAttribute('data-bs-original-title', message);
+            tooltip.show();
+        }
     }
 
     function hideTooltip(btn) {
         setTimeout(function () {
-            $(btn).tooltip('hide');
+            var tooltip = bootstrap.Tooltip.getInstance(btn);
+            if (tooltip) {
+                tooltip.hide();
+            }
         }, 1000);
     }
 
@@ -83,7 +93,8 @@
                 <p>
                     <button class="btn btn-primary"
                             data-clipboard-action="copy"
-                            data-clipboard-target="#tocopy">
+                            data-clipboard-target="#tocopy"
+                            data-bs-toggle="tooltip">
                         Copy <b id="size"></b>
                         trackers to clipboard
                     </button>
@@ -91,18 +102,22 @@
             </div>
             <div class="col-lg-3">
                 <p>
-                    <label class="btn btn-default">
-                        <input type="checkbox" id="include_ipv4_only" checked>
-                        Include IPv4-only trackers
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="include_ipv4_only" checked>
+                        <label class="form-check-label" for="include_ipv4_only">
+                            Include IPv4-only trackers
+                        </label>
+                    </div>
                 </p>
             </div>
             <div class="col-lg-3">
                 <p>
-                    <label class="btn btn-default">
-                        <input type="checkbox" id="include_ipv6_only">
-                        Include IPv6-only trackers
-                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="include_ipv6_only">
+                        <label class="form-check-label" for="include_ipv6_only">
+                            Include IPv6-only trackers
+                        </label>
+                    </div>
                 </p>
             </div>
         </div>

@@ -1,14 +1,14 @@
 {% extends "base.jinja" %}
 {% block head %}
         <link rel="stylesheet"
-                href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"/>
+                href="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/datatables.min.css"/>
         <link rel="stylesheet"
                 href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.3.2/css/flag-icons.min.css"
                 integrity="sha512-+WVTaUIzUw5LFzqIqXOT3JVAc5SrMuvHm230I9QAZa6s+QRk8NDPswbHo2miIZj3yiFyV9lAgzO1wVrjdoO4tw=="
                 crossorigin="anonymous"/>
-        <script src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"></script>
-        <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/natural.js"></script>
-        <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/date-eu.js"></script>
+        <script src="https://cdn.datatables.net/v/bs5/dt-1.13.8/r-2.5.0/datatables.min.js"></script>
+        <script src="https://cdn.datatables.net/plug-ins/1.13.8/sorting/natural.js"></script>
+        <script src="https://cdn.datatables.net/plug-ins/1.13.8/sorting/date-eu.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"
                 integrity="sha512-QoJS4DOhdmG8kbbHkxmB/rtPdN62cGWXAdAFWWJPvUFF1/zxcPSdAnn4HhYZSIlVoLVEJ0LesfNlusgm2bPfnA=="
                 crossorigin="anonymous"></script>
@@ -47,25 +47,23 @@
     </p>
     <hr>
     <form method="POST" action="/">
-        <div class="form-group">
+        <div class="mb-3">
             <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
-            <p>
-                {% if form_feedback == "EMPTY" %}
-                    <div class="alert alert-warning" role="alert">
-                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                        <span class="sr-only">Error:</span>
-                        No trackers were submitted
-                    </div>
-                {% elif form_feedback == "SUCCESS" %}
-                    <div class="alert alert-info" role="alert">
-                        Received, see the progress in the <strong><a style="color:white" href="/submitted">Submitted</a></strong> section
-                    </div>
-                {% endif %}
-            </p>
-            <span class="help-block">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
-            or check the <a href="/submitted">Submitted</a> section.</span>
+            {% if form_feedback == "EMPTY" %}
+                <div class="alert alert-warning mt-2" role="alert">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    <span class="visually-hidden">Error:</span>
+                    No trackers were submitted
+                </div>
+            {% elif form_feedback == "SUCCESS" %}
+                <div class="alert alert-info mt-2" role="alert">
+                    Received, see the progress in the <strong><a style="color:white" href="/submitted">Submitted</a></strong> section
+                </div>
+            {% endif %}
+            <div class="form-text">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
+            or check the <a href="/submitted">Submitted</a> section.</div>
         </div>
-        <div class="form-group">
+        <div class="mb-3">
             <button type="submit" class="btn btn-primary">Submit</button>
         </div>
     </form>
