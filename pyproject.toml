@@ -3,16 +3,17 @@ name = "newTrackon"
 version = "1.0.0"
 requires-python = "==3.14.*"
 dependencies = [
-    "requests==2.32.4",
-    "tornado==6.5.1",
-    "Flask==3.1.1",
-    "dnspython==2.7.0",
+    "requests==2.32.5",
+    "tornado==6.5.4",
+    "Flask==3.1.2",
+    "dnspython==2.8.0",
 ]
 
 [dependency-groups]
 dev = [
     "ruff",
     "basedpyright",
+    "ty",
 ]
 
 [tool.setuptools.packages.find]
