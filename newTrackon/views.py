@@ -12,18 +12,19 @@ from flask import (
     request,
     send_from_directory,
 )
-from werkzeug.routing import BaseConverter
+from flask.typing import ResponseReturnValue
+from werkzeug.routing import BaseConverter, Map
 
 from newTrackon import db, trackon, utils
 
-max_input_length = 1000000
+max_input_length: int = 1000000
 
-app = Flask(__name__)
+app: Flask = Flask(__name__)
 app.template_folder = "tpl"
 
 
 class RegexConverter(BaseConverter):
-    def __init__(self, url_map, *items):
+    def __init__(self, url_map: Map, *items: str) -> None:
         super().__init__(url_map)
         self.regex = items[0]
 
@@ -40,14 +41,14 @@ logger.info("Server started")
 
 
 @app.route("/")
-def main(form_feedback=None):
+def main(form_feedback: str | None = None) -> ResponseReturnValue:
     trackers_list = db.get_all_data()
     trackers_list = utils.format_uptime_and_downtime_time(trackers_list)
     return render_template("main.jinja", form_feedback=form_feedback, trackers=trackers_list, active="Home")
 
 
 @app.route("/", methods=["POST"])
-def new_trackers():
+def new_trackers() -> ResponseReturnValue:
     new_trackers = request.form.get("new_trackers")
     if new_trackers is None:
         abort(400)
@@ -63,7 +64,7 @@ def new_trackers():
 
 
 @app.route("/api/add", methods=["POST"])
-def new_trackers_api():
+def new_trackers_api() -> ResponseReturnValue:
     new_trackers = request.form.get("new_trackers")
     if not new_trackers:
         abort(400)
@@ -77,7 +78,7 @@ def new_trackers_api():
 
 
 @app.route("/submitted")
-def submitted():
+def submitted() -> ResponseReturnValue:
     return render_template(
         "submitted.jinja",
         # Iterating a deque while rendering can cause RuntimeError: deque mutated during iteration, so we cast it to a list
@@ -88,28 +89,28 @@ def submitted():
 
 
 @app.route("/faq")
-def faq():
+def faq() -> ResponseReturnValue:
     return render_template("/static/faq.jinja", active="FAQ")
 
 
 @app.route("/list")
-def list_stable():
+def list_stable() -> ResponseReturnValue:
     return render_template("/static/list.jinja", active="List")
 
 
 @app.route("/api")
-def api_docs():
+def api_docs() -> ResponseReturnValue:
     return render_template("/static/api-docs.jinja", active="API")
 
 
 @app.route("/raw")
-def raw():
+def raw() -> ResponseReturnValue:
     # Iterating a deque while rendering can cause RuntimeError: deque mutated during iteration, so we cast it to a list
     return render_template("raw.jinja", data=list(trackon.raw_data), active="Raw data")
 
 
 @app.route("/api/<int:percentage>")
-def api_percentage(percentage):
+def api_percentage(percentage: int) -> ResponseReturnValue:
     include_upv4_only = (
         False if request.args.get("include_ipv4_only_trackers", default="true").lower() in ("false", "0") else True
     )
@@ -132,52 +133,52 @@ def api_percentage(percentage):
 
 
 @app.route("/api/stable")
-def api_stable():
+def api_stable() -> ResponseReturnValue:
     return api_percentage(95)
 
 
 @app.route("/api/best")
-def api_best():
+def api_best() -> ResponseReturnValue:
     return redirect("/api/stable", code=301)
 
 
 @app.route("/api/all")
-def api_all():
+def api_all() -> ResponseReturnValue:
     return api_percentage(0)
 
 
 @app.route("/api/live")
 @app.route("/api/udp")
 @app.route("/api/http")
-def api_multiple():
+def api_multiple() -> ResponseReturnValue:
     resp = make_response(db.get_api_data(request.path))
     resp = utils.add_api_headers(resp)
     return resp
 
 
 @app.route("/about")
-def about():
+def about() -> ResponseReturnValue:
     return render_template("/static/about.jinja", active="About")
 
 
 @app.route(r'/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>')  # matches all favicons that should be in root
-def favicon(filename, filetype):
+def favicon(filename: str, filetype: str) -> ResponseReturnValue:
     return send_from_directory("static/imgs/", filename + "." + filetype)
 
 
 @app.route(
     r'/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>'
 )  # matches browserconfig and manifest that should be in root
-def app_things(filename, filetype):
+def app_things(filename: str, filetype: str) -> ResponseReturnValue:
     return send_from_directory("static/", filename + "." + filetype)
 
 
 @app.route("/api.yml")
-def openapi_def():
+def openapi_def() -> ResponseReturnValue:
     return send_from_directory(".", "newtrackon-api.yml")
 
 
 @app.before_request
-def reject_announce_requests():
+def reject_announce_requests() -> ResponseReturnValue | None:
     if request.args.get("info_hash"):
         return abort(Response("newTrackon is not a tracker and cannot provide peers", 403))

@@ -6,15 +6,15 @@ from os import path
 from newTrackon.tracker import Tracker
 from newTrackon.utils import dict_factory, format_list, remove_ipvx_only_trackers
 
-db_file = "data/trackon.db"
+db_file: str = "data/trackon.db"
 
 
-def ensure_db_existence():
+def ensure_db_existence() -> None:
     if not path.exists(db_file):
         create_db()
 
 
-def create_db():
+def create_db() -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
@@ -41,7 +41,7 @@ def create_db():
     conn.close()
 
 
-def update_tracker(tracker: Tracker):
+def update_tracker(tracker: Tracker) -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
@@ -68,7 +68,7 @@ def update_tracker(tracker: Tracker):
     conn.close()
 
 
-def delete_tracker(tracker: Tracker):
+def delete_tracker(tracker: Tracker) -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
@@ -107,7 +107,7 @@ def get_all_data() -> list[Tracker]:
     return trackers_from_db
 
 
-def get_api_data(query, uptime=0, include_ipv4_only=True, include_ipv6_only=True):
+def get_api_data(query: str, uptime: int = 0, include_ipv4_only: bool = True, include_ipv6_only: bool = True) -> str:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     if query == "/api/http":
@@ -135,7 +135,7 @@ def get_api_data(query, uptime=0, include_ipv4_only=True, include_ipv6_only=True
     return format_list(urls_and_ips)
 
 
-def insert_new_tracker(tracker: Tracker):
+def insert_new_tracker(tracker: Tracker) -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(

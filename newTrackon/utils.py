@@ -1,22 +1,24 @@
+import sqlite3
 import sys
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from time import time
+from typing import Any
 
 
-def add_api_headers(resp):
+def add_api_headers(resp: Any) -> Any:
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.mimetype = "text/plain"
     return resp
 
 
-def dict_factory(cursor, row):
-    d = {}
+def dict_factory(cursor: sqlite3.Cursor, row: sqlite3.Row | tuple[Any, ...]) -> dict[str, Any]:
+    d: dict[str, Any] = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
 
 
-def format_uptime_and_downtime_time(trackers_unprocessed):
+def format_uptime_and_downtime_time(trackers_unprocessed: list[Any]) -> list[Any]:
     for tracker in trackers_unprocessed:
         if tracker.status == 1:
             tracker.status_epoch = tracker.last_downtime
@@ -36,7 +38,7 @@ def format_uptime_and_downtime_time(trackers_unprocessed):
     return trackers_unprocessed
 
 
-def format_time(last_time):
+def format_time(last_time: int) -> str:
     now = int(time())
     relative = now - int(last_time)
     if relative < 60:
@@ -75,7 +77,7 @@ def format_time(last_time):
         return str(years) + " years"
 
 
-def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: int):
+def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: int) -> list[tuple[str, list[str]]]:
     ip_type_to_keep: type[IPv4Address | IPv6Address]
     if version == 6:
         ip_type_to_keep = IPv4Address
@@ -90,7 +92,7 @@ def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: in
     return cleaned_list
 
 
-def format_list(raw_list):
+def format_list(raw_list: list[tuple[str, list[str]]]) -> str:
     formatted_list = ""
     for url in raw_list:
         url_string = url[0]
@@ -98,7 +100,7 @@ def format_list(raw_list):
     return formatted_list
 
 
-def process_txt_prefs(txt_record: str):
+def process_txt_prefs(txt_record: str) -> list[tuple[str, int]]:
     words = txt_record.split()
     txt_preferences = []
     for word in words[1:11]:  # Get only the first 10 advertised trackers to avoid DoS
@@ -109,7 +111,7 @@ def process_txt_prefs(txt_record: str):
     return txt_preferences
 
 
-def build_httpx_url(submitted_url, tls):
+def build_httpx_url(submitted_url: Any, tls: bool) -> str:
     if tls:
         scheme = "https://"
         default_port = 443

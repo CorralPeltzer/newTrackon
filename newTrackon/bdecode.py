@@ -71,7 +71,7 @@ class Decoder:
         self.index = 0
         self.data = data
 
-    def decode(self) -> OrderedDict | list[Any] | int | bytes | None:
+    def decode(self) -> OrderedDict[Any, Any] | list[Any] | int | bytes | None:
         # decode the bencoded data
         c = self.peek()  # get the next character
         if c is None:
@@ -118,7 +118,7 @@ class Decoder:
         return result
 
     # decodes bencoded data into a Python OrderedDict
-    def decode_dict(self) -> OrderedDict:
+    def decode_dict(self) -> OrderedDict[Any, Any]:
         result = OrderedDict()
         while self.data[self.index : self.index + 1] != TOK_END:
             key = self.decode()  # decode the key

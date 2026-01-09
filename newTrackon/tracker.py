@@ -6,34 +6,54 @@ from datetime import datetime
 from ipaddress import ip_address
 from logging import getLogger
 from time import gmtime, sleep, strftime, time
+from typing import Any
 from urllib import parse, request
 
 from newTrackon import persistence, scraper
 
 logger = getLogger("newtrackon")
 
-max_downtime = 47304000  # 1.5 years
+max_downtime: int = 47304000  # 1.5 years
 
 
 class Tracker:
+    url: str
+    host: Any
+    ips: Any
+    latency: Any
+    last_checked: Any
+    interval: Any
+    status: Any
+    uptime: Any
+    countries: Any
+    country_codes: Any
+    networks: Any
+    historic: Any
+    added: Any
+    last_downtime: Any
+    last_uptime: Any
+    to_be_deleted: bool
+    status_epoch: Any
+    status_readable: Any
+
     def __init__(
         self,
-        url,
-        host,
-        ips,
-        latency,
-        last_checked,
-        interval,
-        status,
-        uptime,
-        countries,
-        country_codes,
-        networks,
-        historic,
-        added,
-        last_downtime,
-        last_uptime,
-    ):
+        url: str,
+        host: Any,
+        ips: Any,
+        latency: Any,
+        last_checked: Any,
+        interval: Any,
+        status: Any,
+        uptime: Any,
+        countries: Any,
+        country_codes: Any,
+        networks: Any,
+        historic: Any,
+        added: Any,
+        last_downtime: Any,
+        last_uptime: Any,
+    ) -> None:
         self.url = url
         self.host = host
         self.ips = ips
@@ -50,9 +70,11 @@ class Tracker:
         self.last_downtime = last_downtime
         self.last_uptime = last_uptime
         self.to_be_deleted = False
+        self.status_epoch = None
+        self.status_readable = None
 
     @classmethod
-    def from_url(cls, url):
+    def from_url(cls, url: str) -> Tracker:
         tracker = cls(
             url,
             None,
@@ -79,7 +101,7 @@ class Tracker:
         tracker.added = f"{date.day}-{date.month}-{date.year}"
         return tracker
 
-    def update_status(self):
+    def update_status(self) -> None:
         try:
             now = int(time())
             if self.last_uptime < (now - max_downtime):
@@ -124,7 +146,7 @@ class Tracker:
             self.interval = 10800
         self.update_uptime()
 
-    def update_scheme_from_bep_34(self):
+    def update_scheme_from_bep_34(self) -> None:
         valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
         if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
             if not bep_34_info:
@@ -150,7 +172,7 @@ class Tracker:
         else:  # No valid BEP34, attempting existing URL
             return
 
-    def clear_tracker(self, reason):
+    def clear_tracker(self, reason: str) -> None:
         self.countries, self.networks, self.country_codes = None, None, None
         self.latency = None
         self.last_checked = int(time())
@@ -167,7 +189,7 @@ class Tracker:
         }
         persistence.raw_data.appendleft(debug)
 
-    def validate_url(self):
+    def validate_url(self) -> None:
         uchars = re.compile(r"^[a-zA-Z0-9_\-\./:]+$")
         url = parse.urlparse(self.url)
         if url.scheme not in ["udp", "http", "https"]:
@@ -178,13 +200,13 @@ class Tracker:
         else:
             raise RuntimeError("Invalid announce URL")
 
-    def update_uptime(self):
+    def update_uptime(self) -> None:
         uptime = float(0)
         for s in self.historic:
             uptime += s
         self.uptime = (uptime / len(self.historic)) * 100
 
-    def update_ips(self):
+    def update_ips(self) -> None:
         self.ips = []
         temp_ips = set()
         try:
@@ -201,7 +223,7 @@ class Tracker:
             self.ips = None
             raise RuntimeError("Can't resolve IP")
 
-    def update_ipapi_data(self):
+    def update_ipapi_data(self) -> None:
         self.countries, self.networks, self.country_codes = [], [], []
         if self.ips:
             for ip in self.ips:
@@ -211,18 +233,18 @@ class Tracker:
                     self.country_codes.append(ip_data[1].lower())
                     self.networks.append(ip_data[2])
 
-    def is_up(self):
+    def is_up(self) -> None:
         self.status = 1
         self.last_uptime = int(time())
         self.historic.append(self.status)
 
-    def is_down(self):
+    def is_down(self) -> None:
         self.status = 0
         self.last_downtime = int(time())
         self.historic.append(self.status)
 
     @staticmethod
-    def ip_api(ip):
+    def ip_api(ip: str) -> str:
         try:
             response = request.urlopen("http://ip-api.com/line/" + ip + "?fields=country,countryCode,isp")
             tracker_info = response.read().decode("utf-8")

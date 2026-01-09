@@ -16,14 +16,14 @@ from newTrackon.persistence import (
 from newTrackon.scraper import attempt_submitted
 from newTrackon.tracker import Tracker
 
-processing_trackers = False
-deque_lock = Lock()
-list_lock = Lock()
+processing_trackers: bool = False
+deque_lock: Lock = Lock()
+list_lock: Lock = Lock()
 
 logger = logging.getLogger("newtrackon")
 
 
-def enqueue_new_trackers(input_string: str):
+def enqueue_new_trackers(input_string: str) -> None:
     if not isinstance(input_string, str):
         return
     input_string = input_string.lower()
@@ -35,7 +35,7 @@ def enqueue_new_trackers(input_string: str):
         process_submitted_deque()
 
 
-def add_one_tracker_to_submitted_deque(url: str):
+def add_one_tracker_to_submitted_deque(url: str) -> None:
     try:
         parsed_url = urlparse(url)
         if parsed_url.hostname:
@@ -70,7 +70,7 @@ def add_one_tracker_to_submitted_deque(url: str):
     logger.info("Tracker %s added to the submitted queue", url)
 
 
-def process_submitted_deque():
+def process_submitted_deque() -> None:
     global processing_trackers
     processing_trackers = True
     while submitted_trackers:
@@ -83,7 +83,7 @@ def process_submitted_deque():
     processing_trackers = False
 
 
-def process_new_tracker(tracker_candidate: Tracker):
+def process_new_tracker(tracker_candidate: Tracker) -> None:
     logger.info("Processing new tracker: %s", tracker_candidate.url)
     all_ips_tracked = get_all_ips_tracked()
     if tracker_candidate.ips and all_ips_tracked:
@@ -126,7 +126,7 @@ def process_new_tracker(tracker_candidate: Tracker):
     logger.info("New tracker %s added to newTrackon", tracker_candidate.url)
 
 
-def update_outdated_trackers():
+def update_outdated_trackers() -> None:
     while True:
         now = int(time())
         trackers_outdated: list[Tracker] = []
@@ -147,7 +147,7 @@ def update_outdated_trackers():
         sleep(5)
 
 
-def log_wrong_interval_denial(reason):
+def log_wrong_interval_denial(reason: str) -> None:
     debug = submitted_data.popleft()
     info = debug["info"]
     debug.update(
@@ -162,7 +162,7 @@ def log_wrong_interval_denial(reason):
     submitted_data.appendleft(debug)
 
 
-def warn_of_duplicate_ips():
+def warn_of_duplicate_ips() -> None:
     all_ips = get_all_ips_tracked()
     if all_ips:
         seen, duplicates = set(), set()
@@ -175,7 +175,7 @@ def warn_of_duplicate_ips():
             logger.warning("IP %s is duplicated, manual action required", duplicate_ip)
 
 
-def get_all_ips_tracked() -> list[str] | None:
+def get_all_ips_tracked() -> list[str]:
     all_ips_of_all_trackers = []
     all_data = db.get_all_data()
     for tracker_in_list in all_data:
