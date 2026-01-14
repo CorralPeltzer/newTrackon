@@ -55,7 +55,7 @@ def update_tracker(tracker: Tracker) -> None:
             tracker.status,
             tracker.interval,
             tracker.uptime,
-            json.dumps(list(tracker.historic)),
+            json.dumps(list(tracker.historic) if tracker.historic else []),
             json.dumps(tracker.countries),
             json.dumps(tracker.country_codes),
             json.dumps(tracker.networks),
@@ -83,7 +83,7 @@ def get_all_data() -> list[Tracker]:
     conn = sqlite3.connect(db_file)
     conn.row_factory = dict_factory
     c = conn.cursor()
-    trackers_from_db = []
+    trackers_from_db: list[Tracker] = []
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
         tracker_in_db = Tracker(
             host=row.get("host"),
@@ -153,7 +153,7 @@ def insert_new_tracker(tracker: Tracker) -> None:
             json.dumps(tracker.country_codes),
             json.dumps(tracker.networks),
             tracker.added,
-            json.dumps(list(tracker.historic)),
+            json.dumps(list(tracker.historic) if tracker.historic else []),
             tracker.last_downtime,
             tracker.last_uptime,
         ),

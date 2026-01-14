@@ -29,5 +29,5 @@ extend-select = ["I", "UP", "Q", "G", "PLE", "PLC", "RUF"]
 
 
 [tool.pyright]
-typeCheckingMode = "basic"
+typeCheckingMode = "strict"
 include = ["newTrackon"]

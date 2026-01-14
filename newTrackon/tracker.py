@@ -3,10 +3,9 @@ import re
 import socket
 from collections import deque
 from datetime import datetime
-from ipaddress import ip_address
+from ipaddress import IPv4Address, IPv6Address, ip_address
 from logging import getLogger
 from time import gmtime, sleep, strftime, time
-from typing import Any
 from urllib import parse, request
 
 from newTrackon import persistence, scraper
@@ -18,41 +17,41 @@ max_downtime: int = 47304000  # 1.5 years
 
 class Tracker:
     url: str
-    host: Any
-    ips: Any
-    latency: Any
-    last_checked: Any
-    interval: Any
-    status: Any
-    uptime: Any
-    countries: Any
-    country_codes: Any
-    networks: Any
-    historic: Any
-    added: Any
-    last_downtime: Any
-    last_uptime: Any
+    host: str | None
+    ips: list[str] | None
+    latency: int | None
+    last_checked: int | None
+    interval: int | None
+    status: int | None
+    uptime: float | None
+    countries: list[str] | None
+    country_codes: list[str] | None
+    networks: list[str] | None
+    historic: deque[int] | None
+    added: str | None
+    last_downtime: int | None
+    last_uptime: int | None
     to_be_deleted: bool
-    status_epoch: Any
-    status_readable: Any
+    status_epoch: int | None
+    status_readable: str | None
 
     def __init__(
         self,
         url: str,
-        host: Any,
-        ips: Any,
-        latency: Any,
-        last_checked: Any,
-        interval: Any,
-        status: Any,
-        uptime: Any,
-        countries: Any,
-        country_codes: Any,
-        networks: Any,
-        historic: Any,
-        added: Any,
-        last_downtime: Any,
-        last_uptime: Any,
+        host: str | None,
+        ips: list[str] | None,
+        latency: int | None,
+        last_checked: int | None,
+        interval: int | None,
+        status: int | None,
+        uptime: float | None,
+        countries: list[str] | None,
+        country_codes: list[str] | None,
+        networks: list[str] | None,
+        historic: deque[int] | None,
+        added: str | None,
+        last_downtime: int | None,
+        last_uptime: int | None,
     ) -> None:
         self.url = url
         self.host = host
@@ -104,7 +103,7 @@ class Tracker:
     def update_status(self) -> None:
         try:
             now = int(time())
-            if self.last_uptime < (now - max_downtime):
+            if self.last_uptime is None or self.last_uptime < (now - max_downtime):
                 self.to_be_deleted = True
                 raise RuntimeError("Tracker unresponsive for too long, removed")
 
@@ -118,7 +117,7 @@ class Tracker:
         self.last_checked = int(time())
         pp = pprint.PrettyPrinter(width=999999, compact=True)
         t1 = time()
-        debug = {
+        debug: dict[str, str | int | None] = {
             "url": self.url,
             "ip": next(iter(self.ips)) if self.ips else None,
             "time": strftime("%H:%M:%S UTC", gmtime(t1)),
@@ -147,6 +146,8 @@ class Tracker:
         self.update_uptime()
 
     def update_scheme_from_bep_34(self) -> None:
+        if self.host is None:
+            return
         valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
         if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
             if not bep_34_info:
@@ -201,6 +202,9 @@ class Tracker:
             raise RuntimeError("Invalid announce URL")
 
     def update_uptime(self) -> None:
+        if self.historic is None or len(self.historic) == 0:
+            self.uptime = 0.0
+            return
         uptime = float(0)
         for s in self.historic:
             uptime += s
@@ -208,17 +212,24 @@ class Tracker:
 
     def update_ips(self) -> None:
         self.ips = []
-        temp_ips = set()
+        temp_ips: set[str] = set()
         try:
             for res in socket.getaddrinfo(self.host, None):
-                temp_ips.add(res[4][0])
+                addr = res[4][0]
+                if isinstance(addr, str):
+                    temp_ips.add(addr)
         except OSError:
             pass
         if temp_ips:  # Order IPs per protocol, IPv6 first
-            parsed_ips = []
-            [parsed_ips.append(ip_address(ip)) for ip in temp_ips]
-            [self.ips.append(str(ip)) for ip in parsed_ips if ip.version == 6]
-            [self.ips.append(str(ip)) for ip in parsed_ips if ip.version == 4]
+            parsed_ips: list[IPv4Address | IPv6Address] = []
+            for ip in temp_ips:
+                parsed_ips.append(ip_address(ip))
+            for ip in parsed_ips:
+                if ip.version == 6:
+                    self.ips.append(str(ip))
+            for ip in parsed_ips:
+                if ip.version == 4:
+                    self.ips.append(str(ip))
         elif not self.ips:
             self.ips = None
             raise RuntimeError("Can't resolve IP")
@@ -236,12 +247,14 @@ class Tracker:
     def is_up(self) -> None:
         self.status = 1
         self.last_uptime = int(time())
-        self.historic.append(self.status)
+        if self.historic is not None:
+            self.historic.append(self.status)
 
     def is_down(self) -> None:
         self.status = 0
         self.last_downtime = int(time())
-        self.historic.append(self.status)
+        if self.historic is not None:
+            self.historic.append(self.status)
 
     @staticmethod
     def ip_api(ip: str) -> str:

@@ -8,15 +8,17 @@ from logging import getLogger
 from os import urandom
 from time import time
 from typing import Any
-from urllib.parse import urlencode, urlparse
+from urllib.parse import ParseResult, urlencode, urlparse
 
 import requests
 from dns import resolver
 from dns.exception import DNSException
+from dns.rdata import Rdata
 from urllib3.exceptions import HTTPError
 
 from newTrackon.bdecode import bdecode, decode_binary_peers_list
 from newTrackon.persistence import submitted_data
+from newTrackon.tracker import Tracker
 from newTrackon.utils import build_httpx_url, process_txt_prefs
 
 HTTP_PORT: int = 6881
@@ -35,20 +37,23 @@ logger = getLogger("newtrackon")
 to_redact: list[str] = [str(HTTP_PORT), str(UDP_PORT)]
 
 
-def attempt_submitted(tracker: Any) -> tuple[int | None, str, int]:
-    submitted_url: Any = urlparse(tracker.url)
+def attempt_submitted(tracker: Tracker) -> tuple[int | None, str, int]:
+    submitted_url = urlparse(tracker.url)
+    hostname = submitted_url.hostname
+    if hostname is None:
+        raise RuntimeError(f"Could not parse hostname from URL {tracker.url!r}")
     try:
-        addrinfo = socket.getaddrinfo(submitted_url.hostname, None)
+        addrinfo = socket.getaddrinfo(hostname, None)
         if not addrinfo:
-            raise RuntimeError(f"getaddrinfo returned no results for hostname {submitted_url.hostname!r}")
+            raise RuntimeError(f"getaddrinfo returned no results for hostname {hostname!r}")
         sockaddr = addrinfo[0][4]
-        if not (isinstance(sockaddr, tuple) and sockaddr and isinstance(sockaddr[0], str)):
-            raise RuntimeError(f"Unexpected getaddrinfo sockaddr for hostname {submitted_url.hostname!r}: {sockaddr!r}")
+        if not sockaddr or not isinstance(sockaddr[0], str):
+            raise RuntimeError(f"Unexpected getaddrinfo sockaddr for hostname {hostname!r}: {sockaddr!r}")
         failover_ip = sockaddr[0]
     except OSError:
         failover_ip = ""
 
-    valid_bep_34, bep_34_info = get_bep_34(submitted_url.hostname)
+    valid_bep_34, bep_34_info = get_bep_34(hostname)
 
     if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
         if not bep_34_info:
@@ -76,7 +81,9 @@ def attempt_submitted(tracker: Any) -> tuple[int | None, str, int]:
     return attempt_all_protocols(submitted_url, failover_ip)
 
 
-def attempt_from_txt_prefs(submitted_url: Any, failover_ip: str, txt_prefs: list[tuple[str, int]]) -> tuple[int | None, str, int]:
+def attempt_from_txt_prefs(
+    submitted_url: ParseResult, failover_ip: str, txt_prefs: list[tuple[str, int]]
+) -> tuple[int | None, str, int]:
     for preference in txt_prefs:
         preferred_url = submitted_url._replace(netloc=f"{submitted_url.hostname}:{preference[1]}")
         if preference[0] == "udp":
@@ -99,7 +106,7 @@ def attempt_from_txt_prefs(submitted_url: Any, failover_ip: str, txt_prefs: list
     raise RuntimeError
 
 
-def attempt_all_protocols(submitted_url: Any, failover_ip: str) -> tuple[int | None, str, int]:
+def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str) -> tuple[int | None, str, int]:
     # UDP scrape
     if submitted_url.port:  # If the tracker netloc has a port, try with UDP
         udp_success, udp_interval, udp_url, latency = attempt_udp(failover_ip, submitted_url.netloc)
@@ -123,7 +130,7 @@ def attempt_all_protocols(submitted_url: Any, failover_ip: str) -> tuple[int | N
     raise RuntimeError
 
 
-def attempt_https_http(failover_ip: str, url: Any) -> tuple[int | None, int | None, str | None, int | None]:
+def attempt_https_http(failover_ip: str, url: ParseResult) -> tuple[int | None, int | None, str | None, int | None]:
     # HTTPS scrape
     https_success, https_interval, https_url, latency = attempt_httpx(failover_ip, url, tls=True)
     if https_success:
@@ -140,7 +147,7 @@ def attempt_https_http(failover_ip: str, url: Any) -> tuple[int | None, int | No
     return None, None, None, None
 
 
-def attempt_httpx(failover_ip: str, submitted_url: Any, tls: bool = True) -> tuple[int, int | None, str, int]:
+def attempt_httpx(failover_ip: str, submitted_url: ParseResult, tls: bool = True) -> tuple[int, int | None, str, int]:
     http_url = build_httpx_url(submitted_url, tls)
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     t1 = time()
@@ -183,11 +190,12 @@ def attempt_udp(failover_ip: str, tracker_netloc: str) -> tuple[int, int | None,
     )
 
 
-def get_bep_34(hostname: Any) -> tuple[bool, list[tuple[str, int]] | None]:
+def get_bep_34(hostname: str) -> tuple[bool, list[tuple[str, int]] | None]:
     """Querying for http://bittorrent.org/beps/bep_0034.html"""
     try:
         txt_info = resolver.resolve(hostname, "TXT").response.answer[0]
-        for record in txt_info:
+        records: list[Rdata] = list(txt_info)
+        for record in records:
             record_text = str(record).strip('"')
             if record_text.startswith("BITTORRENT"):
                 return True, process_txt_prefs(record_text)
@@ -246,18 +254,18 @@ def announce_http(url: str, thash: bytes = urandom(20)) -> dict[str, Any]:
 def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[dict[str, Any], str | None]:
     parsed_tracker = urlparse(udp_url)
     logger.info("%s Scraping UDP", udp_url)
-    sock = None
-    ip = None
-    getaddr_responses = []
+    sock: socket.socket | None = None
+    ip: str | None = None
     try:
-        for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM):
-            getaddr_responses.append(res)
+        getaddr_responses = socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM)
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")
 
-    for res in getaddr_responses:
-        af, socktype, proto, _, sa = res
-        ip = sa[0]
+    for af, socktype, proto, _, sa in getaddr_responses:
+        addr = sa[0]
+        if not isinstance(addr, str):
+            continue
+        ip = addr
         try:
             sock = socket.socket(af, socktype, proto)
             sock.settimeout(10)
@@ -366,7 +374,7 @@ def udp_parse_announce_response(buf: bytes, sent_transaction_id: int, ip_family:
             f"Transaction ID doesnt match in announce response! Expected {sent_transaction_id}, got {res_transaction_id}"
         )
     if action == 0x1:
-        ret = dict()
+        ret: dict[str, Any] = {}
         offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
         ret["interval"] = struct.unpack_from("!i", buf, offset)[0]
         offset += 4

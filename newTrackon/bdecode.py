@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from socket import AF_INET, AF_INET6, inet_ntop
 from struct import unpack_from
-from typing import Any
 
 TOK_DICT: bytes = b"d"
 TOK_LIST: bytes = b"l"
@@ -9,34 +8,42 @@ TOK_INT: bytes = b"i"
 TOK_END: bytes = b"e"
 TOK_STR_SEP: bytes = b":"
 
+# Recursive type for bencoded values
+type BencodedValue = int | bytes | "list[BencodedValue]" | "OrderedDict[bytes, BencodedValue]"
 
-def bdecode(data: bytes) -> dict[str, Any]:
+
+def bdecode(data: bytes) -> dict[str, object]:
     bdecoded_response = Decoder(data).decode()
-    response = {}
+    response: dict[str, object] = {}
     if not isinstance(bdecoded_response, OrderedDict):
         raise RuntimeError("Could not extract the bencoded dict, probably invalid format")
     for key, value in bdecoded_response.items():
-        if isinstance(key, bytes):
-            response[key.decode()] = value
-        else:
-            response[key] = value
+        response[key.decode()] = value
 
     if "peers" in response:
-        response["peers"] = decode_binary_peers_list(response["peers"], 0, AF_INET)
+        peers_data: object = response["peers"]
+        if isinstance(peers_data, bytes):
+            response["peers"] = decode_binary_peers_list(peers_data, 0, AF_INET)
 
     if "peers6" in response:
-        response["peers6"] = decode_binary_peers_list(response["peers6"], 0, AF_INET6)
+        peers6_data: object = response["peers6"]
+        if isinstance(peers6_data, bytes):
+            response["peers6"] = decode_binary_peers_list(peers6_data, 0, AF_INET6)
 
     if "external ip" in response:
-        external_ip_length = len(response["external ip"])
-        if external_ip_length == 4:
-            response["external ip"] = inet_ntop(AF_INET, response["external ip"])
-        elif external_ip_length == 16:
-            response["external ip"] = inet_ntop(AF_INET6, response["external ip"])
-        else:
-            raise RuntimeError("Invalid external IP size")
+        external_ip: object = response["external ip"]
+        if isinstance(external_ip, bytes):
+            external_ip_length = len(external_ip)
+            if external_ip_length == 4:
+                response["external ip"] = inet_ntop(AF_INET, external_ip)
+            elif external_ip_length == 16:
+                response["external ip"] = inet_ntop(AF_INET6, external_ip)
+            else:
+                raise RuntimeError("Invalid external IP size")
 
-    for key, value in response.items():
+    keys_to_decode: list[str] = [k for k, v in response.items() if isinstance(v, bytes)]
+    for key in keys_to_decode:
+        value: object = response[key]
         if isinstance(value, bytes):
             response[key] = value.decode()
 
@@ -44,7 +51,7 @@ def bdecode(data: bytes) -> dict[str, Any]:
 
 
 def decode_binary_peers_list(buf: bytes, offset: int, ip_family: int) -> list[dict[str, str | int]]:
-    peers = []
+    peers: list[dict[str, str | int]] = []
     x = 0
     while offset != len(buf):
         if ip_family == AF_INET:
@@ -66,12 +73,10 @@ def decode_binary_peers_list(buf: bytes, offset: int, ip_family: int) -> list[di
 
 class Decoder:
     def __init__(self, data: bytes) -> None:
-        if not isinstance(data, bytes):
-            raise TypeError("'data' must be 'bytes'")
         self.index = 0
         self.data = data
 
-    def decode(self) -> OrderedDict[Any, Any] | list[Any] | int | bytes | None:
+    def decode(self) -> BencodedValue | None:
         # decode the bencoded data
         c = self.peek()  # get the next character
         if c is None:
@@ -118,21 +123,23 @@ class Decoder:
         return result
 
     # decodes bencoded data into a Python OrderedDict
-    def decode_dict(self) -> OrderedDict[Any, Any]:
-        result = OrderedDict()
+    def decode_dict(self) -> OrderedDict[bytes, BencodedValue]:
+        result: OrderedDict[bytes, BencodedValue] = OrderedDict()
         while self.data[self.index : self.index + 1] != TOK_END:
             key = self.decode()  # decode the key
             item = self.decode()  # decode the item
-            result[key] = item  # add the key item pair to the dict
+            if isinstance(key, bytes) and item is not None:
+                result[key] = item  # add the key item pair to the dict
         self.read(1)  # read the end token
         return result
 
     # decodes bencoded data into a Python list
-    def decode_list(self) -> list[Any]:
-        result = []
+    def decode_list(self) -> list[BencodedValue]:
+        result: list[BencodedValue] = []
         while self.data[self.index : self.index + 1] != TOK_END:
             item = self.decode()  # decode an item
-            result.append(item)  # add to the list
+            if item is not None:
+                result.append(item)  # add to the list
         self.read(1)  # read the end token
         return result
 

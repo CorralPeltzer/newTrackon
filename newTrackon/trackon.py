@@ -24,8 +24,6 @@ logger = logging.getLogger("newtrackon")
 
 
 def enqueue_new_trackers(input_string: str) -> None:
-    if not isinstance(input_string, str):
-        return
     input_string = input_string.lower()
     new_trackers_list = input_string.split()
     for url in new_trackers_list:
@@ -131,6 +129,8 @@ def update_outdated_trackers() -> None:
         now = int(time())
         trackers_outdated: list[Tracker] = []
         for tracker in db.get_all_data():
+            if tracker.last_checked is None or tracker.interval is None:
+                continue
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)
         for tracker in trackers_outdated:
@@ -165,7 +165,8 @@ def log_wrong_interval_denial(reason: str) -> None:
 def warn_of_duplicate_ips() -> None:
     all_ips = get_all_ips_tracked()
     if all_ips:
-        seen, duplicates = set(), set()
+        seen: set[str] = set()
+        duplicates: set[str] = set()
         for ip in all_ips:
             if ip not in seen:
                 seen.add(ip)
@@ -176,7 +177,7 @@ def warn_of_duplicate_ips() -> None:
 
 
 def get_all_ips_tracked() -> list[str]:
-    all_ips_of_all_trackers = []
+    all_ips_of_all_trackers: list[str] = []
     all_data = db.get_all_data()
     for tracker_in_list in all_data:
         if tracker_in_list.ips:

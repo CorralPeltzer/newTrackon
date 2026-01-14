@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import json
 from collections import deque
 from os import path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-submitted_trackers: deque[Any] = deque(maxlen=10000)
+if TYPE_CHECKING:
+    from newTrackon.tracker import Tracker
+
+submitted_trackers: deque[Tracker] = deque(maxlen=10000)
 raw_history_file: str = "data/raw_data.json"
 submitted_history_file: str = "data/submitted_data.json"
 raw_data: deque[dict[str, Any]]

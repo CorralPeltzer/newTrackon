@@ -83,7 +83,7 @@ def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: in
         ip_type_to_keep = IPv4Address
     else:
         ip_type_to_keep = IPv6Address
-    cleaned_list = []
+    cleaned_list: list[tuple[str, list[str]]] = []
     for url, ips_list in raw_list:
         if ips_list:
             ips_parsed = [ip_address(ip) for ip in ips_list]
@@ -102,7 +102,7 @@ def format_list(raw_list: list[tuple[str, list[str]]]) -> str:
 
 def process_txt_prefs(txt_record: str) -> list[tuple[str, int]]:
     words = txt_record.split()
-    txt_preferences = []
+    txt_preferences: list[tuple[str, int]] = []
     for word in words[1:11]:  # Get only the first 10 advertised trackers to avoid DoS
         if word.startswith("UDP:") and word[4:].isdigit():
             txt_preferences.append(("udp", int(word[4:])))
