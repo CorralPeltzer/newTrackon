@@ -55,7 +55,7 @@ def update_tracker(tracker: Tracker) -> None:
             tracker.status,
             tracker.interval,
             tracker.uptime,
-            json.dumps(list(tracker.historic) if tracker.historic else []),
+            json.dumps(list(tracker.historic)),
             json.dumps(tracker.countries),
             json.dumps(tracker.country_codes),
             json.dumps(tracker.networks),
@@ -85,22 +85,26 @@ def get_all_data() -> list[Tracker]:
     c = conn.cursor()
     trackers_from_db: list[Tracker] = []
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
+        # host and url are NOT NULL in DB schema
+        host: str = row["host"]
+        url: str = row["url"]
+        historic_json = row.get("historic")
         tracker_in_db = Tracker(
-            host=row.get("host"),
-            url=row.get("url"),
-            ips=json.loads(row.get("ip")),
+            host=host,
+            url=url,
+            ips=json.loads(row.get("ip")) if row.get("ip") else [],
             latency=row.get("latency"),
-            last_checked=row.get("last_checked"),
+            last_checked=row.get("last_checked") or 0,
             interval=row.get("interval"),
-            status=row.get("status"),
-            uptime=row.get("uptime"),
-            countries=json.loads(row.get("country")),
-            country_codes=json.loads(row.get("country_code")),
-            historic=deque(json.loads(row.get("historic")), maxlen=1000),
-            added=row.get("added"),
-            networks=json.loads(row.get("network")),
-            last_downtime=row.get("last_downtime"),
-            last_uptime=row.get("last_uptime"),
+            status=row.get("status") or 0,
+            uptime=row.get("uptime") or 0.0,
+            countries=json.loads(row.get("country")) if row.get("country") else [],
+            country_codes=json.loads(row.get("country_code")) if row.get("country_code") else [],
+            historic=deque(json.loads(historic_json), maxlen=1000) if historic_json else deque(maxlen=1000),
+            added=row.get("added") or "",
+            networks=json.loads(row.get("network")) if row.get("network") else [],
+            last_downtime=row.get("last_downtime") or 0,
+            last_uptime=row.get("last_uptime") or 0,
         )
         trackers_from_db.append(tracker_in_db)
     conn.close()
@@ -153,7 +157,7 @@ def insert_new_tracker(tracker: Tracker) -> None:
             json.dumps(tracker.country_codes),
             json.dumps(tracker.networks),
             tracker.added,
-            json.dumps(list(tracker.historic) if tracker.historic else []),
+            json.dumps(list(tracker.historic)),
             tracker.last_downtime,
             tracker.last_uptime,
         ),

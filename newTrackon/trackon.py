@@ -129,7 +129,7 @@ def update_outdated_trackers() -> None:
         now = int(time())
         trackers_outdated: list[Tracker] = []
         for tracker in db.get_all_data():
-            if tracker.last_checked is None or tracker.interval is None:
+            if tracker.interval is None:
                 continue
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)

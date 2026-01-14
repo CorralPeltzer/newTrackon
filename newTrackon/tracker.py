@@ -17,20 +17,20 @@ max_downtime: int = 47304000  # 1.5 years
 
 class Tracker:
     url: str
-    host: str | None
-    ips: list[str] | None
+    host: str
+    ips: list[str]
     latency: int | None
-    last_checked: int | None
+    last_checked: int
     interval: int | None
-    status: int | None
-    uptime: float | None
-    countries: list[str] | None
-    country_codes: list[str] | None
-    networks: list[str] | None
-    historic: deque[int] | None
-    added: str | None
-    last_downtime: int | None
-    last_uptime: int | None
+    status: int
+    uptime: float
+    countries: list[str]
+    country_codes: list[str]
+    networks: list[str]
+    historic: deque[int]
+    added: str
+    last_downtime: int
+    last_uptime: int
     to_be_deleted: bool
     status_epoch: int | None
     status_readable: str | None
@@ -38,20 +38,20 @@ class Tracker:
     def __init__(
         self,
         url: str,
-        host: str | None,
-        ips: list[str] | None,
+        host: str,
+        ips: list[str],
         latency: int | None,
-        last_checked: int | None,
+        last_checked: int,
         interval: int | None,
-        status: int | None,
-        uptime: float | None,
-        countries: list[str] | None,
-        country_codes: list[str] | None,
-        networks: list[str] | None,
-        historic: deque[int] | None,
-        added: str | None,
-        last_downtime: int | None,
-        last_uptime: int | None,
+        status: int,
+        uptime: float,
+        countries: list[str],
+        country_codes: list[str],
+        networks: list[str],
+        historic: deque[int],
+        added: str,
+        last_downtime: int,
+        last_uptime: int,
     ) -> None:
         self.url = url
         self.host = host
@@ -74,36 +74,39 @@ class Tracker:
 
     @classmethod
     def from_url(cls, url: str) -> Tracker:
+        parsed = parse.urlparse(url)
+        hostname = parsed.hostname
+        if hostname is None:
+            raise RuntimeError("Could not parse hostname from URL")
+
+        now = int(time())
+        date = datetime.now()
         tracker = cls(
-            url,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            [],
-            [],
-            [],
-            None,
-            None,
-            None,
-            None,
+            url=url,
+            host=hostname,
+            ips=[],
+            latency=None,
+            last_checked=now,
+            interval=None,
+            status=0,
+            uptime=0.0,
+            countries=[],
+            country_codes=[],
+            networks=[],
+            historic=deque(maxlen=1000),
+            added=f"{date.day}-{date.month}-{date.year}",
+            last_downtime=now,
+            last_uptime=now,
         )
         tracker.validate_url()
         logger.info("Preprocessing %s", url)
-        tracker.host = parse.urlparse(tracker.url).hostname
         tracker.update_ips()
-        tracker.historic = deque(maxlen=1000)
-        date = datetime.now()
-        tracker.added = f"{date.day}-{date.month}-{date.year}"
         return tracker
 
     def update_status(self) -> None:
         try:
             now = int(time())
-            if self.last_uptime is None or self.last_uptime < (now - max_downtime):
+            if self.last_uptime < (now - max_downtime):
                 self.to_be_deleted = True
                 raise RuntimeError("Tracker unresponsive for too long, removed")
 
@@ -146,8 +149,6 @@ class Tracker:
         self.update_uptime()
 
     def update_scheme_from_bep_34(self) -> None:
-        if self.host is None:
-            return
         valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
         if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
             if not bep_34_info:
@@ -174,7 +175,7 @@ class Tracker:
             return
 
     def clear_tracker(self, reason: str) -> None:
-        self.countries, self.networks, self.country_codes = None, None, None
+        self.countries, self.networks, self.country_codes = [], [], []
         self.latency = None
         self.last_checked = int(time())
         self.is_down()
@@ -202,7 +203,7 @@ class Tracker:
             raise RuntimeError("Invalid announce URL")
 
     def update_uptime(self) -> None:
-        if self.historic is None or len(self.historic) == 0:
+        if len(self.historic) == 0:
             self.uptime = 0.0
             return
         uptime = float(0)
@@ -231,7 +232,6 @@ class Tracker:
                 if ip.version == 4:
                     self.ips.append(str(ip))
         elif not self.ips:
-            self.ips = None
             raise RuntimeError("Can't resolve IP")
 
     def update_ipapi_data(self) -> None:
@@ -247,14 +247,12 @@ class Tracker:
     def is_up(self) -> None:
         self.status = 1
         self.last_uptime = int(time())
-        if self.historic is not None:
-            self.historic.append(self.status)
+        self.historic.append(self.status)
 
     def is_down(self) -> None:
         self.status = 0
         self.last_downtime = int(time())
-        if self.historic is not None:
-            self.historic.append(self.status)
+        self.historic.append(self.status)
 
     @staticmethod
     def ip_api(ip: str) -> str:
