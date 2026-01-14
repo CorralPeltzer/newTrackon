@@ -41,9 +41,7 @@ def bdecode(data: bytes) -> dict[str, object]:
             else:
                 raise RuntimeError("Invalid external IP size")
 
-    keys_to_decode: list[str] = [k for k, v in response.items() if isinstance(v, bytes)]
-    for key in keys_to_decode:
-        value: object = response[key]
+    for key, value in list(response.items()):
         if isinstance(value, bytes):
             response[key] = value.decode()
 

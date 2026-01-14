@@ -3,7 +3,7 @@ import re
 import socket
 from collections import deque
 from datetime import datetime
-from ipaddress import IPv4Address, IPv6Address, ip_address
+from ipaddress import ip_address
 from logging import getLogger
 from time import gmtime, sleep, strftime, time
 from urllib import parse, request
@@ -216,21 +216,14 @@ class Tracker:
         temp_ips: set[str] = set()
         try:
             for res in socket.getaddrinfo(self.host, None):
-                addr = res[4][0]
-                if isinstance(addr, str):
-                    temp_ips.add(addr)
+                temp_ips.add(str(res[4][0]))
         except OSError:
             pass
         if temp_ips:  # Order IPs per protocol, IPv6 first
-            parsed_ips: list[IPv4Address | IPv6Address] = []
-            for ip in temp_ips:
-                parsed_ips.append(ip_address(ip))
-            for ip in parsed_ips:
-                if ip.version == 6:
-                    self.ips.append(str(ip))
-            for ip in parsed_ips:
-                if ip.version == 4:
-                    self.ips.append(str(ip))
+            parsed_ips = [ip_address(ip) for ip in temp_ips]
+            # Sort by version (IPv6=6 first, then IPv4=4)
+            parsed_ips.sort(key=lambda ip: ip.version, reverse=True)
+            self.ips = [str(ip) for ip in parsed_ips]
         elif not self.ips:
             raise RuntimeError("Can't resolve IP")
 

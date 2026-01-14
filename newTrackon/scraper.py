@@ -47,9 +47,7 @@ def attempt_submitted(tracker: Tracker) -> tuple[int | None, str, int]:
         if not addrinfo:
             raise RuntimeError(f"getaddrinfo returned no results for hostname {hostname!r}")
         sockaddr = addrinfo[0][4]
-        if not sockaddr or not isinstance(sockaddr[0], str):
-            raise RuntimeError(f"Unexpected getaddrinfo sockaddr for hostname {hostname!r}: {sockaddr!r}")
-        failover_ip = sockaddr[0]
+        failover_ip = str(sockaddr[0])
     except OSError:
         failover_ip = ""
 
@@ -91,13 +89,9 @@ def attempt_from_txt_prefs(
             if udp_success:
                 return udp_interval, udp_url, latency
         elif preference[0] == "tcp":
-            http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, preferred_url)
-            if http_success:
-                if not isinstance(http_url, str):
-                    raise RuntimeError(f"Expected HTTP URL string for {preferred_url.geturl()!r}, got {http_url!r}")
-                if not isinstance(latency, int):
-                    raise RuntimeError(f"Expected HTTP latency int for {preferred_url.geturl()!r}, got {latency!r}")
-                return http_interval, http_url, latency
+            http_result = attempt_https_http(failover_ip, preferred_url)
+            if http_result:
+                return http_result
 
     logger.info(
         "All DNS TXT protocol preferences failed, giving up on submitted tracker %s",
@@ -116,13 +110,9 @@ def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str) -> tuple
         logger.info("%s UDP failed", udp_url)
 
     # HTTPS and HTTP scrape
-    http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, submitted_url)
-    if http_success:
-        if not isinstance(http_url, str):
-            raise RuntimeError(f"Expected HTTP URL string for {submitted_url.geturl()!r}, got {http_url!r}")
-        if not isinstance(latency, int):
-            raise RuntimeError(f"Expected HTTP latency int for {submitted_url.geturl()!r}, got {latency!r}")
-        return http_interval, http_url, latency
+    http_result = attempt_https_http(failover_ip, submitted_url)
+    if http_result:
+        return http_result
     logger.info(
         "All protocols failed, giving up on submitted tracker %s",
         submitted_url.geturl(),
@@ -130,21 +120,21 @@ def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str) -> tuple
     raise RuntimeError
 
 
-def attempt_https_http(failover_ip: str, url: ParseResult) -> tuple[int | None, int | None, str | None, int | None]:
+def attempt_https_http(failover_ip: str, url: ParseResult) -> tuple[int | None, str, int] | None:
     # HTTPS scrape
     https_success, https_interval, https_url, latency = attempt_httpx(failover_ip, url, tls=True)
     if https_success:
-        return https_success, https_interval, https_url, latency
+        return https_interval, https_url, latency
 
     logger.info("%s HTTPS failed", https_url)
 
     # HTTP scrape
     http_success, http_interval, http_url, latency = attempt_httpx(failover_ip, url, tls=False)
     if http_success:
-        return http_success, http_interval, http_url, latency
+        return http_interval, http_url, latency
 
     logger.info("%s HTTP failed", http_url)
-    return None, None, None, None
+    return None
 
 
 def attempt_httpx(failover_ip: str, submitted_url: ParseResult, tls: bool = True) -> tuple[int, int | None, str, int]:
@@ -262,10 +252,7 @@ def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[dict[str, An
         raise RuntimeError(f"UDP error: {err}")
 
     for af, socktype, proto, _, sa in getaddr_responses:
-        addr = sa[0]
-        if not isinstance(addr, str):
-            continue
-        ip = addr
+        ip = str(sa[0])
         try:
             sock = socket.socket(af, socktype, proto)
             sock.settimeout(10)
@@ -310,7 +297,7 @@ def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[dict[str, An
         raise RuntimeError(f"UDP error: {err}")
     ip_family = sock.family
     sock.close()
-    parsed_response, _raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
+    parsed_response, _ = udp_parse_announce_response(buf, transaction_id, ip_family)
     logger.info("%s response: %s", udp_url, parsed_response)
     return parsed_response, ip
 
