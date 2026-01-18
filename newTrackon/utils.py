@@ -1,9 +1,13 @@
 import sys
+from collections.abc import Sequence
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from time import time
+from urllib.parse import ParseResult
+
+from flask import Response
 
 
-def add_api_headers(resp):
+def add_api_headers(resp: Response) -> Response:
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.mimetype = "text/plain"
     return resp
@@ -36,7 +40,7 @@ def format_uptime_and_downtime_time(trackers_unprocessed):
     return trackers_unprocessed
 
 
-def format_time(last_time):
+def format_time(last_time: int | float) -> str:
     now = int(time())
     relative = now - int(last_time)
     if relative < 60:
@@ -75,13 +79,13 @@ def format_time(last_time):
         return str(years) + " years"
 
 
-def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: int):
+def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: int) -> list[tuple[str, list[str]]]:
     ip_type_to_keep: type[IPv4Address | IPv6Address]
     if version == 6:
         ip_type_to_keep = IPv4Address
     else:
         ip_type_to_keep = IPv6Address
-    cleaned_list = []
+    cleaned_list: list[tuple[str, list[str]]] = []
     for url, ips_list in raw_list:
         if ips_list:
             ips_parsed = [ip_address(ip) for ip in ips_list]
@@ -90,7 +94,7 @@ def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: in
     return cleaned_list
 
 
-def format_list(raw_list):
+def format_list(raw_list: Sequence[tuple[str, list[str]]]) -> str:
     formatted_list = ""
     for url in raw_list:
         url_string = url[0]
@@ -98,9 +102,9 @@ def format_list(raw_list):
     return formatted_list
 
 
-def process_txt_prefs(txt_record: str):
+def process_txt_prefs(txt_record: str) -> list[tuple[str, int]]:
     words = txt_record.split()
-    txt_preferences = []
+    txt_preferences: list[tuple[str, int]] = []
     for word in words[1:11]:  # Get only the first 10 advertised trackers to avoid DoS
         if word.startswith("UDP:") and word[4:].isdigit():
             txt_preferences.append(("udp", int(word[4:])))
@@ -109,7 +113,7 @@ def process_txt_prefs(txt_record: str):
     return txt_preferences
 
 
-def build_httpx_url(submitted_url, tls):
+def build_httpx_url(submitted_url: ParseResult, tls: bool) -> str:
     if tls:
         scheme = "https://"
         default_port = 443

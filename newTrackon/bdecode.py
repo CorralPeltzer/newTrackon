@@ -43,7 +43,7 @@ def bdecode(data: bytes) -> dict[str, Any]:
     return response
 
 
-def decode_binary_peers_list(buf: bytes, offset: int, ip_family: int) -> list[dict[str, str | int]]:
+def decode_binary_peers_list(buf: bytes, offset: int, ip_family: int):
     peers = []
     x = 0
     while offset != len(buf):

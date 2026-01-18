@@ -128,7 +128,7 @@ class TestEnqueueNewTrackers:
         """Test that process_submitted_deque is not called when already processing."""
         from newTrackon import trackon
 
-        trackon.processing_trackers = True  # type: ignore[assignment]
+        trackon.processing_trackers = True
 
         with (
             patch.object(trackon, "add_one_tracker_to_submitted_deque"),

@@ -12,18 +12,18 @@ from flask import (
     request,
     send_from_directory,
 )
-from werkzeug.routing import BaseConverter
+from werkzeug.routing import BaseConverter, Map
 
 from newTrackon import db, trackon, utils
 
-max_input_length = 1000000
+max_input_length: int = 1000000
 
 app = Flask(__name__)
 app.template_folder = "tpl"
 
 
 class RegexConverter(BaseConverter):
-    def __init__(self, url_map, *items):
+    def __init__(self, url_map: Map, *items: str) -> None:
         super().__init__(url_map)
         self.regex = items[0]
 
@@ -40,7 +40,7 @@ logger.info("Server started")
 
 
 @app.route("/")
-def main(form_feedback=None):
+def main(form_feedback: str | None = None) -> str:
     trackers_list = db.get_all_data()
     trackers_list = utils.format_uptime_and_downtime_time(trackers_list)
     return render_template("main.jinja", form_feedback=form_feedback, trackers=trackers_list, active="Home")
@@ -109,7 +109,7 @@ def raw():
 
 
 @app.route("/api/<int:percentage>")
-def api_percentage(percentage):
+def api_percentage(percentage: int) -> Response:
     include_upv4_only = (
         False if request.args.get("include_ipv4_only_trackers", default="true").lower() in ("false", "0") else True
     )
@@ -161,14 +161,14 @@ def about():
 
 
 @app.route(r'/<regex(".*(?=\.)"):filename>.<regex("(png|svg|ico)"):filetype>')  # matches all favicons that should be in root
-def favicon(filename, filetype):
+def favicon(filename: str, filetype: str) -> Response:
     return send_from_directory("static/imgs/", filename + "." + filetype)
 
 
 @app.route(
     r'/<regex(".*(?=\.)"):filename>.<regex("(xml|json)"):filetype>'
 )  # matches browserconfig and manifest that should be in root
-def app_things(filename, filetype):
+def app_things(filename: str, filetype: str) -> Response:
     return send_from_directory("static/", filename + "." + filetype)
 
 
