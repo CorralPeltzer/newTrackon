@@ -1,7 +1,14 @@
 *.pyc
+__pycache__/
 .idea
 *.json
 *.sh
 *.log
 *.html
 *.db
+
+# Testing/coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/

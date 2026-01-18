@@ -14,6 +14,9 @@ dev = [
     "ruff",
     "basedpyright",
     "ty",
+    "pytest",
+    "pytest-cov",
+    "freezegun",
 ]
 
 [tool.setuptools.packages.find]
@@ -27,7 +30,11 @@ unsafe-fixes = true
 [tool.ruff.lint]
 extend-select = ["I", "UP", "Q", "G", "PLE", "PLC", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# Allow imports inside test functions for test isolation
+"tests/**/*.py" = ["PLC0415"]
+
 
 [tool.pyright]
 typeCheckingMode = "basic"
-include = ["newTrackon"]
+

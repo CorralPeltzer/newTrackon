@@ -19,3 +19,8 @@ check: venv
 	$(UV) run ruff format && \
 	$(UV) run basedpyright && \
 	$(UV) run ty check
+
+# Run test suite with coverage
+test: venv
+	$(ACTIVATE)
+	$(UV) run pytest tests/ -q --cov=newTrackon --cov-report=term-missing
