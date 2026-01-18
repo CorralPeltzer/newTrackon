@@ -630,7 +630,7 @@ class TestRedactOrigin:
     def test_redact_origin_ipv4(self):
         """Test redacting IPv4 address."""
         original_ipv4 = scraper.my_ipv4
-        scraper.my_ipv4 = "192.168.1.100"  # type: ignore[assignment]
+        scraper.my_ipv4 = "192.168.1.100"
 
         try:
             response = "Connected from 192.168.1.100"
@@ -643,7 +643,7 @@ class TestRedactOrigin:
     def test_redact_origin_ipv6(self):
         """Test redacting IPv6 address."""
         original_ipv6 = scraper.my_ipv6
-        scraper.my_ipv6 = "2001:db8::1"  # type: ignore[assignment]
+        scraper.my_ipv6 = "2001:db8::1"
 
         try:
             response = "Connected from 2001:db8::1"
@@ -666,8 +666,8 @@ class TestRedactOrigin:
         """Test redacting both IPv4 and IPv6 addresses."""
         original_ipv4 = scraper.my_ipv4
         original_ipv6 = scraper.my_ipv6
-        scraper.my_ipv4 = "10.0.0.1"  # type: ignore[assignment]
-        scraper.my_ipv6 = "fe80::1"  # type: ignore[assignment]
+        scraper.my_ipv4 = "10.0.0.1"
+        scraper.my_ipv6 = "fe80::1"
 
         try:
             response = "IPv4: 10.0.0.1, IPv6: fe80::1"
@@ -1140,7 +1140,7 @@ class TestEdgeCases:
     def test_redact_origin_multiple_occurrences(self):
         """Test redacting multiple occurrences of the same IP."""
         original_ipv4 = scraper.my_ipv4
-        scraper.my_ipv4 = "10.0.0.1"  # type: ignore[assignment]
+        scraper.my_ipv4 = "10.0.0.1"
 
         try:
             response = "IP: 10.0.0.1, also 10.0.0.1, and again 10.0.0.1"
