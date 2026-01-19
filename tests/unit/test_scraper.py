@@ -14,6 +14,7 @@ Tests cover:
 import socket
 import struct
 from collections import deque
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -46,7 +47,7 @@ from newTrackon.scraper import (
 class TestUDPBinaryEncoding:
     """Test UDP protocol binary encoding functions."""
 
-    def test_udp_create_binary_connection_request_structure(self):
+    def test_udp_create_binary_connection_request_structure(self) -> None:
         """Test that connection request has correct structure and length."""
         buf, transaction_id = udp_create_binary_connection_request()
 
@@ -65,13 +66,13 @@ class TestUDPBinaryEncoding:
         packed_transaction_id = struct.unpack_from("!i", buf, 12)[0]
         assert packed_transaction_id == transaction_id
 
-    def test_udp_create_binary_connection_request_transaction_id_range(self):
+    def test_udp_create_binary_connection_request_transaction_id_range(self) -> None:
         """Test that transaction ID is within expected range."""
         for _ in range(100):
             _, transaction_id = udp_create_binary_connection_request()
             assert 0 <= transaction_id <= 255
 
-    def test_udp_create_announce_request_structure(self):
+    def test_udp_create_announce_request_structure(self) -> None:
         """Test that announce request has correct structure and length."""
         connection_id = 0x12345678ABCDEF01
         thash = b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a" * 2  # 20 bytes
@@ -129,7 +130,7 @@ class TestUDPBinaryEncoding:
 class TestUDPResponseParsing:
     """Test UDP protocol response parsing functions."""
 
-    def test_udp_parse_connection_response_success(self):
+    def test_udp_parse_connection_response_success(self) -> None:
         """Test successful parsing of connection response."""
         transaction_id = 42
         # Use a value that fits in signed 64-bit integer
@@ -143,14 +144,14 @@ class TestUDPResponseParsing:
         result = udp_parse_connection_response(buf, transaction_id)
         assert result == expected_connection_id
 
-    def test_udp_parse_connection_response_wrong_length(self):
+    def test_udp_parse_connection_response_wrong_length(self) -> None:
         """Test that short response raises RuntimeError."""
         buf = b"\x00" * 15  # Too short
 
         with pytest.raises(RuntimeError, match="Wrong response length"):
             udp_parse_connection_response(buf, 0)
 
-    def test_udp_parse_connection_response_transaction_id_mismatch(self):
+    def test_udp_parse_connection_response_transaction_id_mismatch(self) -> None:
         """Test that mismatched transaction ID raises RuntimeError."""
         buf = struct.pack("!i", 0)  # action
         buf += struct.pack("!i", 100)  # wrong transaction_id
@@ -159,7 +160,7 @@ class TestUDPResponseParsing:
         with pytest.raises(RuntimeError, match="Transaction ID doesn't match"):
             udp_parse_connection_response(buf, 42)
 
-    def test_udp_parse_connection_response_error_action(self):
+    def test_udp_parse_connection_response_error_action(self) -> None:
         """Test that error action (0x3) raises RuntimeError."""
         transaction_id = 42
         buf = struct.pack("!i", 0x3)  # action = 3 (error)
@@ -169,7 +170,7 @@ class TestUDPResponseParsing:
         with pytest.raises(RuntimeError, match="Error while trying to get a connection response"):
             udp_parse_connection_response(buf, transaction_id)
 
-    def test_udp_parse_announce_response_success_ipv4(self):
+    def test_udp_parse_announce_response_success_ipv4(self) -> None:
         """Test successful parsing of IPv4 announce response."""
         transaction_id = 42
         interval = 1800
@@ -195,7 +196,7 @@ class TestUDPResponseParsing:
         assert result["peers"][0]["IP"] == "192.168.1.1"
         assert result["peers"][0]["port"] == 6881
 
-    def test_udp_parse_announce_response_success_ipv6(self):
+    def test_udp_parse_announce_response_success_ipv6(self) -> None:
         """Test successful parsing of IPv6 announce response."""
         transaction_id = 42
         interval = 3600
@@ -223,14 +224,14 @@ class TestUDPResponseParsing:
         assert result["peers"][0]["IP"] == "2001:db8::1"
         assert result["peers"][0]["port"] == 6881
 
-    def test_udp_parse_announce_response_wrong_length(self):
+    def test_udp_parse_announce_response_wrong_length(self) -> None:
         """Test that short announce response raises RuntimeError."""
         buf = b"\x00" * 19  # Too short (need at least 20)
 
         with pytest.raises(RuntimeError, match="Wrong response length"):
             udp_parse_announce_response(buf, 0, socket.AF_INET)
 
-    def test_udp_parse_announce_response_transaction_id_mismatch(self):
+    def test_udp_parse_announce_response_transaction_id_mismatch(self) -> None:
         """Test that mismatched transaction ID raises RuntimeError."""
         buf = struct.pack("!i", 1)  # action
         buf += struct.pack("!i", 100)  # wrong transaction_id
@@ -241,7 +242,7 @@ class TestUDPResponseParsing:
         with pytest.raises(RuntimeError, match="Transaction ID doesnt match"):
             udp_parse_announce_response(buf, 42, socket.AF_INET)
 
-    def test_udp_parse_announce_response_error_action(self):
+    def test_udp_parse_announce_response_error_action(self) -> None:
         """Test that non-announce action raises RuntimeError."""
         transaction_id = 42
         buf = struct.pack("!i", 0x3)  # action = 3 (error)
@@ -259,7 +260,7 @@ class TestAnnounceHTTP:
     """Test HTTP announce functionality with mocked requests."""
 
     @pytest.fixture
-    def mock_successful_response(self):
+    def mock_successful_response(self) -> MagicMock:
         """Create a mock successful HTTP response."""
         # Valid bencoded response with peers
         bencoded = b"d8:intervali1800e5:peers6:\xc0\xa8\x01\x01\x1a\xe1e"
@@ -270,7 +271,7 @@ class TestAnnounceHTTP:
         return mock_response
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_success(self, mock_get):
+    def test_announce_http_success(self, mock_get: MagicMock) -> None:
         """Test successful HTTP announce."""
         bencoded = b"d8:intervali1800e5:peers6:\xc0\xa8\x01\x01\x1a\xe1e"
         mock_response = MagicMock()
@@ -283,7 +284,7 @@ class TestAnnounceHTTP:
         assert "peers" in result
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_timeout(self, mock_get):
+    def test_announce_http_timeout(self, mock_get: MagicMock) -> None:
         """Test HTTP announce timeout."""
         mock_get.side_effect = requests.Timeout()
 
@@ -291,7 +292,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_connection_error(self, mock_get):
+    def test_announce_http_connection_error(self, mock_get: MagicMock) -> None:
         """Test HTTP announce connection error."""
         mock_get.side_effect = requests.ConnectionError()
 
@@ -299,7 +300,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_invalid_status_code(self, mock_get):
+    def test_announce_http_invalid_status_code(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with non-200 status code."""
         mock_response = MagicMock()
         mock_response.status_code = 404
@@ -309,7 +310,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_empty_response(self, mock_get):
+    def test_announce_http_empty_response(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with empty response."""
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -319,7 +320,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_invalid_bencoded_response(self, mock_get):
+    def test_announce_http_invalid_bencoded_response(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with invalid bencoded response."""
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -329,7 +330,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_tracker_failure_reason(self, mock_get):
+    def test_announce_http_tracker_failure_reason(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with tracker failure reason."""
         bencoded = b"d14:failure reason12:invalid hashe"
         mock_response = MagicMock()
@@ -340,7 +341,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_missing_peers_field(self, mock_get):
+    def test_announce_http_missing_peers_field(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with missing peers field."""
         bencoded = b"d8:intervali1800ee"
         mock_response = MagicMock()
@@ -351,7 +352,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_response_too_large(self, mock_get):
+    def test_announce_http_response_too_large(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with response exceeding size limit."""
         mock_get.side_effect = RuntimeError("HTTP response size above 1 MB")
 
@@ -359,7 +360,7 @@ class TestAnnounceHTTP:
             announce_http("http://tracker.example.com/announce")
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_request_exception(self, mock_get):
+    def test_announce_http_request_exception(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with generic request exception."""
         mock_get.side_effect = requests.RequestException()
 
@@ -371,7 +372,7 @@ class TestAnnounceUDP:
     """Test UDP announce functionality with mocked socket."""
 
     @pytest.fixture
-    def mock_socket(self):
+    def mock_socket(self) -> MagicMock:
         """Create a mock socket for UDP testing."""
         mock_sock = MagicMock()
         mock_sock.family = socket.AF_INET
@@ -379,7 +380,7 @@ class TestAnnounceUDP:
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
-    def test_announce_udp_success(self, mock_socket_class, mock_getaddrinfo):
+    def test_announce_udp_success(self, mock_socket_class: MagicMock, mock_getaddrinfo: MagicMock) -> None:
         """Test successful UDP announce."""
         # Setup getaddrinfo response
         mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969))]
@@ -402,8 +403,8 @@ class TestAnnounceUDP:
         announce_response += struct.pack("!i", 50)  # leechers
         announce_response += struct.pack("!i", 100)  # seeds
 
-        def recv_side_effect(size):
-            if mock_sock.recv.call_count == 1:
+        def recv_side_effect(size: int) -> bytes:
+            if mock_sock.recv.call_count == 1:  # pyright: ignore[reportUnknownMemberType]
                 # First recv is for connection response
                 # Get the transaction ID from the sent request
                 sent_data = mock_sock.sendall.call_args_list[0][0][0]
@@ -433,7 +434,7 @@ class TestAnnounceUDP:
         assert ip == "93.184.216.34"
 
     @patch("socket.getaddrinfo")
-    def test_announce_udp_dns_resolution_error(self, mock_getaddrinfo):
+    def test_announce_udp_dns_resolution_error(self, mock_getaddrinfo: MagicMock) -> None:
         """Test UDP announce with DNS resolution error."""
         mock_getaddrinfo.side_effect = OSError("Name or service not known")
 
@@ -442,7 +443,7 @@ class TestAnnounceUDP:
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
-    def test_announce_udp_connection_refused(self, mock_socket_class, mock_getaddrinfo):
+    def test_announce_udp_connection_refused(self, mock_socket_class: MagicMock, mock_getaddrinfo: MagicMock) -> None:
         """Test UDP announce with connection refused."""
         mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969))]
 
@@ -455,7 +456,7 @@ class TestAnnounceUDP:
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
-    def test_announce_udp_timeout(self, mock_socket_class, mock_getaddrinfo):
+    def test_announce_udp_timeout(self, mock_socket_class: MagicMock, mock_getaddrinfo: MagicMock) -> None:
         """Test UDP announce timeout."""
         mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969))]
 
@@ -468,7 +469,7 @@ class TestAnnounceUDP:
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
-    def test_announce_udp_socket_creation_failure(self, mock_socket_class, mock_getaddrinfo):
+    def test_announce_udp_socket_creation_failure(self, mock_socket_class: MagicMock, mock_getaddrinfo: MagicMock) -> None:
         """Test UDP announce when socket creation fails."""
         mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969))]
 
@@ -479,7 +480,7 @@ class TestAnnounceUDP:
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
-    def test_announce_udp_connect_failure(self, mock_socket_class, mock_getaddrinfo):
+    def test_announce_udp_connect_failure(self, mock_socket_class: MagicMock, mock_getaddrinfo: MagicMock) -> None:
         """Test UDP announce when socket connect fails."""
         mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969))]
 
@@ -495,15 +496,13 @@ class TestGetBEP34:
     """Test BEP34 DNS TXT record parsing."""
 
     @patch("dns.resolver.resolve")
-    def test_get_bep_34_valid_record(self, mock_resolve):
+    def test_get_bep_34_valid_record(self, mock_resolve: MagicMock) -> None:
         """Test parsing valid BEP34 TXT record."""
-        mock_answer = MagicMock()
         mock_record = MagicMock()
         mock_record.__str__ = MagicMock(return_value='"BITTORRENT UDP:6969 TCP:80"')
+        mock_answer = MagicMock()
         mock_answer.__iter__ = MagicMock(return_value=iter([mock_record]))
-        mock_response = MagicMock()
-        mock_response.answer = [mock_answer]
-        mock_resolve.return_value = MagicMock(response=mock_response)
+        mock_resolve.return_value = mock_answer
 
         valid, prefs = get_bep_34("tracker.example.com")
 
@@ -511,7 +510,7 @@ class TestGetBEP34:
         assert prefs == [("udp", 6969), ("tcp", 80)]
 
     @patch("dns.resolver.resolve")
-    def test_get_bep_34_no_record(self, mock_resolve):
+    def test_get_bep_34_no_record(self, mock_resolve: MagicMock) -> None:
         """Test when no TXT record exists."""
         mock_resolve.side_effect = DNSException("No TXT record")
 
@@ -521,15 +520,13 @@ class TestGetBEP34:
         assert prefs is None
 
     @patch("dns.resolver.resolve")
-    def test_get_bep_34_non_bittorrent_record(self, mock_resolve):
+    def test_get_bep_34_non_bittorrent_record(self, mock_resolve: MagicMock) -> None:
         """Test when TXT record doesn't start with BITTORRENT."""
-        mock_answer = MagicMock()
         mock_record = MagicMock()
         mock_record.__str__ = MagicMock(return_value='"v=spf1 include:example.com"')
+        mock_answer = MagicMock()
         mock_answer.__iter__ = MagicMock(return_value=iter([mock_record]))
-        mock_response = MagicMock()
-        mock_response.answer = [mock_answer]
-        mock_resolve.return_value = MagicMock(response=mock_response)
+        mock_resolve.return_value = mock_answer
 
         valid, prefs = get_bep_34("tracker.example.com")
 
@@ -537,15 +534,13 @@ class TestGetBEP34:
         assert prefs is None
 
     @patch("dns.resolver.resolve")
-    def test_get_bep_34_deny_connection(self, mock_resolve):
+    def test_get_bep_34_deny_connection(self, mock_resolve: MagicMock) -> None:
         """Test BEP34 record that denies connection (BITTORRENT only)."""
-        mock_answer = MagicMock()
         mock_record = MagicMock()
         mock_record.__str__ = MagicMock(return_value='"BITTORRENT"')
+        mock_answer = MagicMock()
         mock_answer.__iter__ = MagicMock(return_value=iter([mock_record]))
-        mock_response = MagicMock()
-        mock_response.answer = [mock_answer]
-        mock_resolve.return_value = MagicMock(response=mock_response)
+        mock_resolve.return_value = mock_answer
 
         valid, prefs = get_bep_34("tracker.example.com")
 
@@ -553,17 +548,15 @@ class TestGetBEP34:
         assert prefs == []  # Empty list means deny
 
     @patch("dns.resolver.resolve")
-    def test_get_bep_34_multiple_records(self, mock_resolve):
+    def test_get_bep_34_multiple_records(self, mock_resolve: MagicMock) -> None:
         """Test with multiple TXT records, one being BEP34."""
-        mock_answer = MagicMock()
         mock_record1 = MagicMock()
         mock_record1.__str__ = MagicMock(return_value='"v=spf1"')
         mock_record2 = MagicMock()
         mock_record2.__str__ = MagicMock(return_value='"BITTORRENT UDP:1337"')
+        mock_answer = MagicMock()
         mock_answer.__iter__ = MagicMock(return_value=iter([mock_record1, mock_record2]))
-        mock_response = MagicMock()
-        mock_response.answer = [mock_answer]
-        mock_resolve.return_value = MagicMock(response=mock_response)
+        mock_resolve.return_value = mock_answer
 
         valid, prefs = get_bep_34("tracker.example.com")
 
@@ -575,7 +568,7 @@ class TestMemoryLimitedGet:
     """Test memory-limited HTTP GET functionality."""
 
     @patch("requests.get")
-    def test_memory_limited_get_success(self, mock_get):
+    def test_memory_limited_get_success(self, mock_get: MagicMock) -> None:
         """Test successful GET within size limit."""
         mock_response = MagicMock()
         mock_response.raw.read.return_value = b"x" * 1000
@@ -584,10 +577,10 @@ class TestMemoryLimitedGet:
         _response, content = memory_limited_get("http://example.com")
 
         assert len(content) == 1000
-        mock_response.raw.read.assert_called_once_with(1024 * 1024 + 1, decode_content=True)
+        mock_response.raw.read.assert_called_once_with(1024 * 1024 + 1, decode_content=True)  # pyright: ignore[reportUnknownMemberType]
 
     @patch("requests.get")
-    def test_memory_limited_get_exceeds_limit(self, mock_get):
+    def test_memory_limited_get_exceeds_limit(self, mock_get: MagicMock) -> None:
         """Test GET that exceeds 1MB limit."""
         mock_response = MagicMock()
         mock_response.raw.read.return_value = b"x" * (1024 * 1024 + 1)
@@ -597,7 +590,7 @@ class TestMemoryLimitedGet:
             memory_limited_get("http://example.com")
 
     @patch("requests.get")
-    def test_memory_limited_get_exactly_at_limit(self, mock_get):
+    def test_memory_limited_get_exactly_at_limit(self, mock_get: MagicMock) -> None:
         """Test GET exactly at 1MB limit."""
         mock_response = MagicMock()
         mock_response.raw.read.return_value = b"x" * (1024 * 1024)
@@ -608,7 +601,7 @@ class TestMemoryLimitedGet:
         assert len(content) == 1024 * 1024
 
     @patch("requests.get")
-    def test_memory_limited_get_uses_correct_headers(self, mock_get):
+    def test_memory_limited_get_uses_correct_headers(self, mock_get: MagicMock) -> None:
         """Test that correct headers are used."""
         mock_response = MagicMock()
         mock_response.raw.read.return_value = b"content"
@@ -616,8 +609,8 @@ class TestMemoryLimitedGet:
 
         memory_limited_get("http://example.com")
 
-        mock_get.assert_called_once()
-        call_kwargs = mock_get.call_args[1]
+        mock_get.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
+        call_kwargs: dict[str, Any] = mock_get.call_args[1]  # pyright: ignore[reportUnknownMemberType]
         assert call_kwargs["headers"]["User-Agent"] == "qBittorrent/4.3.9"
         assert call_kwargs["timeout"] == 10
         assert call_kwargs["stream"] is True
@@ -627,7 +620,7 @@ class TestMemoryLimitedGet:
 class TestRedactOrigin:
     """Test IP redaction functionality."""
 
-    def test_redact_origin_ipv4(self):
+    def test_redact_origin_ipv4(self) -> None:
         """Test redacting IPv4 address."""
         original_ipv4 = scraper.my_ipv4
         scraper.my_ipv4 = "192.168.1.100"
@@ -640,7 +633,7 @@ class TestRedactOrigin:
         finally:
             scraper.my_ipv4 = original_ipv4
 
-    def test_redact_origin_ipv6(self):
+    def test_redact_origin_ipv6(self) -> None:
         """Test redacting IPv6 address."""
         original_ipv6 = scraper.my_ipv6
         scraper.my_ipv6 = "2001:db8::1"
@@ -653,7 +646,7 @@ class TestRedactOrigin:
         finally:
             scraper.my_ipv6 = original_ipv6
 
-    def test_redact_origin_ports(self):
+    def test_redact_origin_ports(self) -> None:
         """Test redacting HTTP and UDP ports."""
         response = f"Port {HTTP_PORT} and port {UDP_PORT}"
         result = redact_origin(response)
@@ -662,7 +655,7 @@ class TestRedactOrigin:
         assert str(UDP_PORT) not in result
         assert "redacted" in result
 
-    def test_redact_origin_both_ips(self):
+    def test_redact_origin_both_ips(self) -> None:
         """Test redacting both IPv4 and IPv6 addresses."""
         original_ipv4 = scraper.my_ipv4
         original_ipv6 = scraper.my_ipv6
@@ -680,7 +673,7 @@ class TestRedactOrigin:
             scraper.my_ipv4 = original_ipv4
             scraper.my_ipv6 = original_ipv6
 
-    def test_redact_origin_no_ips_set(self):
+    def test_redact_origin_no_ips_set(self) -> None:
         """Test redaction when no IPs are set."""
         original_ipv4 = scraper.my_ipv4
         original_ipv6 = scraper.my_ipv6
@@ -701,8 +694,8 @@ class TestAttemptUDP:
     """Test attempt_udp function."""
 
     @patch("newTrackon.scraper.announce_udp")
-    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque(maxlen=100))
-    def test_attempt_udp_success(self, mock_submitted_data, mock_announce_udp):
+    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
+    def test_attempt_udp_success(self, mock_submitted_data: MagicMock, mock_announce_udp: MagicMock) -> None:
         """Test successful UDP attempt."""
         mock_announce_udp.return_value = (
             {"interval": 1800, "leechers": 50, "seeds": 100, "peers": []},
@@ -717,8 +710,8 @@ class TestAttemptUDP:
         assert latency >= 0
 
     @patch("newTrackon.scraper.announce_udp")
-    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque(maxlen=100))
-    def test_attempt_udp_failure(self, mock_submitted_data, mock_announce_udp):
+    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
+    def test_attempt_udp_failure(self, mock_submitted_data: MagicMock, mock_announce_udp: MagicMock) -> None:
         """Test failed UDP attempt."""
         mock_announce_udp.side_effect = RuntimeError("UDP timeout")
 
@@ -732,8 +725,8 @@ class TestAttemptHTTPX:
     """Test attempt_httpx function."""
 
     @patch("newTrackon.scraper.announce_http")
-    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque(maxlen=100))
-    def test_attempt_httpx_https_success(self, mock_submitted_data, mock_announce_http):
+    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
+    def test_attempt_httpx_https_success(self, mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
         """Test successful HTTPS attempt."""
         from urllib.parse import urlparse
 
@@ -747,8 +740,8 @@ class TestAttemptHTTPX:
         assert "https://" in url
 
     @patch("newTrackon.scraper.announce_http")
-    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque(maxlen=100))
-    def test_attempt_httpx_http_success(self, mock_submitted_data, mock_announce_http):
+    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
+    def test_attempt_httpx_http_success(self, mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
         """Test successful HTTP attempt."""
         from urllib.parse import urlparse
 
@@ -762,8 +755,8 @@ class TestAttemptHTTPX:
         assert "http://" in url
 
     @patch("newTrackon.scraper.announce_http")
-    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque(maxlen=100))
-    def test_attempt_httpx_failure(self, mock_submitted_data, mock_announce_http):
+    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
+    def test_attempt_httpx_failure(self, mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
         """Test failed HTTP attempt."""
         from urllib.parse import urlparse
 
@@ -780,54 +773,57 @@ class TestAttemptHTTPSHTTP:
     """Test attempt_https_http function."""
 
     @patch("newTrackon.scraper.attempt_httpx")
-    def test_attempt_https_http_https_success(self, mock_attempt_httpx):
+    def test_attempt_https_http_https_success(self, mock_attempt_httpx: MagicMock) -> None:
         """Test when HTTPS succeeds."""
         from urllib.parse import urlparse
 
-        mock_attempt_httpx.return_value = (1, 1800, "https://tracker.example.com:443/announce", 100)
+        from newTrackon.scraper import AttemptResult
+
+        mock_attempt_httpx.return_value = AttemptResult(1, 1800, "https://tracker.example.com:443/announce", 100)
 
         url = urlparse("http://tracker.example.com/announce")
-        success, interval, result_url, _latency = attempt_https_http("93.184.216.34", url)
+        result = attempt_https_http("93.184.216.34", url)
 
-        assert success == 1
-        assert interval == 1800
-        assert result_url is not None
-        assert "https://" in result_url
+        assert result is not None
+        assert result.interval == 1800
+        assert "https://" in result.url
         # Should only call once since HTTPS succeeded
-        assert mock_attempt_httpx.call_count == 1
+        assert mock_attempt_httpx.call_count == 1  # pyright: ignore[reportUnknownMemberType]
 
     @patch("newTrackon.scraper.attempt_httpx")
-    def test_attempt_https_http_https_fails_http_succeeds(self, mock_attempt_httpx):
+    def test_attempt_https_http_https_fails_http_succeeds(self, mock_attempt_httpx: MagicMock) -> None:
         """Test when HTTPS fails but HTTP succeeds."""
         from urllib.parse import urlparse
 
+        from newTrackon.scraper import AttemptResult
+
         mock_attempt_httpx.side_effect = [
-            (0, None, "https://tracker.example.com:443/announce", 0),
-            (1, 1800, "http://tracker.example.com:80/announce", 100),
+            AttemptResult(0, None, "https://tracker.example.com:443/announce", 0),
+            AttemptResult(1, 1800, "http://tracker.example.com:80/announce", 100),
         ]
 
         url = urlparse("http://tracker.example.com/announce")
-        success, interval, result_url, _latency = attempt_https_http("93.184.216.34", url)
+        result = attempt_https_http("93.184.216.34", url)
 
-        assert success == 1
-        assert interval == 1800
-        assert result_url is not None
-        assert "http://" in result_url
-        assert mock_attempt_httpx.call_count == 2
+        assert result is not None
+        assert result.interval == 1800
+        assert "http://" in result.url
+        assert mock_attempt_httpx.call_count == 2  # pyright: ignore[reportUnknownMemberType]
 
     @patch("newTrackon.scraper.attempt_httpx")
-    def test_attempt_https_http_both_fail(self, mock_attempt_httpx):
+    def test_attempt_https_http_both_fail(self, mock_attempt_httpx: MagicMock) -> None:
         """Test when both HTTPS and HTTP fail."""
         from urllib.parse import urlparse
 
-        mock_attempt_httpx.return_value = (0, None, "url", 0)
+        from newTrackon.scraper import AttemptResult
+
+        mock_attempt_httpx.return_value = AttemptResult(0, None, "url", 0)
 
         url = urlparse("http://tracker.example.com/announce")
-        success, interval, _result_url, _latency = attempt_https_http("93.184.216.34", url)
+        result = attempt_https_http("93.184.216.34", url)
 
-        assert success is None
-        assert interval is None
-        assert mock_attempt_httpx.call_count == 2
+        assert result is None
+        assert mock_attempt_httpx.call_count == 2  # pyright: ignore[reportUnknownMemberType]
 
 
 class TestAttemptAllProtocols:
@@ -835,58 +831,64 @@ class TestAttemptAllProtocols:
 
     @patch("newTrackon.scraper.attempt_udp")
     @patch("newTrackon.scraper.attempt_https_http")
-    def test_attempt_all_protocols_udp_success(self, mock_https_http, mock_udp):
+    def test_attempt_all_protocols_udp_success(self, mock_https_http: MagicMock, mock_udp: MagicMock) -> None:
         """Test when UDP succeeds."""
         from urllib.parse import urlparse
 
-        mock_udp.return_value = (1, 1800, "udp://tracker.example.com:6969/announce", 50)
+        from newTrackon.scraper import AttemptResult
+
+        mock_udp.return_value = AttemptResult(1, 1800, "udp://tracker.example.com:6969/announce", 50)
 
         url = urlparse("udp://tracker.example.com:6969/announce")
-        interval, result_url, _latency = attempt_all_protocols(url, "93.184.216.34")
+        result = attempt_all_protocols(url, "93.184.216.34")
 
-        assert interval == 1800
-        assert result_url is not None
-        assert "udp://" in result_url
-        mock_https_http.assert_not_called()
+        assert result.interval == 1800
+        assert "udp://" in result.url
+        mock_https_http.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
 
     @patch("newTrackon.scraper.attempt_udp")
     @patch("newTrackon.scraper.attempt_https_http")
-    def test_attempt_all_protocols_udp_fails_http_success(self, mock_https_http, mock_udp):
+    def test_attempt_all_protocols_udp_fails_http_success(self, mock_https_http: MagicMock, mock_udp: MagicMock) -> None:
         """Test when UDP fails but HTTP succeeds."""
         from urllib.parse import urlparse
 
-        mock_udp.return_value = (0, None, "udp://tracker.example.com:6969/announce", 0)
-        mock_https_http.return_value = (1, 1800, "http://tracker.example.com:80/announce", 100)
+        from newTrackon.scraper import AttemptResult, ScraperResult
+
+        mock_udp.return_value = AttemptResult(0, None, "udp://tracker.example.com:6969/announce", 0)
+        mock_https_http.return_value = ScraperResult(1800, "http://tracker.example.com:80/announce", 100)
 
         url = urlparse("udp://tracker.example.com:6969/announce")
-        interval, result_url, _latency = attempt_all_protocols(url, "93.184.216.34")
+        result = attempt_all_protocols(url, "93.184.216.34")
 
-        assert interval == 1800
-        assert result_url is not None
-        assert "http://" in result_url
+        assert result.interval == 1800
+        assert "http://" in result.url
 
     @patch("newTrackon.scraper.attempt_udp")
     @patch("newTrackon.scraper.attempt_https_http")
-    def test_attempt_all_protocols_no_port_skips_udp(self, mock_https_http, mock_udp):
+    def test_attempt_all_protocols_no_port_skips_udp(self, mock_https_http: MagicMock, mock_udp: MagicMock) -> None:
         """Test that UDP is skipped when no port is specified."""
         from urllib.parse import urlparse
 
-        mock_https_http.return_value = (1, 1800, "http://tracker.example.com:80/announce", 100)
+        from newTrackon.scraper import ScraperResult
+
+        mock_https_http.return_value = ScraperResult(1800, "http://tracker.example.com:80/announce", 100)
 
         url = urlparse("http://tracker.example.com/announce")  # No port
-        interval, _result_url, _latency = attempt_all_protocols(url, "93.184.216.34")
+        result = attempt_all_protocols(url, "93.184.216.34")
 
-        mock_udp.assert_not_called()
-        assert interval == 1800
+        mock_udp.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
+        assert result.interval == 1800
 
     @patch("newTrackon.scraper.attempt_udp")
     @patch("newTrackon.scraper.attempt_https_http")
-    def test_attempt_all_protocols_all_fail(self, mock_https_http, mock_udp):
+    def test_attempt_all_protocols_all_fail(self, mock_https_http: MagicMock, mock_udp: MagicMock) -> None:
         """Test when all protocols fail."""
         from urllib.parse import urlparse
 
-        mock_udp.return_value = (0, None, "udp://tracker.example.com:6969/announce", 0)
-        mock_https_http.return_value = (None, None, None, None)
+        from newTrackon.scraper import AttemptResult
+
+        mock_udp.return_value = AttemptResult(0, None, "udp://tracker.example.com:6969/announce", 0)
+        mock_https_http.return_value = None
 
         url = urlparse("udp://tracker.example.com:6969/announce")
 
@@ -899,47 +901,53 @@ class TestAttemptFromTxtPrefs:
 
     @patch("newTrackon.scraper.attempt_udp")
     @patch("newTrackon.scraper.attempt_https_http")
-    def test_attempt_from_txt_prefs_udp_success(self, mock_https_http, mock_udp):
+    def test_attempt_from_txt_prefs_udp_success(self, mock_https_http: MagicMock, mock_udp: MagicMock) -> None:
         """Test when UDP preference succeeds."""
         from urllib.parse import urlparse
 
-        mock_udp.return_value = (1, 1800, "udp://tracker.example.com:6969/announce", 50)
+        from newTrackon.scraper import AttemptResult
+
+        mock_udp.return_value = AttemptResult(1, 1800, "udp://tracker.example.com:6969/announce", 50)
 
         url = urlparse("http://tracker.example.com/announce")
-        txt_prefs = [("udp", 6969), ("tcp", 80)]
+        txt_prefs: list[tuple[str, int]] = [("udp", 6969), ("tcp", 80)]
 
-        interval, _result_url, _latency = attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
+        result = attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
 
-        assert interval == 1800
-        mock_https_http.assert_not_called()
+        assert result.interval == 1800
+        mock_https_http.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
 
     @patch("newTrackon.scraper.attempt_udp")
     @patch("newTrackon.scraper.attempt_https_http")
-    def test_attempt_from_txt_prefs_tcp_success(self, mock_https_http, mock_udp):
+    def test_attempt_from_txt_prefs_tcp_success(self, mock_https_http: MagicMock, mock_udp: MagicMock) -> None:
         """Test when TCP preference succeeds."""
         from urllib.parse import urlparse
 
-        mock_https_http.return_value = (1, 1800, "http://tracker.example.com:80/announce", 100)
+        from newTrackon.scraper import ScraperResult
+
+        mock_https_http.return_value = ScraperResult(1800, "http://tracker.example.com:80/announce", 100)
 
         url = urlparse("http://tracker.example.com/announce")
-        txt_prefs = [("tcp", 80)]
+        txt_prefs: list[tuple[str, int]] = [("tcp", 80)]
 
-        interval, _result_url, _latency = attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
+        result = attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
 
-        assert interval == 1800
-        mock_udp.assert_not_called()
+        assert result.interval == 1800
+        mock_udp.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
 
     @patch("newTrackon.scraper.attempt_udp")
     @patch("newTrackon.scraper.attempt_https_http")
-    def test_attempt_from_txt_prefs_all_fail(self, mock_https_http, mock_udp):
+    def test_attempt_from_txt_prefs_all_fail(self, mock_https_http: MagicMock, mock_udp: MagicMock) -> None:
         """Test when all preferences fail."""
         from urllib.parse import urlparse
 
-        mock_udp.return_value = (0, None, "url", 0)
-        mock_https_http.return_value = (0, None, "url", 0)
+        from newTrackon.scraper import AttemptResult
+
+        mock_udp.return_value = AttemptResult(0, None, "url", 0)
+        mock_https_http.return_value = None
 
         url = urlparse("http://tracker.example.com/announce")
-        txt_prefs = [("udp", 6969), ("tcp", 80)]
+        txt_prefs: list[tuple[str, int]] = [("udp", 6969), ("tcp", 80)]
 
         with pytest.raises(RuntimeError):
             attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
@@ -951,7 +959,9 @@ class TestAttemptSubmitted:
     @patch("newTrackon.scraper.get_bep_34")
     @patch("newTrackon.scraper.attempt_all_protocols")
     @patch("socket.getaddrinfo")
-    def test_attempt_submitted_no_bep34(self, mock_getaddrinfo, mock_all_protocols, mock_bep34):
+    def test_attempt_submitted_no_bep34(
+        self, mock_getaddrinfo: MagicMock, mock_all_protocols: MagicMock, mock_bep34: MagicMock
+    ) -> None:
         """Test submitted tracker without BEP34."""
 
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("93.184.216.34", 6969))]
@@ -966,12 +976,14 @@ class TestAttemptSubmitted:
         interval, _url, _latency = result
 
         assert interval == 1800
-        mock_all_protocols.assert_called_once()
+        mock_all_protocols.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
 
     @patch("newTrackon.scraper.get_bep_34")
     @patch("newTrackon.scraper.attempt_from_txt_prefs")
     @patch("socket.getaddrinfo")
-    def test_attempt_submitted_with_bep34(self, mock_getaddrinfo, mock_txt_prefs, mock_bep34):
+    def test_attempt_submitted_with_bep34(
+        self, mock_getaddrinfo: MagicMock, mock_txt_prefs: MagicMock, mock_bep34: MagicMock
+    ) -> None:
         """Test submitted tracker with valid BEP34."""
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("93.184.216.34", 6969))]
         mock_bep34.return_value = (True, [("udp", 6969)])
@@ -985,12 +997,14 @@ class TestAttemptSubmitted:
         interval, _url, _latency = result
 
         assert interval == 1800
-        mock_txt_prefs.assert_called_once()
+        mock_txt_prefs.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
 
     @patch("newTrackon.scraper.get_bep_34")
-    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque(maxlen=100))
+    @patch("newTrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
     @patch("socket.getaddrinfo")
-    def test_attempt_submitted_bep34_denies(self, mock_getaddrinfo, mock_submitted_data, mock_bep34):
+    def test_attempt_submitted_bep34_denies(
+        self, mock_getaddrinfo: MagicMock, mock_submitted_data: MagicMock, mock_bep34: MagicMock
+    ) -> None:
         """Test submitted tracker with BEP34 that denies connection."""
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("93.184.216.34", 6969))]
         mock_bep34.return_value = (True, [])  # Empty list = deny
@@ -1004,7 +1018,9 @@ class TestAttemptSubmitted:
     @patch("newTrackon.scraper.get_bep_34")
     @patch("newTrackon.scraper.attempt_all_protocols")
     @patch("socket.getaddrinfo")
-    def test_attempt_submitted_dns_failure(self, mock_getaddrinfo, mock_all_protocols, mock_bep34):
+    def test_attempt_submitted_dns_failure(
+        self, mock_getaddrinfo: MagicMock, mock_all_protocols: MagicMock, mock_bep34: MagicMock
+    ) -> None:
         """Test submitted tracker with DNS resolution failure."""
         mock_getaddrinfo.side_effect = OSError("DNS failure")
         mock_bep34.return_value = (False, None)
@@ -1024,42 +1040,42 @@ class TestGetServerIP:
     """Test get_server_ip function."""
 
     @patch("subprocess.check_output")
-    def test_get_server_ip_v4(self, mock_check_output):
+    def test_get_server_ip_v4(self, mock_check_output: MagicMock) -> None:
         """Test getting IPv4 address."""
         mock_check_output.return_value = b"93.184.216.34\n"
 
         result = get_server_ip("4")
 
         assert result == "93.184.216.34"
-        mock_check_output.assert_called_with(["curl", "-s", "-4", "https://icanhazip.com/"])
+        mock_check_output.assert_called_with(["curl", "-s", "-4", "https://icanhazip.com/"])  # pyright: ignore[reportUnknownMemberType]
 
     @patch("subprocess.check_output")
-    def test_get_server_ip_v6(self, mock_check_output):
+    def test_get_server_ip_v6(self, mock_check_output: MagicMock) -> None:
         """Test getting IPv6 address."""
         mock_check_output.return_value = b"2001:db8::1\n"
 
         result = get_server_ip("6")
 
         assert result == "2001:db8::1"
-        mock_check_output.assert_called_with(["curl", "-s", "-6", "https://icanhazip.com/"])
+        mock_check_output.assert_called_with(["curl", "-s", "-6", "https://icanhazip.com/"])  # pyright: ignore[reportUnknownMemberType]
 
 
 class TestGlobalConstants:
     """Test global constants and configuration."""
 
-    def test_http_port_value(self):
+    def test_http_port_value(self) -> None:
         """Test HTTP_PORT constant."""
         assert HTTP_PORT == 6881
 
-    def test_udp_port_value(self):
+    def test_udp_port_value(self) -> None:
         """Test UDP_PORT constant."""
         assert UDP_PORT == 30461
 
-    def test_max_response_size(self):
+    def test_max_response_size(self) -> None:
         """Test MAX_RESPONSE_SIZE constant."""
         assert scraper.MAX_RESPONSE_SIZE == 1024 * 1024
 
-    def test_scraping_headers(self):
+    def test_scraping_headers(self) -> None:
         """Test SCRAPING_HEADERS configuration."""
         assert scraper.SCRAPING_HEADERS["User-Agent"] == "qBittorrent/4.3.9"
         assert scraper.SCRAPING_HEADERS["Accept-Encoding"] == "gzip"
@@ -1069,7 +1085,7 @@ class TestGlobalConstants:
 class TestEdgeCases:
     """Test edge cases and error boundaries."""
 
-    def test_udp_create_announce_request_with_random_hash(self):
+    def test_udp_create_announce_request_with_random_hash(self) -> None:
         """Test announce request with various hash values."""
         connection_id = 0x1234567890ABCDEF
 
@@ -1085,7 +1101,7 @@ class TestEdgeCases:
         buf, _ = udp_create_announce_request(connection_id, bytes(range(20)))
         assert len(buf) == 98
 
-    def test_udp_parse_announce_response_no_peers(self):
+    def test_udp_parse_announce_response_no_peers(self) -> None:
         """Test parsing announce response with no peers."""
         transaction_id = 42
         buf = struct.pack("!i", 1)  # action
@@ -1102,7 +1118,7 @@ class TestEdgeCases:
         assert result["seeds"] == 0
         assert result["peers"] == []
 
-    def test_udp_parse_announce_response_multiple_peers(self):
+    def test_udp_parse_announce_response_multiple_peers(self) -> None:
         """Test parsing announce response with multiple peers."""
         transaction_id = 42
         buf = struct.pack("!i", 1)
@@ -1124,7 +1140,7 @@ class TestEdgeCases:
         assert result["peers"][2]["port"] == 6883
 
     @patch("newTrackon.scraper.memory_limited_get")
-    def test_announce_http_with_peers6_field(self, mock_get):
+    def test_announce_http_with_peers6_field(self, mock_get: MagicMock) -> None:
         """Test HTTP announce with peers6 field instead of peers."""
         # Response with peers6 instead of peers
         bencoded = b"d8:intervali1800e6:peers618:\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1a\xe1e"
@@ -1137,7 +1153,7 @@ class TestEdgeCases:
         assert result["interval"] == 1800
         assert "peers6" in result
 
-    def test_redact_origin_multiple_occurrences(self):
+    def test_redact_origin_multiple_occurrences(self) -> None:
         """Test redacting multiple occurrences of the same IP."""
         original_ipv4 = scraper.my_ipv4
         scraper.my_ipv4 = "10.0.0.1"

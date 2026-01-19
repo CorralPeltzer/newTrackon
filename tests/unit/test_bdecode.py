@@ -252,21 +252,6 @@ class TestDecoderNestedStructures:
 class TestDecoderErrors:
     """Tests for error handling in Decoder."""
 
-    def test_non_bytes_input_raises_type_error(self):
-        """Decoder should raise TypeError for non-bytes input."""
-        with pytest.raises(TypeError, match="'data' must be 'bytes'"):
-            Decoder("not bytes")  # type: ignore[arg-type]
-
-    def test_non_bytes_input_int_raises_type_error(self):
-        """Decoder should raise TypeError for integer input."""
-        with pytest.raises(TypeError, match="'data' must be 'bytes'"):
-            Decoder(123)  # type: ignore[arg-type]
-
-    def test_non_bytes_input_list_raises_type_error(self):
-        """Decoder should raise TypeError for list input."""
-        with pytest.raises(TypeError, match="'data' must be 'bytes'"):
-            Decoder([1, 2, 3])  # type: ignore[arg-type]
-
     def test_empty_data_raises_eof_error(self):
         """Empty data should raise EOFError."""
         decoder = Decoder(b"")
@@ -387,15 +372,15 @@ class TestDecodeBinaryPeersList:
         # Only 4 bytes instead of 6
         buf = b"\xc0\xa8\x01\x01"
         result = decode_binary_peers_list(buf, 0, AF_INET)
-        # Should return empty or partial based on implementation
-        assert result == [{}]
+        # Returns empty list when data is insufficient for a complete peer
+        assert result == []
 
     def test_decode_truncated_ipv6_peer(self):
         """Handle truncated IPv6 peer data gracefully."""
         # Only 10 bytes instead of 18
         buf = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00"
         result = decode_binary_peers_list(buf, 0, AF_INET6)
-        assert result == [{}]
+        assert result == []
 
     def test_decode_ipv4_high_port(self):
         """Decode IPv4 peer with high port number."""
@@ -430,11 +415,6 @@ class TestBdecodeFunction:
         result = bdecode(data)
         assert result["name"] == "test"
 
-    def test_bdecode_non_bytes_raises_type_error(self):
-        """bdecode() should raise TypeError for non-bytes input."""
-        with pytest.raises(TypeError, match="'data' must be 'bytes'"):
-            bdecode("not bytes")  # type: ignore[arg-type]
-
     def test_bdecode_non_dict_raises_runtime_error(self):
         """bdecode() should raise RuntimeError if root is not a dict."""
         # A bencoded list at the root level
@@ -458,10 +438,13 @@ class TestBdecodeFunction:
         data = b"d5:peers" + str(len(peers_binary)).encode() + b":" + peers_binary + b"e"
         result = bdecode(data)
         assert "peers" in result
-        assert isinstance(result["peers"], list)
-        assert len(result["peers"]) == 1
-        assert result["peers"][0]["IP"] == "192.168.1.1"
-        assert result["peers"][0]["port"] == 6881
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 1
+        peer = peers[0]
+        assert isinstance(peer, dict)
+        assert peer["IP"] == "192.168.1.1"  # pyright: ignore[reportArgumentType]
+        assert peer["port"] == 6881  # pyright: ignore[reportArgumentType]
 
     def test_bdecode_processes_ipv6_peers(self):
         """bdecode() should decode binary peers6 field."""
@@ -470,10 +453,13 @@ class TestBdecodeFunction:
         data = b"d6:peers6" + str(len(peers6_binary)).encode() + b":" + peers6_binary + b"e"
         result = bdecode(data)
         assert "peers6" in result
-        assert isinstance(result["peers6"], list)
-        assert len(result["peers6"]) == 1
-        assert result["peers6"][0]["IP"] == "2001:db8::1"
-        assert result["peers6"][0]["port"] == 6881
+        peers6 = result["peers6"]
+        assert isinstance(peers6, list)
+        assert len(peers6) == 1
+        peer6 = peers6[0]
+        assert isinstance(peer6, dict)
+        assert peer6["IP"] == "2001:db8::1"  # pyright: ignore[reportArgumentType]
+        assert peer6["port"] == 6881  # pyright: ignore[reportArgumentType]
 
     def test_bdecode_processes_external_ip_v4(self):
         """bdecode() should decode external ip field for IPv4."""
@@ -523,31 +509,59 @@ class TestRealisticTrackerResponses:
     def test_tracker_response_with_peers(self):
         """Decode a tracker response with binary peer data."""
         # Two IPv4 peers
-        peers = b"\x01\x02\x03\x04\x1a\xe1\x05\x06\x07\x08\x1f\x90"
-        data = b"d8:completei10e10:incompletei5e8:intervali1800e5:peers" + str(len(peers)).encode() + b":" + peers + b"e"
+        peers_binary = b"\x01\x02\x03\x04\x1a\xe1\x05\x06\x07\x08\x1f\x90"
+        data = (
+            b"d8:completei10e10:incompletei5e8:intervali1800e5:peers"
+            + str(len(peers_binary)).encode()
+            + b":"
+            + peers_binary
+            + b"e"
+        )
         result = bdecode(data)
         assert result["complete"] == 10
         assert result["incomplete"] == 5
         assert result["interval"] == 1800
-        assert len(result["peers"]) == 2
-        assert result["peers"][0]["IP"] == "1.2.3.4"
-        assert result["peers"][0]["port"] == 6881
-        assert result["peers"][1]["IP"] == "5.6.7.8"
-        assert result["peers"][1]["port"] == 8080
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 2
+        peer0 = peers[0]
+        assert isinstance(peer0, dict)
+        assert peer0["IP"] == "1.2.3.4"  # pyright: ignore[reportArgumentType]
+        assert peer0["port"] == 6881  # pyright: ignore[reportArgumentType]
+        peer1 = peers[1]
+        assert isinstance(peer1, dict)
+        assert peer1["IP"] == "5.6.7.8"  # pyright: ignore[reportArgumentType]
+        assert peer1["port"] == 8080  # pyright: ignore[reportArgumentType]
 
     def test_tracker_response_with_both_peer_types(self):
         """Decode a tracker response with both IPv4 and IPv6 peers."""
-        peers = b"\x01\x02\x03\x04\x1a\xe1"
-        peers6 = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1f\x90"
+        peers_binary = b"\x01\x02\x03\x04\x1a\xe1"
+        peers6_binary = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1f\x90"
         data = (
             b"d8:intervali1800e"
-            b"5:peers" + str(len(peers)).encode() + b":" + peers + b"6:peers6" + str(len(peers6)).encode() + b":" + peers6 + b"e"
+            b"5:peers"
+            + str(len(peers_binary)).encode()
+            + b":"
+            + peers_binary
+            + b"6:peers6"
+            + str(len(peers6_binary)).encode()
+            + b":"
+            + peers6_binary
+            + b"e"
         )
         result = bdecode(data)
-        assert len(result["peers"]) == 1
-        assert result["peers"][0]["IP"] == "1.2.3.4"
-        assert len(result["peers6"]) == 1
-        assert result["peers6"][0]["IP"] == "2001:db8::1"
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 1
+        peer = peers[0]
+        assert isinstance(peer, dict)
+        assert peer["IP"] == "1.2.3.4"  # pyright: ignore[reportArgumentType]
+        peers6 = result["peers6"]
+        assert isinstance(peers6, list)
+        assert len(peers6) == 1
+        peer6 = peers6[0]
+        assert isinstance(peer6, dict)
+        assert peer6["IP"] == "2001:db8::1"  # pyright: ignore[reportArgumentType]
 
     def test_tracker_failure_response(self):
         """Decode a tracker failure response."""
@@ -580,7 +594,7 @@ class TestRealisticTrackerResponses:
     def test_tracker_response_complete_example(self):
         """Decode a complete realistic tracker response."""
         # Build a comprehensive response
-        peers = b"\xc0\xa8\x01\x01\x1a\xe1"  # 192.168.1.1:6881
+        peers_binary = b"\xc0\xa8\x01\x01\x1a\xe1"  # 192.168.1.1:6881
         external_ip = b"\x0a\x00\x00\x01"  # 10.0.0.1
         data = (
             b"d"
@@ -588,7 +602,7 @@ class TestRealisticTrackerResponses:
             b"11:external ip4:" + external_ip + b"10:incompletei75e"
             b"8:intervali1800e"
             b"12:min intervali900e"
-            b"5:peers6:" + peers + b"e"
+            b"5:peers6:" + peers_binary + b"e"
         )
         result = bdecode(data)
         assert result["complete"] == 150
@@ -596,8 +610,12 @@ class TestRealisticTrackerResponses:
         assert result["interval"] == 1800
         assert result["min interval"] == 900
         assert result["external ip"] == "10.0.0.1"
-        assert len(result["peers"]) == 1
-        assert result["peers"][0]["IP"] == "192.168.1.1"
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 1
+        peer = peers[0]
+        assert isinstance(peer, dict)
+        assert peer["IP"] == "192.168.1.1"  # pyright: ignore[reportArgumentType]
 
 
 class TestEdgeCases:
@@ -728,35 +746,3 @@ class TestDecoderInternals:
         decoder = Decoder(b"exx")  # 'e' followed by padding for peek()
         result = decoder.decode()
         assert result is None
-
-
-class TestBdecodeNonBytesKey:
-    """Tests for bdecode() handling non-bytes keys."""
-
-    def test_bdecode_handles_non_bytes_key(self):
-        """bdecode() handles non-bytes keys from the decoder.
-
-        This tests line 22 in bdecode.py which is defensive code for when
-        a decoded key is not bytes. The normal Decoder always produces bytes
-        keys, but this branch exists for safety. We test it by mocking the
-        Decoder to return a dict with a non-bytes key.
-        """
-        from unittest.mock import MagicMock, patch
-
-        # Create a mock decoder that returns an OrderedDict with a string key
-        mock_decoder_instance = MagicMock()
-        mock_decoder_instance.decode.return_value = OrderedDict(
-            [
-                ("string_key", 42),  # Non-bytes key (string)
-                (b"bytes_key", "value"),  # Normal bytes key
-            ]
-        )
-
-        with patch("newTrackon.bdecode.Decoder", return_value=mock_decoder_instance):
-            result = bdecode(b"dummy data")
-
-        # Both keys should be present in the result
-        assert "string_key" in result
-        assert result["string_key"] == 42
-        assert "bytes_key" in result
-        assert result["bytes_key"] == "value"

@@ -1,20 +1,35 @@
+from __future__ import annotations
+
 import json
 from collections import deque
 from os import path
+from typing import TYPE_CHECKING, TypedDict
 
-submitted_trackers: deque = deque(maxlen=10000)
+if TYPE_CHECKING:
+    from newTrackon.tracker import Tracker
+
+
+class HistoryData(TypedDict):
+    url: str
+    time: int
+    status: int
+    ip: str
+    info: list[str] | str
+
+
+submitted_trackers: deque[Tracker] = deque(maxlen=10000)
 raw_history_file = "data/raw_data.json"
 submitted_history_file = "data/submitted_data.json"
 
-if path.exists(raw_history_file):
-    raw_data = deque(json.load(open(raw_history_file)), maxlen=600)
-else:
-    raw_data = deque(maxlen=600)
-if path.exists(submitted_history_file):
-    submitted_data = deque(json.load(open(submitted_history_file)), maxlen=600)
-else:
-    submitted_data = deque(maxlen=600)
+raw_data: deque[HistoryData] = deque(
+    json.load(open(raw_history_file)) if path.exists(raw_history_file) else [],
+    maxlen=600,
+)
+submitted_data: deque[HistoryData] = deque(
+    json.load(open(submitted_history_file)) if path.exists(submitted_history_file) else [],
+    maxlen=600,
+)
 
 
-def save_deque_to_disk(obj, filename):
+def save_deque_to_disk(obj: deque[HistoryData], filename: str) -> None:
     json.dump(list(obj), open(filename, "w"))

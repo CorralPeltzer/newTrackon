@@ -1,15 +1,28 @@
 """Shared pytest fixtures for newTrackon test suite."""
 
+from __future__ import annotations
+
 import json
 import sqlite3
 from collections import deque
-from unittest.mock import patch
+from collections.abc import Generator
+from sqlite3 import Connection
+from types import ModuleType
+from typing import TYPE_CHECKING, Any
+from unittest.mock import MagicMock, patch
 
 import pytest
+from flask.testing import FlaskClient
+
+if TYPE_CHECKING:
+    from newTrackon.tracker import Tracker
+
+# Type alias for sample tracker data
+TrackerDataDict = dict[str, Any]
 
 
 @pytest.fixture(autouse=True)
-def clean_global_state():
+def clean_global_state() -> Generator[None]:
     """Automatically clean global state before and after each test."""
     import newTrackon.persistence as persistence
     import newTrackon.trackon as trackon
@@ -30,7 +43,7 @@ def clean_global_state():
 
 
 @pytest.fixture
-def in_memory_db():
+def in_memory_db() -> Generator[Connection]:
     """Provide an in-memory SQLite database with schema."""
     conn = sqlite3.connect(":memory:")
     conn.execute("""
@@ -58,21 +71,21 @@ def in_memory_db():
 
 
 @pytest.fixture
-def mock_db_connection(in_memory_db, monkeypatch):
+def mock_db_connection(in_memory_db: Connection, monkeypatch: pytest.MonkeyPatch) -> Connection:
     """Patch sqlite3.connect to use in-memory database."""
     original_connect = sqlite3.connect
 
-    def patched_connect(database, *args, **kwargs):
+    def patched_connect(database: str, *args: Any, **kwargs: Any) -> Connection:
         if database == "data/trackon.db":
             return in_memory_db
-        return original_connect(database, *args, **kwargs)
+        return original_connect(database, *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
 
     monkeypatch.setattr("sqlite3.connect", patched_connect)
     return in_memory_db
 
 
 @pytest.fixture
-def sample_tracker_data():
+def sample_tracker_data() -> TrackerDataDict:
     """Return sample tracker data as a dictionary."""
     return {
         "host": "tracker.example.com",
@@ -94,32 +107,32 @@ def sample_tracker_data():
 
 
 @pytest.fixture
-def sample_tracker(sample_tracker_data):
+def sample_tracker(sample_tracker_data: TrackerDataDict) -> Tracker:
     """Create a sample Tracker instance for testing."""
     from newTrackon.tracker import Tracker
 
     tracker = Tracker(
-        host=sample_tracker_data["host"],
-        url=sample_tracker_data["url"],
-        ips=sample_tracker_data["ips"],
-        latency=sample_tracker_data["latency"],
-        last_checked=sample_tracker_data["last_checked"],
-        interval=sample_tracker_data["interval"],
-        status=sample_tracker_data["status"],
-        uptime=sample_tracker_data["uptime"],
-        countries=sample_tracker_data["countries"],
-        country_codes=sample_tracker_data["country_codes"],
-        networks=sample_tracker_data["networks"],
-        historic=deque(sample_tracker_data["historic"], maxlen=1000),
-        added=sample_tracker_data["added"],
-        last_downtime=sample_tracker_data["last_downtime"],
-        last_uptime=sample_tracker_data["last_uptime"],
+        host=sample_tracker_data["host"],  # pyright: ignore[reportUnknownArgumentType]
+        url=sample_tracker_data["url"],  # pyright: ignore[reportUnknownArgumentType]
+        ips=sample_tracker_data["ips"],  # pyright: ignore[reportUnknownArgumentType]
+        latency=sample_tracker_data["latency"],  # pyright: ignore[reportUnknownArgumentType]
+        last_checked=sample_tracker_data["last_checked"],  # pyright: ignore[reportUnknownArgumentType]
+        interval=sample_tracker_data["interval"],  # pyright: ignore[reportUnknownArgumentType]
+        status=sample_tracker_data["status"],  # pyright: ignore[reportUnknownArgumentType]
+        uptime=sample_tracker_data["uptime"],  # pyright: ignore[reportUnknownArgumentType]
+        countries=sample_tracker_data["countries"],  # pyright: ignore[reportUnknownArgumentType]
+        country_codes=sample_tracker_data["country_codes"],  # pyright: ignore[reportUnknownArgumentType]
+        networks=sample_tracker_data["networks"],  # pyright: ignore[reportUnknownArgumentType]
+        historic=deque(sample_tracker_data["historic"], maxlen=1000),  # pyright: ignore[reportUnknownArgumentType]
+        added=sample_tracker_data["added"],  # pyright: ignore[reportUnknownArgumentType]
+        last_downtime=sample_tracker_data["last_downtime"],  # pyright: ignore[reportUnknownArgumentType]
+        last_uptime=sample_tracker_data["last_uptime"],  # pyright: ignore[reportUnknownArgumentType]
     )
     return tracker
 
 
 @pytest.fixture
-def insert_sample_tracker(mock_db_connection, sample_tracker_data):
+def insert_sample_tracker(mock_db_connection: Connection, sample_tracker_data: TrackerDataDict) -> TrackerDataDict:
     """Insert sample tracker into the test database."""
     mock_db_connection.execute(
         "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -146,7 +159,7 @@ def insert_sample_tracker(mock_db_connection, sample_tracker_data):
 
 
 @pytest.fixture
-def mock_network():
+def mock_network() -> Generator[dict[str, MagicMock]]:
     """Disable all network calls by default."""
     with (
         patch("requests.get") as mock_get,
@@ -165,7 +178,7 @@ def mock_network():
 
 
 @pytest.fixture
-def reset_globals():
+def reset_globals() -> Generator[None]:
     """Reset global state between tests."""
     import newTrackon.persistence as persistence
     import newTrackon.scraper as scraper
@@ -196,7 +209,7 @@ def reset_globals():
 
 
 @pytest.fixture
-def empty_deques(reset_globals):
+def empty_deques(reset_globals: None) -> Generator[ModuleType]:
     """Provide empty deques for testing."""
     import newTrackon.persistence as persistence
 
@@ -207,7 +220,7 @@ def empty_deques(reset_globals):
 
 
 @pytest.fixture
-def flask_client(mock_db_connection):
+def flask_client(mock_db_connection: Connection) -> Generator[FlaskClient]:
     """Create Flask test client with mocked database."""
     from newTrackon.views import app
 
@@ -217,7 +230,7 @@ def flask_client(mock_db_connection):
 
 
 @pytest.fixture
-def mock_tracker_response():
+def mock_tracker_response() -> dict[str, Any]:
     """Return a mock successful tracker response."""
     return {
         "interval": 1800,
@@ -228,7 +241,7 @@ def mock_tracker_response():
 
 
 @pytest.fixture
-def mock_udp_response():
+def mock_udp_response() -> dict[str, Any]:
     """Return mock UDP tracker response data."""
     return {
         "interval": 1800,
@@ -239,14 +252,14 @@ def mock_udp_response():
 
 
 @pytest.fixture
-def bencoded_tracker_response():
+def bencoded_tracker_response() -> bytes:
     """Return a valid bencoded tracker response."""
     # d8:completei100e10:incompletei50e8:intervali1800e5:peers6:...e
     return b"d8:completei100e10:incompletei50e8:intervali1800e5:peers6:\x01\x02\x03\x04\x1a\xe1e"
 
 
 @pytest.fixture
-def mock_ip_resolution():
+def mock_ip_resolution() -> Generator[MagicMock]:
     """Mock socket.getaddrinfo for IP resolution."""
     with patch("socket.getaddrinfo") as mock:
         mock.return_value = [

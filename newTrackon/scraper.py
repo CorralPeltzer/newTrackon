@@ -7,7 +7,7 @@ import subprocess
 from logging import getLogger
 from os import urandom
 from time import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple, TypedDict
 from urllib.parse import ParseResult, urlencode, urlparse
 
 import requests
@@ -15,12 +15,34 @@ from dns import resolver
 from dns.exception import DNSException
 from urllib3.exceptions import HTTPError
 
-from newTrackon.bdecode import bdecode, decode_binary_peers_list
-from newTrackon.persistence import submitted_data
-from newTrackon.utils import build_httpx_url, process_txt_prefs
+from newTrackon.bdecode import BDecodeResponse, PeerInfo, bdecode, decode_binary_peers_list
+from newTrackon.persistence import HistoryData, submitted_data
+from newTrackon.utils import ProtocolPref, build_httpx_url, process_txt_prefs
 
 if TYPE_CHECKING:
     from newTrackon.tracker import Tracker
+
+# Socket address types for getaddrinfo results
+SockAddr = tuple[str, int] | tuple[str, int, int, int] | tuple[int, bytes]
+AddrInfo = tuple[socket.AddressFamily, socket.SocketKind, int, str, SockAddr]
+
+
+class ScraperResult(NamedTuple):
+    """Result from a successful tracker scrape attempt."""
+
+    interval: int
+    url: str
+    latency: int
+
+
+class AttemptResult(NamedTuple):
+    """Result from an individual protocol attempt (HTTP/UDP)."""
+
+    status: int
+    interval: int | None
+    url: str
+    latency: int
+
 
 HTTP_PORT: int = 6881
 UDP_PORT: int = 30461
@@ -38,8 +60,15 @@ logger = getLogger("newtrackon")
 to_redact: list[str] = [str(HTTP_PORT), str(UDP_PORT)]
 
 
-def attempt_submitted(tracker: Tracker):
-    submitted_url: ParseResult = urlparse(tracker.url)
+class UDPAnnounceResponse(TypedDict):
+    interval: int
+    leechers: int
+    seeds: int
+    peers: list[PeerInfo]
+
+
+def attempt_submitted(tracker: Tracker) -> ScraperResult:
+    submitted_url = urlparse(tracker.url)
     try:
         failover_ip: str = str(socket.getaddrinfo(submitted_url.hostname, None)[0][4][0])
     except OSError:
@@ -63,28 +92,27 @@ def attempt_submitted(tracker: Tracker):
                 }
             )
             raise RuntimeError
-        elif bep_34_info:
-            logger.info(
-                "Tracker %s sets protocol and port preferences from BEP34: %s",
-                tracker.url,
-                bep_34_info,
-            )
-            return attempt_from_txt_prefs(submitted_url, failover_ip, bep_34_info)
-    else:  # No valid BEP34, attempting all protocols
-        return attempt_all_protocols(submitted_url, failover_ip)
+        logger.info(
+            "Tracker %s sets protocol and port preferences from BEP34: %s",
+            tracker.url,
+            bep_34_info,
+        )
+        return attempt_from_txt_prefs(submitted_url, failover_ip, bep_34_info)
+    # No valid BEP34, attempting all protocols
+    return attempt_all_protocols(submitted_url, failover_ip)
 
 
-def attempt_from_txt_prefs(submitted_url: ParseResult, failover_ip: str, txt_prefs: list[tuple[str, int]]):
-    for preference in txt_prefs:
-        preferred_url = submitted_url._replace(netloc=f"{submitted_url.hostname}:{preference[1]}")
-        if preference[0] == "udp":
-            udp_success, udp_interval, udp_url, latency = attempt_udp(failover_ip, preferred_url.netloc)
-            if udp_success:
-                return udp_interval, udp_url, latency
-        elif preference[0] == "tcp":
-            http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, preferred_url)
-            if http_success:
-                return http_interval, http_url, latency
+def attempt_from_txt_prefs(submitted_url: ParseResult, failover_ip: str, txt_prefs: list[ProtocolPref]) -> ScraperResult:
+    for protocol, port in txt_prefs:
+        preferred_url = submitted_url._replace(netloc=f"{submitted_url.hostname}:{port}")
+        if protocol == "udp":
+            result = attempt_udp(failover_ip, preferred_url.netloc)
+            if result.status and result.interval is not None:
+                return ScraperResult(result.interval, result.url, result.latency)
+        elif protocol == "tcp":
+            http_result = attempt_https_http(failover_ip, preferred_url)
+            if http_result is not None:
+                return ScraperResult(http_result.interval, http_result.url, http_result.latency)
 
     logger.info(
         "All DNS TXT protocol preferences failed, giving up on submitted tracker %s",
@@ -93,19 +121,19 @@ def attempt_from_txt_prefs(submitted_url: ParseResult, failover_ip: str, txt_pre
     raise RuntimeError
 
 
-def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str):
+def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str) -> ScraperResult:
     # UDP scrape
     if submitted_url.port:  # If the tracker netloc has a port, try with UDP
-        udp_success, udp_interval, udp_url, latency = attempt_udp(failover_ip, submitted_url.netloc)
-        if udp_success:
-            return udp_interval, udp_url, latency
+        result = attempt_udp(failover_ip, submitted_url.netloc)
+        if result.status and result.interval is not None:
+            return ScraperResult(result.interval, result.url, result.latency)
 
-        logger.info("%s UDP failed", udp_url)
+        logger.info("%s UDP failed", result.url)
 
     # HTTPS and HTTP scrape
-    http_success, http_interval, http_url, latency = attempt_https_http(failover_ip, submitted_url)
-    if http_success:
-        return http_interval, http_url, latency
+    http_result = attempt_https_http(failover_ip, submitted_url)
+    if http_result is not None:
+        return ScraperResult(http_result.interval, http_result.url, http_result.latency)
     logger.info(
         "All protocols failed, giving up on submitted tracker %s",
         submitted_url.geturl(),
@@ -113,72 +141,85 @@ def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str):
     raise RuntimeError
 
 
-def attempt_https_http(failover_ip: str, url: ParseResult):
+def attempt_https_http(failover_ip: str, url: ParseResult) -> ScraperResult | None:
     # HTTPS scrape
-    https_success, https_interval, https_url, latency = attempt_httpx(failover_ip, url, tls=True)
-    if https_success:
-        return https_success, https_interval, https_url, latency
+    https_result = attempt_httpx(failover_ip, url, tls=True)
+    if https_result.status and https_result.interval is not None:
+        return ScraperResult(https_result.interval, https_result.url, https_result.latency)
 
-    logger.info("%s HTTPS failed", https_url)
+    logger.info("%s HTTPS failed", https_result.url)
 
     # HTTP scrape
-    http_success, http_interval, http_url, latency = attempt_httpx(failover_ip, url, tls=False)
-    if http_success:
-        return http_success, http_interval, http_url, latency
+    http_result = attempt_httpx(failover_ip, url, tls=False)
+    if http_result.status and http_result.interval is not None:
+        return ScraperResult(http_result.interval, http_result.url, http_result.latency)
 
-    logger.info("%s HTTP failed", http_url)
-    return None, None, None, None
+    logger.info("%s HTTP failed", http_result.url)
+    return None
 
 
-def attempt_httpx(failover_ip: str, submitted_url: ParseResult, tls: bool = True):
+def attempt_httpx(failover_ip: str, submitted_url: ParseResult, tls: bool = True) -> AttemptResult:
     http_url = build_httpx_url(submitted_url, tls)
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     t1 = time()
-    debug_http = {"url": http_url, "time": int(t1), "ip": failover_ip}
     latency = 0
-    http_response = {}
+    status = 0
+    interval: int | None = None
+    info: list[str] = []
     try:
         http_response = announce_http(http_url)
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(http_response))
-        debug_http.update({"info": [pretty_data], "status": 1})
+        info = [pretty_data]
+        status = 1
+        raw_interval = http_response.get("interval")
+        if isinstance(raw_interval, int):
+            interval = raw_interval
     except RuntimeError as e:
-        debug_http.update({"info": [redact_origin(str(e))], "status": 0})
+        info = [redact_origin(str(e))]
+        status = 0
+    debug_http: HistoryData = {"url": http_url, "time": int(t1), "ip": failover_ip, "info": info, "status": status}
     submitted_data.appendleft(debug_http)
-    return debug_http["status"], http_response.get("interval"), http_url, latency
+    return AttemptResult(status, interval, http_url, latency)
 
 
-def attempt_udp(failover_ip: str, tracker_netloc: str):
+def attempt_udp(failover_ip: str, tracker_netloc: str) -> AttemptResult:
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     udp_url = "udp://" + tracker_netloc + "/announce"
     t1 = time()
-    udp_attempt_result = {"url": udp_url, "time": int(t1)}
     latency = 0
-    parsed_response = {}
+    status = 0
+    interval: int | None = None
+    info: list[str] = []
+    ip = failover_ip
     try:
-        parsed_response, ip = announce_udp(udp_url)
+        parsed_response, resolved_ip = announce_udp(udp_url)
         latency = int((time() - t1) * 1000)
         pretty_data = redact_origin(pp.pformat(parsed_response))
-        udp_attempt_result.update({"info": [pretty_data], "status": 1, "ip": ip})
+        info = [pretty_data]
+        status = 1
+        interval = parsed_response["interval"]
+        if resolved_ip is not None:
+            ip = resolved_ip
     except RuntimeError as e:
-        udp_attempt_result.update({"info": [str(e)], "status": 0})
-        if udp_attempt_result["info"] != ["Can't resolve IP"]:
-            udp_attempt_result["ip"] = failover_ip
+        error_msg = str(e)
+        info = [error_msg]
+        status = 0
+        if error_msg == "Can't resolve IP":
+            ip = ""
+    udp_attempt_result: HistoryData = {"url": udp_url, "time": int(t1), "ip": ip, "info": info, "status": status}
     submitted_data.appendleft(udp_attempt_result)
-    return (
-        udp_attempt_result["status"],
-        parsed_response.get("interval"),
-        udp_url,
-        latency,
-    )
+    return AttemptResult(status, interval, udp_url, latency)
 
 
-def get_bep_34(hostname):
+def get_bep_34(hostname: str | None) -> tuple[bool, list[ProtocolPref] | None]:
     """Querying for http://bittorrent.org/beps/bep_0034.html"""
+    if hostname is None:
+        return False, None
     try:
-        txt_info = resolver.resolve(hostname, "TXT").response.answer[0]
-        for record in txt_info:
-            record_text = str(record).strip('"')
+        answer: resolver.Answer = resolver.resolve(hostname, "TXT")
+        for rdata in answer:
+            record_text = str(rdata).strip('"')
             if record_text.startswith("BITTORRENT"):
                 return True, process_txt_prefs(record_text)
     except DNSException:
@@ -186,7 +227,7 @@ def get_bep_34(hostname):
     return False, None
 
 
-def announce_http(url: str, thash: bytes = urandom(20)):
+def announce_http(url: str, thash: bytes = urandom(20)) -> BDecodeResponse:
     logger.info("%s Scraping HTTP(S)", url)
     pid = "-qB4390-" + "".join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
 
@@ -233,20 +274,12 @@ def announce_http(url: str, thash: bytes = urandom(20)):
     return tracker_response
 
 
-def announce_udp(udp_url: str, thash: bytes = urandom(20)):
+def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[UDPAnnounceResponse, str | None]:
     parsed_tracker = urlparse(udp_url)
     logger.info("%s Scraping UDP", udp_url)
     sock: socket.socket | None = None
     ip: str | None = None
-    getaddr_responses: list[
-        tuple[
-            socket.AddressFamily,
-            socket.SocketKind,
-            int,
-            str,
-            tuple[str, int] | tuple[str, int, int, int] | tuple[int, bytes],
-        ]
-    ] = []
+    getaddr_responses: list[AddrInfo] = []
     try:
         for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM):
             getaddr_responses.append(res)
@@ -254,10 +287,6 @@ def announce_udp(udp_url: str, thash: bytes = urandom(20)):
         raise RuntimeError(f"UDP error: {err}")
 
     for res in getaddr_responses:
-        af: socket.AddressFamily
-        socktype: socket.SocketKind
-        proto: int
-        sa: tuple[str, int] | tuple[str, int, int, int] | tuple[int, bytes]
         af, socktype, proto, _, sa = res
         ip = str(sa[0])
         try:
@@ -356,7 +385,9 @@ def udp_create_announce_request(connection_id: int | None, thash: bytes) -> tupl
     return buf, transaction_id
 
 
-def udp_parse_announce_response(buf: bytes, sent_transaction_id: int, ip_family: socket.AddressFamily):
+def udp_parse_announce_response(
+    buf: bytes, sent_transaction_id: int, ip_family: socket.AddressFamily
+) -> tuple[UDPAnnounceResponse, str]:
     if len(buf) < 20:
         raise RuntimeError(f"Wrong response length while announcing: {len(buf)}")
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
@@ -366,20 +397,19 @@ def udp_parse_announce_response(buf: bytes, sent_transaction_id: int, ip_family:
             f"Transaction ID doesnt match in announce response! Expected {sent_transaction_id}, got {res_transaction_id}"
         )
     if action == 0x1:
-        ret = {}
         offset = 8  # next 4 bytes after action is transaction_id, so data doesnt start till byte 8
-        ret["interval"] = struct.unpack_from("!i", buf, offset)[0]
+        interval = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        ret["leechers"] = struct.unpack_from("!i", buf, offset)[0]
+        leechers = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        ret["seeds"] = struct.unpack_from("!i", buf, offset)[0]
+        seeds = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
-        ret["peers"] = decode_binary_peers_list(buf, offset, ip_family)
+        peers = decode_binary_peers_list(buf, offset, ip_family)
+        ret: UDPAnnounceResponse = {"interval": interval, "leechers": leechers, "seeds": seeds, "peers": peers}
         return ret, buf.hex()
-    else:
-        # an error occured, try and extract the error string
-        error = struct.unpack_from("!s", buf, 8)
-        raise RuntimeError(f"Error while annoucing: {error}")
+    # an error occured, try and extract the error string
+    error = struct.unpack_from("!s", buf, 8)
+    raise RuntimeError(f"Error while annoucing: {error}")
 
 
 def udp_get_transaction_id() -> int:

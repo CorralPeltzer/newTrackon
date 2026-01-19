@@ -3,14 +3,20 @@
 import json
 import sqlite3
 from collections import deque
+from collections.abc import Generator
+from sqlite3 import Connection
 from time import time
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pytest import MonkeyPatch
+
+from newTrackon.tracker import Tracker
 
 
 @pytest.fixture
-def shared_memory_db(monkeypatch):
+def shared_memory_db(monkeypatch: MonkeyPatch) -> Generator[Connection]:
     """Provide a shared in-memory SQLite database that persists across connections.
 
     Uses a URI-based connection with shared cache to allow multiple connections
@@ -41,13 +47,13 @@ def shared_memory_db(monkeypatch):
 
     original_connect = sqlite3.connect
 
-    def patched_connect(database, *args, **kwargs):
+    def patched_connect(database: str, *args: Any, **kwargs: Any) -> Connection:
         if database == "data/trackon.db":
             # Return a new connection to the shared memory database
             return original_connect("file::memory:?cache=shared", uri=True)
         return original_connect(database, *args, **kwargs)
 
-    monkeypatch.setattr("sqlite3.connect", patched_connect)
+    monkeypatch.setattr("sqlite3.connect", patched_connect)  # pyright: ignore[reportUnknownMemberType]
 
     yield conn
 
@@ -63,7 +69,9 @@ def shared_memory_db(monkeypatch):
 class TestTrackerUpdateCycle:
     """Test end-to-end tracker update cycle combining multiple modules."""
 
-    def test_update_status_with_successful_scrape(self, shared_memory_db, sample_tracker, reset_globals):
+    def test_update_status_with_successful_scrape(
+        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
+    ) -> None:
         """Insert tracker in DB, call update_status() with mocked scraper,
         verify status, uptime, historic updated, and db.update_tracker() persists changes.
         """
@@ -100,7 +108,7 @@ class TestTrackerUpdateCycle:
         initial_last_checked = sample_tracker.last_checked
 
         # Mock scraper to return successful response
-        mock_response = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
@@ -139,7 +147,9 @@ class TestTrackerUpdateCycle:
         historic_from_db = json.loads(row[2])
         assert historic_from_db[-1] == 1  # Last historic entry
 
-    def test_update_status_updates_latency(self, shared_memory_db, sample_tracker, reset_globals):
+    def test_update_status_updates_latency(
+        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
+    ) -> None:
         """Verify latency is calculated and stored after successful scrape."""
 
         # Ensure tracker has a recent last_uptime to avoid max_downtime deletion
@@ -168,7 +178,7 @@ class TestTrackerUpdateCycle:
         )
         shared_memory_db.commit()
 
-        mock_response = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
@@ -187,7 +197,9 @@ class TestTrackerUpdateCycle:
 class TestTrackerGoesDown:
     """Test workflow when a tracker becomes unresponsive."""
 
-    def test_tracker_goes_down_on_scraper_error(self, shared_memory_db, sample_tracker, reset_globals):
+    def test_tracker_goes_down_on_scraper_error(
+        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
+    ) -> None:
         """Insert working tracker, mock scraper to raise RuntimeError,
         verify status changes to 0 and last_downtime updated.
         """
@@ -238,7 +250,9 @@ class TestTrackerGoesDown:
         # Verify historic records the down status
         assert sample_tracker.historic[-1] == 0
 
-    def test_tracker_goes_down_updates_database(self, shared_memory_db, sample_tracker, reset_globals):
+    def test_tracker_goes_down_updates_database(
+        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
+    ) -> None:
         """Verify that tracker going down is properly persisted to database."""
         from newTrackon import db
 
@@ -287,9 +301,10 @@ class TestTrackerGoesDown:
         assert row[0] == 0  # status is DOWN
         assert row[1] == sample_tracker.last_downtime
 
-    def test_http_tracker_goes_down(self, shared_memory_db, sample_tracker_data, reset_globals):
+    def test_http_tracker_goes_down(
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], reset_globals: None
+    ) -> None:
         """Test HTTP tracker going down."""
-        from newTrackon.tracker import Tracker
 
         # Create HTTP tracker
         sample_tracker_data["url"] = "http://tracker.example.com:80/announce"
@@ -326,21 +341,20 @@ class TestTrackerGoesDown:
 class TestNewTrackerSubmissionFlow:
     """Test end-to-end new tracker submission workflow."""
 
-    def test_add_tracker_to_submitted_deque(self, shared_memory_db, empty_deques):
+    def test_add_tracker_to_submitted_deque(self, shared_memory_db: Connection, empty_deques: Any) -> None:
         """Call add_one_tracker_to_submitted_deque with valid URL,
         verify tracker added to submitted_trackers deque.
         """
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
         # Mock Tracker.from_url to return a valid tracker
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = test_url
-        mock_tracker.host = "newtracker.example.com"
-        mock_tracker.ips = ["5.6.7.8"]
+        mock_tracker.url = test_url  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.host = "newtracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.ips = ["5.6.7.8"]  # pyright: ignore[reportAttributeAccessIssue]
 
         with (
             patch.object(Tracker, "from_url", return_value=mock_tracker),
@@ -352,11 +366,12 @@ class TestNewTrackerSubmissionFlow:
         assert len(submitted_trackers) == 1
         assert submitted_trackers[0] == mock_tracker
 
-    def test_tracker_ends_up_in_database_after_processing(self, shared_memory_db, empty_deques, reset_globals):
+    def test_tracker_ends_up_in_database_after_processing(
+        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+    ) -> None:
         """Verify tracker ends up in database after full submission processing."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
@@ -400,11 +415,10 @@ class TestNewTrackerSubmissionFlow:
         assert row[0] == mock_tracker.host
         assert row[1] == test_url
 
-    def test_full_submission_flow_integration(self, shared_memory_db, empty_deques, reset_globals):
+    def test_full_submission_flow_integration(self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None) -> None:
         """Test complete flow from URL submission to database insertion."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://complete-flow.example.com:6969/announce"
 
@@ -414,17 +428,17 @@ class TestNewTrackerSubmissionFlow:
             host="complete-flow.example.com",
             ips=["10.20.30.40"],
             latency=None,
-            last_checked=None,
-            interval=None,
-            status=None,
-            uptime=None,
+            last_checked=0,
+            interval=10800,
+            status=0,
+            uptime=0.0,
             countries=[],
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
             added="18-1-2026",
-            last_downtime=None,
-            last_uptime=None,
+            last_downtime=0,
+            last_uptime=0,
         )
 
         mock_attempt_result = (1800, test_url, 50)
@@ -456,13 +470,14 @@ class TestNewTrackerSubmissionFlow:
 class TestDuplicateIPRejection:
     """Test rejection of trackers with duplicate IPs."""
 
-    def test_reject_tracker_with_duplicate_ip(self, shared_memory_db, sample_tracker_data, empty_deques):
+    def test_reject_tracker_with_duplicate_ip(
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_deques: Any
+    ) -> None:
         """Insert tracker with IP 1.2.3.4, try to add new tracker that
         resolves to same IP, verify rejection.
         """
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         # Insert an existing tracker with known IP
         shared_memory_db.execute(
@@ -490,9 +505,9 @@ class TestDuplicateIPRejection:
         # Try to add a new tracker that resolves to the same IP
         new_url = "udp://different-tracker.example.com:6969/announce"
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = new_url
-        mock_tracker.host = "different-tracker.example.com"
-        mock_tracker.ips = ["1.2.3.4"]  # Same IP as existing tracker
+        mock_tracker.url = new_url  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.host = "different-tracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.ips = ["1.2.3.4"]  # Same IP as existing tracker  # pyright: ignore[reportAttributeAccessIssue]
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
             trackon.add_one_tracker_to_submitted_deque(new_url)
@@ -500,11 +515,12 @@ class TestDuplicateIPRejection:
         # Verify tracker was NOT added to submitted_trackers deque
         assert len(submitted_trackers) == 0
 
-    def test_reject_tracker_with_overlapping_ips(self, shared_memory_db, sample_tracker_data, empty_deques):
+    def test_reject_tracker_with_overlapping_ips(
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_deques: Any
+    ) -> None:
         """Test rejection when new tracker has any IP overlapping with existing."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         # Insert existing tracker with multiple IPs
         shared_memory_db.execute(
@@ -532,9 +548,9 @@ class TestDuplicateIPRejection:
         # New tracker with one overlapping IP
         new_url = "udp://another-tracker.example.com:6969/announce"
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = new_url
-        mock_tracker.host = "another-tracker.example.com"
-        mock_tracker.ips = ["9.10.11.12", "5.6.7.8"]  # 5.6.7.8 overlaps
+        mock_tracker.url = new_url  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.host = "another-tracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.ips = ["9.10.11.12", "5.6.7.8"]  # 5.6.7.8 overlaps  # pyright: ignore[reportAttributeAccessIssue]
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
             trackon.add_one_tracker_to_submitted_deque(new_url)
@@ -542,11 +558,12 @@ class TestDuplicateIPRejection:
         # Should be rejected
         assert len(submitted_trackers) == 0
 
-    def test_allow_tracker_with_unique_ip(self, shared_memory_db, sample_tracker_data, empty_deques):
+    def test_allow_tracker_with_unique_ip(
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_deques: Any
+    ) -> None:
         """Test that tracker with unique IP is allowed."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         # Insert existing tracker with known IP
         shared_memory_db.execute(
@@ -574,9 +591,9 @@ class TestDuplicateIPRejection:
         # New tracker with completely different IP
         new_url = "udp://unique-tracker.example.com:6969/announce"
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = new_url
-        mock_tracker.host = "unique-tracker.example.com"
-        mock_tracker.ips = ["9.10.11.12"]  # Different IP
+        mock_tracker.url = new_url  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.host = "unique-tracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.ips = ["9.10.11.12"]  # Different IP  # pyright: ignore[reportAttributeAccessIssue]
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
             trackon.add_one_tracker_to_submitted_deque(new_url)
@@ -589,11 +606,12 @@ class TestDuplicateIPRejection:
 class TestIntervalValidation:
     """Test interval validation during tracker submission."""
 
-    def test_reject_tracker_with_interval_below_minimum(self, shared_memory_db, empty_deques, reset_globals):
+    def test_reject_tracker_with_interval_below_minimum(
+        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+    ) -> None:
         """Mock scraper to return interval < 300, verify tracker rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_data, submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://low-interval.example.com:6969/announce"
 
@@ -602,24 +620,24 @@ class TestIntervalValidation:
             host="low-interval.example.com",
             ips=["20.30.40.50"],
             latency=None,
-            last_checked=None,
-            interval=None,
-            status=None,
-            uptime=None,
+            last_checked=0,
+            interval=10800,
+            status=0,
+            uptime=0.0,
             countries=[],
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
             added="18-1-2026",
-            last_downtime=None,
-            last_uptime=None,
+            last_downtime=0,
+            last_uptime=0,
         )
 
         # Interval of 200 is less than minimum of 300
         mock_attempt_result = (200, test_url, 50)
 
         # Pre-populate submitted_data with expected debug entry
-        submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "info": ["Response data"]})
+        submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "ip": "", "info": ["Response data"]})
 
         submitted_trackers.append(mock_tracker)
 
@@ -637,11 +655,12 @@ class TestIntervalValidation:
         row = cursor.fetchone()
         assert row is None
 
-    def test_reject_tracker_with_interval_above_maximum(self, shared_memory_db, empty_deques, reset_globals):
+    def test_reject_tracker_with_interval_above_maximum(
+        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+    ) -> None:
         """Mock scraper to return interval > 10800, verify tracker rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_data, submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://high-interval.example.com:6969/announce"
 
@@ -650,24 +669,24 @@ class TestIntervalValidation:
             host="high-interval.example.com",
             ips=["30.40.50.60"],
             latency=None,
-            last_checked=None,
-            interval=None,
-            status=None,
-            uptime=None,
+            last_checked=0,
+            interval=10800,
+            status=0,
+            uptime=0.0,
             countries=[],
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
             added="18-1-2026",
-            last_downtime=None,
-            last_uptime=None,
+            last_downtime=0,
+            last_uptime=0,
         )
 
         # Interval of 15000 is greater than maximum of 10800
         mock_attempt_result = (15000, test_url, 50)
 
         # Pre-populate submitted_data with expected debug entry
-        submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "info": ["Response data"]})
+        submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "ip": "", "info": ["Response data"]})
 
         submitted_trackers.append(mock_tracker)
 
@@ -685,11 +704,12 @@ class TestIntervalValidation:
         row = cursor.fetchone()
         assert row is None
 
-    def test_accept_tracker_with_valid_interval(self, shared_memory_db, empty_deques, reset_globals):
+    def test_accept_tracker_with_valid_interval(
+        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+    ) -> None:
         """Verify tracker with interval between 300 and 10800 is accepted."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://valid-interval.example.com:6969/announce"
 
@@ -698,17 +718,17 @@ class TestIntervalValidation:
             host="valid-interval.example.com",
             ips=["40.50.60.70"],
             latency=None,
-            last_checked=None,
-            interval=None,
-            status=None,
-            uptime=None,
+            last_checked=0,
+            interval=10800,
+            status=0,
+            uptime=0.0,
             countries=[],
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
             added="18-1-2026",
-            last_downtime=None,
-            last_uptime=None,
+            last_downtime=0,
+            last_uptime=0,
         )
 
         # Valid interval of 1800 (30 minutes)
@@ -732,14 +752,15 @@ class TestIntervalValidation:
         assert row[0] == "valid-interval.example.com"
         assert row[1] == 1800
 
-    def test_accept_tracker_with_exactly_minimum_interval(self, shared_memory_db, empty_deques, reset_globals):
+    def test_accept_tracker_with_exactly_minimum_interval(
+        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+    ) -> None:
         """Interval of exactly 300 should be accepted (boundary condition).
 
         Per code logic: "300 > tracker_candidate.interval" means 300 is NOT rejected.
         """
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://boundary-low.example.com:6969/announce"
 
@@ -748,17 +769,17 @@ class TestIntervalValidation:
             host="boundary-low.example.com",
             ips=["50.60.70.80"],
             latency=None,
-            last_checked=None,
-            interval=None,
-            status=None,
-            uptime=None,
+            last_checked=0,
+            interval=10800,
+            status=0,
+            uptime=0.0,
             countries=[],
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
             added="18-1-2026",
-            last_downtime=None,
-            last_uptime=None,
+            last_downtime=0,
+            last_uptime=0,
         )
 
         # Interval of exactly 300 - boundary condition
@@ -780,11 +801,12 @@ class TestIntervalValidation:
         row = cursor.fetchone()
         assert row is not None
 
-    def test_accept_tracker_with_exactly_maximum_interval(self, shared_memory_db, empty_deques, reset_globals):
+    def test_accept_tracker_with_exactly_maximum_interval(
+        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+    ) -> None:
         """Interval of exactly 10800 should be accepted."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://boundary-high.example.com:6969/announce"
 
@@ -793,17 +815,17 @@ class TestIntervalValidation:
             host="boundary-high.example.com",
             ips=["60.70.80.90"],
             latency=None,
-            last_checked=None,
-            interval=None,
-            status=None,
-            uptime=None,
+            last_checked=0,
+            interval=10800,
+            status=0,
+            uptime=0.0,
             countries=[],
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
             added="18-1-2026",
-            last_downtime=None,
-            last_uptime=None,
+            last_downtime=0,
+            last_uptime=0,
         )
 
         # Interval of exactly 10800 - boundary condition
@@ -826,11 +848,12 @@ class TestIntervalValidation:
         assert row is not None
         assert row[1] == 10800
 
-    def test_reject_tracker_with_missing_interval(self, shared_memory_db, empty_deques, reset_globals):
+    def test_reject_tracker_with_missing_interval(
+        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+    ) -> None:
         """Verify tracker with missing interval is rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
-        from newTrackon.tracker import Tracker
 
         test_url = "udp://no-interval.example.com:6969/announce"
 
@@ -839,17 +862,17 @@ class TestIntervalValidation:
             host="no-interval.example.com",
             ips=["70.80.90.100"],
             latency=None,
-            last_checked=None,
-            interval=None,
-            status=None,
-            uptime=None,
+            last_checked=0,
+            interval=10800,
+            status=0,
+            uptime=0.0,
             countries=[],
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
             added="18-1-2026",
-            last_downtime=None,
-            last_uptime=None,
+            last_downtime=0,
+            last_uptime=0,
         )
 
         # No interval returned (None)
@@ -876,9 +899,11 @@ class TestIntervalValidation:
 class TestTrackerDeletionWorkflow:
     """Test workflow for tracker deletion due to prolonged downtime."""
 
-    def test_tracker_marked_for_deletion_after_max_downtime(self, shared_memory_db, sample_tracker_data, reset_globals):
+    def test_tracker_marked_for_deletion_after_max_downtime(
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], reset_globals: None
+    ) -> None:
         """Test that tracker is marked for deletion if last_uptime exceeds max_downtime."""
-        from newTrackon.tracker import Tracker, max_downtime
+        from newTrackon.tracker import max_downtime
 
         # Create tracker with last_uptime far in the past
         old_uptime = int(time()) - max_downtime - 1000  # Beyond max_downtime
@@ -914,7 +939,9 @@ class TestTrackerDeletionWorkflow:
 class TestTrackerIPResolutionFailure:
     """Test behavior when tracker IP resolution fails."""
 
-    def test_tracker_cleared_on_ip_resolution_failure(self, shared_memory_db, sample_tracker, reset_globals):
+    def test_tracker_cleared_on_ip_resolution_failure(
+        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
+    ) -> None:
         """Test that tracker is cleared when IP resolution fails."""
         sample_tracker.status = 1
         sample_tracker.last_uptime = int(time())
@@ -933,7 +960,7 @@ class TestTrackerIPResolutionFailure:
 class TestBEP34Integration:
     """Test BEP34 (DNS-based tracker discovery) integration."""
 
-    def test_tracker_denied_by_bep34(self, shared_memory_db, sample_tracker, reset_globals):
+    def test_tracker_denied_by_bep34(self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None) -> None:
         """Test tracker is marked for deletion when BEP34 denies connection."""
         sample_tracker.status = 1
         sample_tracker.last_uptime = int(time())
@@ -946,7 +973,9 @@ class TestBEP34Integration:
         # Tracker should be marked for deletion
         assert sample_tracker.to_be_deleted is True
 
-    def test_tracker_updates_url_from_bep34(self, shared_memory_db, sample_tracker, reset_globals):
+    def test_tracker_updates_url_from_bep34(
+        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
+    ) -> None:
         """Test tracker URL is updated based on BEP34 preferences."""
         sample_tracker.status = 1
         sample_tracker.last_uptime = int(time())
@@ -954,7 +983,7 @@ class TestBEP34Integration:
         # BEP34 returns UDP preference on port 1337
         bep34_prefs = [("udp", 1337)]
 
-        mock_response = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newTrackon.scraper.get_bep_34", return_value=(True, bep34_prefs)),

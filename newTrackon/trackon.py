@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from newTrackon import db
 from newTrackon.persistence import (
+    HistoryData,
     raw_data,
     raw_history_file,
     save_deque_to_disk,
@@ -25,8 +26,6 @@ logger: logging.Logger = logging.getLogger("newtrackon")
 
 
 def enqueue_new_trackers(input_string: str) -> None:
-    if not isinstance(input_string, str):
-        return
     input_string = input_string.lower()
     new_trackers_list = input_string.split()
     for url in new_trackers_list:
@@ -84,7 +83,7 @@ def process_submitted_deque() -> None:
     processing_trackers = False
 
 
-def process_new_tracker(tracker_candidate) -> None:
+def process_new_tracker(tracker_candidate: Tracker) -> None:
     logger.info("Processing new tracker: %s", tracker_candidate.url)
     all_ips_tracked = get_all_ips_tracked()
     if tracker_candidate.ips and all_ips_tracked:
@@ -130,7 +129,7 @@ def process_new_tracker(tracker_candidate) -> None:
 def update_outdated_trackers() -> NoReturn:
     while True:
         now = int(time())
-        trackers_outdated = []
+        trackers_outdated: list[Tracker] = []
         for tracker in db.get_all_data():
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)
@@ -149,13 +148,14 @@ def update_outdated_trackers() -> NoReturn:
 
 
 def log_wrong_interval_denial(reason: str) -> None:
-    debug = submitted_data.popleft()
+    debug: HistoryData = submitted_data.popleft()
     info = debug["info"]
+    first_info = info[0] if isinstance(info, list) else info
     debug.update(
         {
             "status": 0,
             "info": [
-                info[0],
+                first_info,
                 f"Tracker rejected for {reason}",
             ],
         }
@@ -166,7 +166,8 @@ def log_wrong_interval_denial(reason: str) -> None:
 def warn_of_duplicate_ips() -> None:
     all_ips = get_all_ips_tracked()
     if all_ips:
-        seen, duplicates = set(), set()
+        seen: set[str] = set()
+        duplicates: set[str] = set()
         for ip in all_ips:
             if ip not in seen:
                 seen.add(ip)
@@ -176,8 +177,8 @@ def warn_of_duplicate_ips() -> None:
             logger.warning("IP %s is duplicated, manual action required", duplicate_ip)
 
 
-def get_all_ips_tracked() -> list[str] | None:
-    all_ips_of_all_trackers = []
+def get_all_ips_tracked() -> list[str]:
+    all_ips_of_all_trackers: list[str] = []
     all_data = db.get_all_data()
     for tracker_in_list in all_data:
         if tracker_in_list.ips:

@@ -1,25 +1,34 @@
 """Unit tests for the persistence module."""
 
+from __future__ import annotations
+
 import json
 from collections import deque
+from pathlib import Path
+from types import ModuleType
+from typing import Any
+
+import pytest
+
+from newTrackon.persistence import HistoryData
 
 
 class TestDequeMaxlenValues:
     """Test that deques have correct maxlen values."""
 
-    def test_submitted_trackers_maxlen(self):
+    def test_submitted_trackers_maxlen(self) -> None:
         """Verify submitted_trackers has maxlen of 10000."""
         from newTrackon import persistence
 
         assert persistence.submitted_trackers.maxlen == 10000
 
-    def test_raw_data_maxlen(self):
+    def test_raw_data_maxlen(self) -> None:
         """Verify raw_data has maxlen of 600."""
         from newTrackon import persistence
 
         assert persistence.raw_data.maxlen == 600
 
-    def test_submitted_data_maxlen(self):
+    def test_submitted_data_maxlen(self) -> None:
         """Verify submitted_data has maxlen of 600."""
         from newTrackon import persistence
 
@@ -29,12 +38,12 @@ class TestDequeMaxlenValues:
 class TestSaveDequeToDisk:
     """Test save_deque_to_disk function."""
 
-    def test_save_empty_deque(self, tmp_path):
+    def test_save_empty_deque(self, tmp_path: Path) -> None:
         """Test saving an empty deque writes empty JSON array."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "empty.json"
-        empty_deque = deque(maxlen=100)
+        empty_deque: deque[HistoryData] = deque(maxlen=100)
 
         save_deque_to_disk(empty_deque, str(filepath))
 
@@ -43,29 +52,34 @@ class TestSaveDequeToDisk:
             data = json.load(f)
         assert data == []
 
-    def test_save_deque_with_strings(self, tmp_path):
-        """Test saving a deque with string data."""
+    def test_save_deque_with_history_data(self, tmp_path: Path) -> None:
+        """Test saving a deque with HistoryData."""
         from newTrackon.persistence import save_deque_to_disk
 
-        filepath = tmp_path / "strings.json"
-        test_deque = deque(["item1", "item2", "item3"], maxlen=100)
+        filepath = tmp_path / "history.json"
+        test_data: list[HistoryData] = [
+            {"url": "udp://tracker1.com:6969", "time": 1700000000, "status": 1, "ip": "1.2.3.4", "info": []},
+            {"url": "http://tracker2.com/announce", "time": 1700000001, "status": 0, "ip": "5.6.7.8", "info": "error"},
+            {"url": "wss://tracker3.com/announce", "time": 1700000002, "status": 1, "ip": "9.10.11.12", "info": []},
+        ]
+        test_deque: deque[HistoryData] = deque(test_data, maxlen=100)
 
         save_deque_to_disk(test_deque, str(filepath))
 
         with open(filepath) as f:
             data = json.load(f)
-        assert data == ["item1", "item2", "item3"]
+        assert data == test_data
 
-    def test_save_deque_with_dicts(self, tmp_path):
+    def test_save_deque_with_dicts(self, tmp_path: Path) -> None:
         """Test saving a deque with dictionary data."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "dicts.json"
-        test_data = [
-            {"url": "udp://tracker1.com:6969", "status": "success"},
-            {"url": "http://tracker2.com/announce", "status": "failed"},
+        test_data: list[HistoryData] = [
+            {"url": "udp://tracker1.com:6969", "time": 1700000000, "status": 1, "ip": "1.2.3.4", "info": []},
+            {"url": "http://tracker2.com/announce", "time": 1700000001, "status": 0, "ip": "5.6.7.8", "info": "failed"},
         ]
-        test_deque = deque(test_data, maxlen=100)
+        test_deque: deque[HistoryData] = deque(test_data, maxlen=100)
 
         save_deque_to_disk(test_deque, str(filepath))
 
@@ -73,16 +87,16 @@ class TestSaveDequeToDisk:
             data = json.load(f)
         assert data == test_data
 
-    def test_save_deque_with_nested_data(self, tmp_path):
-        """Test saving a deque with nested structures."""
+    def test_save_deque_with_nested_data(self, tmp_path: Path) -> None:
+        """Test saving a deque with nested structures (info as list)."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "nested.json"
-        test_data = [
-            {"tracker": "example.com", "ips": ["1.2.3.4", "5.6.7.8"], "ports": [6969]},
-            {"tracker": "test.com", "ips": [], "ports": [80, 443]},
+        test_data: list[HistoryData] = [
+            {"url": "udp://example.com:6969", "time": 1700000000, "status": 1, "ip": "1.2.3.4", "info": ["peer1", "peer2"]},
+            {"url": "http://test.com/announce", "time": 1700000001, "status": 0, "ip": "5.6.7.8", "info": []},
         ]
-        test_deque = deque(test_data, maxlen=100)
+        test_deque: deque[HistoryData] = deque(test_data, maxlen=100)
 
         save_deque_to_disk(test_deque, str(filepath))
 
@@ -90,42 +104,56 @@ class TestSaveDequeToDisk:
             data = json.load(f)
         assert data == test_data
 
-    def test_save_deque_with_integers(self, tmp_path):
-        """Test saving a deque with integer data."""
+    def test_save_deque_with_multiple_items(self, tmp_path: Path) -> None:
+        """Test saving a deque with multiple HistoryData items."""
         from newTrackon.persistence import save_deque_to_disk
 
-        filepath = tmp_path / "integers.json"
-        test_deque = deque([1, 2, 3, 4, 5], maxlen=100)
+        filepath = tmp_path / "multiple.json"
+        test_data: list[HistoryData] = [
+            {"url": "udp://tracker0.com:6969", "time": 1700000000, "status": 0, "ip": "1.2.3.0", "info": []},
+            {"url": "udp://tracker1.com:6969", "time": 1700000001, "status": 1, "ip": "1.2.3.1", "info": []},
+            {"url": "udp://tracker2.com:6969", "time": 1700000002, "status": 0, "ip": "1.2.3.2", "info": []},
+            {"url": "udp://tracker3.com:6969", "time": 1700000003, "status": 1, "ip": "1.2.3.3", "info": []},
+            {"url": "udp://tracker4.com:6969", "time": 1700000004, "status": 0, "ip": "1.2.3.4", "info": []},
+        ]
+        test_deque: deque[HistoryData] = deque(test_data, maxlen=100)
 
         save_deque_to_disk(test_deque, str(filepath))
 
         with open(filepath) as f:
             data = json.load(f)
-        assert data == [1, 2, 3, 4, 5]
+        assert data == test_data
 
-    def test_save_deque_overwrites_existing_file(self, tmp_path):
+    def test_save_deque_overwrites_existing_file(self, tmp_path: Path) -> None:
         """Test that saving overwrites existing file content."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "overwrite.json"
         # Write initial content
         with open(filepath, "w") as f:
-            json.dump(["old", "data"], f)
+            json.dump([{"url": "old", "time": 0, "status": 0, "ip": "0.0.0.0", "info": []}], f)
 
         # Overwrite with new data
-        new_deque = deque(["new", "content"], maxlen=100)
+        new_data: list[HistoryData] = [
+            {"url": "udp://new.tracker:6969", "time": 1700000000, "status": 1, "ip": "1.2.3.4", "info": []},
+            {"url": "http://updated.tracker/announce", "time": 1700000001, "status": 1, "ip": "5.6.7.8", "info": []},
+        ]
+        new_deque: deque[HistoryData] = deque(new_data, maxlen=100)
         save_deque_to_disk(new_deque, str(filepath))
 
         with open(filepath) as f:
             data = json.load(f)
-        assert data == ["new", "content"]
+        assert data == new_data
 
-    def test_save_deque_creates_valid_json(self, tmp_path):
+    def test_save_deque_creates_valid_json(self, tmp_path: Path) -> None:
         """Test that output is valid parseable JSON."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "valid.json"
-        test_deque = deque(["test"], maxlen=100)
+        test_data: list[HistoryData] = [
+            {"url": "udp://test.tracker:6969", "time": 1700000000, "status": 1, "ip": "1.2.3.4", "info": []},
+        ]
+        test_deque: deque[HistoryData] = deque(test_data, maxlen=100)
 
         save_deque_to_disk(test_deque, str(filepath))
 
@@ -138,66 +166,66 @@ class TestSaveDequeToDisk:
 class TestDequeOverflow:
     """Test that deques correctly handle overflow at maxlen."""
 
-    def test_submitted_trackers_overflow(self, empty_deques):
+    def test_submitted_trackers_overflow(self, empty_deques: ModuleType) -> None:
         """Test submitted_trackers removes oldest when full."""
         persistence = empty_deques
-        maxlen = persistence.submitted_trackers.maxlen
+        maxlen = persistence.submitted_trackers.maxlen  # pyright: ignore[reportUnknownMemberType]
 
         # Fill deque to capacity
-        for i in range(maxlen):
-            persistence.submitted_trackers.append(f"tracker_{i}")
+        for i in range(maxlen):  # pyright: ignore[reportUnknownArgumentType]
+            persistence.submitted_trackers.append(f"tracker_{i}")  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.submitted_trackers) == maxlen
-        assert persistence.submitted_trackers[0] == "tracker_0"
+        assert len(persistence.submitted_trackers) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.submitted_trackers[0] == "tracker_0"  # pyright: ignore[reportUnknownMemberType]
 
         # Add one more item
-        persistence.submitted_trackers.append("new_tracker")
+        persistence.submitted_trackers.append("new_tracker")  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.submitted_trackers) == maxlen
-        assert persistence.submitted_trackers[0] == "tracker_1"
-        assert persistence.submitted_trackers[-1] == "new_tracker"
+        assert len(persistence.submitted_trackers) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.submitted_trackers[0] == "tracker_1"  # pyright: ignore[reportUnknownMemberType]
+        assert persistence.submitted_trackers[-1] == "new_tracker"  # pyright: ignore[reportUnknownMemberType]
 
-    def test_raw_data_overflow(self, empty_deques):
+    def test_raw_data_overflow(self, empty_deques: ModuleType) -> None:
         """Test raw_data removes oldest when full."""
         persistence = empty_deques
-        maxlen = persistence.raw_data.maxlen
+        maxlen = persistence.raw_data.maxlen  # pyright: ignore[reportUnknownMemberType]
 
         # Fill deque to capacity
-        for i in range(maxlen):
-            persistence.raw_data.append({"id": i})
+        for i in range(maxlen):  # pyright: ignore[reportUnknownArgumentType]
+            persistence.raw_data.append({"id": i})  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.raw_data) == maxlen
-        assert persistence.raw_data[0] == {"id": 0}
+        assert len(persistence.raw_data) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.raw_data[0] == {"id": 0}  # pyright: ignore[reportUnknownMemberType]
 
         # Add one more item
-        persistence.raw_data.append({"id": maxlen})
+        persistence.raw_data.append({"id": maxlen})  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.raw_data) == maxlen
-        assert persistence.raw_data[0] == {"id": 1}
-        assert persistence.raw_data[-1] == {"id": maxlen}
+        assert len(persistence.raw_data) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.raw_data[0] == {"id": 1}  # pyright: ignore[reportUnknownMemberType]
+        assert persistence.raw_data[-1] == {"id": maxlen}  # pyright: ignore[reportUnknownMemberType]
 
-    def test_submitted_data_overflow(self, empty_deques):
+    def test_submitted_data_overflow(self, empty_deques: ModuleType) -> None:
         """Test submitted_data removes oldest when full."""
         persistence = empty_deques
-        maxlen = persistence.submitted_data.maxlen
+        maxlen = persistence.submitted_data.maxlen  # pyright: ignore[reportUnknownMemberType]
 
         # Fill deque to capacity
-        for i in range(maxlen):
-            persistence.submitted_data.append({"submission": i})
+        for i in range(maxlen):  # pyright: ignore[reportUnknownArgumentType]
+            persistence.submitted_data.append({"submission": i})  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.submitted_data) == maxlen
-        assert persistence.submitted_data[0] == {"submission": 0}
+        assert len(persistence.submitted_data) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.submitted_data[0] == {"submission": 0}  # pyright: ignore[reportUnknownMemberType]
 
         # Add one more item
-        persistence.submitted_data.append({"submission": maxlen})
+        persistence.submitted_data.append({"submission": maxlen})  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.submitted_data) == maxlen
-        assert persistence.submitted_data[0] == {"submission": 1}
-        assert persistence.submitted_data[-1] == {"submission": maxlen}
+        assert len(persistence.submitted_data) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.submitted_data[0] == {"submission": 1}  # pyright: ignore[reportUnknownMemberType]
+        assert persistence.submitted_data[-1] == {"submission": maxlen}  # pyright: ignore[reportUnknownMemberType]
 
-    def test_deque_fifo_order_preserved(self, empty_deques):
+    def test_deque_fifo_order_preserved(self, empty_deques: ModuleType) -> None:
         """Test that FIFO order is maintained during overflow."""
-        test_deque = deque(maxlen=5)
+        test_deque: deque[int] = deque(maxlen=5)
 
         # Add items
         for i in range(10):
@@ -210,43 +238,43 @@ class TestDequeOverflow:
 class TestEmptyDequeHandling:
     """Test handling of empty deques."""
 
-    def test_empty_submitted_trackers(self, empty_deques):
+    def test_empty_submitted_trackers(self, empty_deques: ModuleType) -> None:
         """Test empty submitted_trackers deque."""
         persistence = empty_deques
 
-        assert len(persistence.submitted_trackers) == 0
-        assert list(persistence.submitted_trackers) == []
-        assert persistence.submitted_trackers.maxlen == 10000
+        assert len(persistence.submitted_trackers) == 0  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert list(persistence.submitted_trackers) == []  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.submitted_trackers.maxlen == 10000  # pyright: ignore[reportUnknownMemberType]
 
-    def test_empty_raw_data(self, empty_deques):
+    def test_empty_raw_data(self, empty_deques: ModuleType) -> None:
         """Test empty raw_data deque."""
         persistence = empty_deques
 
-        assert len(persistence.raw_data) == 0
-        assert list(persistence.raw_data) == []
-        assert persistence.raw_data.maxlen == 600
+        assert len(persistence.raw_data) == 0  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert list(persistence.raw_data) == []  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.raw_data.maxlen == 600  # pyright: ignore[reportUnknownMemberType]
 
-    def test_empty_submitted_data(self, empty_deques):
+    def test_empty_submitted_data(self, empty_deques: ModuleType) -> None:
         """Test empty submitted_data deque."""
         persistence = empty_deques
 
-        assert len(persistence.submitted_data) == 0
-        assert list(persistence.submitted_data) == []
-        assert persistence.submitted_data.maxlen == 600
+        assert len(persistence.submitted_data) == 0  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert list(persistence.submitted_data) == []  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+        assert persistence.submitted_data.maxlen == 600  # pyright: ignore[reportUnknownMemberType]
 
-    def test_save_and_load_empty_deque(self, tmp_path):
+    def test_save_and_load_empty_deque(self, tmp_path: Path) -> None:
         """Test saving and loading an empty deque."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "empty_test.json"
-        empty_deque = deque(maxlen=600)
+        empty_deque: deque[HistoryData] = deque(maxlen=600)
 
         save_deque_to_disk(empty_deque, str(filepath))
 
         with open(filepath) as f:
-            loaded_data = json.load(f)
+            loaded_data: list[HistoryData] = json.load(f)
 
-        restored_deque = deque(loaded_data, maxlen=600)
+        restored_deque: deque[HistoryData] = deque(loaded_data, maxlen=600)
         assert len(restored_deque) == 0
         assert restored_deque.maxlen == 600
 
@@ -254,7 +282,7 @@ class TestEmptyDequeHandling:
 class TestLoadingBehavior:
     """Test module loading behavior with different file states."""
 
-    def test_loading_with_existing_raw_data_file(self, tmp_path, monkeypatch):
+    def test_loading_with_existing_raw_data_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that raw_data is loaded from file when it exists."""
         # Create test data file
         data_dir = tmp_path / "data"
@@ -269,12 +297,12 @@ class TestLoadingBehavior:
 
         original_exists = ospath.exists
 
-        def patched_exists(path):
+        def patched_exists(path: str) -> bool:
             if path == "data/raw_data.json":
                 return True
             if path == "data/submitted_data.json":
                 return False
-            return original_exists(path)
+            return original_exists(path)  # pyright: ignore[reportReturnType]
 
         monkeypatch.setattr("os.path.exists", patched_exists)
 
@@ -283,10 +311,12 @@ class TestLoadingBehavior:
 
         original_open = builtins.open
 
-        def patched_open(path, *args, **kwargs):
+        def patched_open(path: str, *args: Any, **kwargs: Any) -> Any:
             if path == "data/raw_data.json":
-                return original_open(str(raw_file), *args, **kwargs)
-            return original_open(path, *args, **kwargs)
+                result: Any = original_open(str(raw_file), *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
+                return result  # pyright: ignore[reportUnknownVariableType]
+            result2: Any = original_open(path, *args, **kwargs)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+            return result2  # pyright: ignore[reportUnknownVariableType]
 
         monkeypatch.setattr("builtins.open", patched_open)
 
@@ -305,7 +335,7 @@ class TestLoadingBehavior:
         assert len(persistence.raw_data) == 2
         assert list(persistence.raw_data) == test_data
 
-    def test_loading_with_existing_submitted_data_file(self, tmp_path, monkeypatch):
+    def test_loading_with_existing_submitted_data_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that submitted_data is loaded from file when it exists."""
         # Create test data file
         data_dir = tmp_path / "data"
@@ -320,12 +350,12 @@ class TestLoadingBehavior:
 
         original_exists = ospath.exists
 
-        def patched_exists(path):
+        def patched_exists(path: str) -> bool:
             if path == "data/raw_data.json":
                 return False
             if path == "data/submitted_data.json":
                 return True
-            return original_exists(path)
+            return original_exists(path)  # pyright: ignore[reportReturnType]
 
         monkeypatch.setattr("os.path.exists", patched_exists)
 
@@ -334,10 +364,12 @@ class TestLoadingBehavior:
 
         original_open = builtins.open
 
-        def patched_open(path, *args, **kwargs):
+        def patched_open(path: str, *args: Any, **kwargs: Any) -> Any:
             if path == "data/submitted_data.json":
-                return original_open(str(submitted_file), *args, **kwargs)
-            return original_open(path, *args, **kwargs)
+                result: Any = original_open(str(submitted_file), *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
+                return result  # pyright: ignore[reportUnknownVariableType]
+            result2: Any = original_open(path, *args, **kwargs)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+            return result2  # pyright: ignore[reportUnknownVariableType]
 
         monkeypatch.setattr("builtins.open", patched_open)
 
@@ -356,10 +388,14 @@ class TestLoadingBehavior:
         assert len(persistence.submitted_data) == 2
         assert list(persistence.submitted_data) == test_data
 
-    def test_loading_without_existing_files(self, monkeypatch):
+    def test_loading_without_existing_files(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that empty deques are created when files don't exist."""
+
         # Monkeypatch os.path.exists to always return False
-        monkeypatch.setattr("os.path.exists", lambda path: False)
+        def fake_exists(path: str) -> bool:
+            return False
+
+        monkeypatch.setattr("os.path.exists", fake_exists)
 
         # Force reimport of the module
         import importlib
@@ -378,7 +414,7 @@ class TestLoadingBehavior:
         assert persistence.raw_data.maxlen == 600
         assert persistence.submitted_data.maxlen == 600
 
-    def test_loaded_data_respects_maxlen(self, tmp_path, monkeypatch):
+    def test_loaded_data_respects_maxlen(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that loaded data is truncated to maxlen if file has more items."""
         # Create test data file with more than 600 items
         data_dir = tmp_path / "data"
@@ -393,12 +429,12 @@ class TestLoadingBehavior:
 
         original_exists = ospath.exists
 
-        def patched_exists(path):
+        def patched_exists(path: str) -> bool:
             if path == "data/raw_data.json":
                 return True
             if path == "data/submitted_data.json":
                 return False
-            return original_exists(path)
+            return original_exists(path)  # pyright: ignore[reportReturnType]
 
         monkeypatch.setattr("os.path.exists", patched_exists)
 
@@ -407,10 +443,12 @@ class TestLoadingBehavior:
 
         original_open = builtins.open
 
-        def patched_open(path, *args, **kwargs):
+        def patched_open(path: str, *args: Any, **kwargs: Any) -> Any:
             if path == "data/raw_data.json":
-                return original_open(str(raw_file), *args, **kwargs)
-            return original_open(path, *args, **kwargs)
+                result: Any = original_open(str(raw_file), *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
+                return result  # pyright: ignore[reportUnknownVariableType]
+            result2: Any = original_open(path, *args, **kwargs)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
+            return result2  # pyright: ignore[reportUnknownVariableType]
 
         monkeypatch.setattr("builtins.open", patched_open)
 
@@ -435,13 +473,13 @@ class TestLoadingBehavior:
 class TestFilePathConstants:
     """Test file path constant values."""
 
-    def test_raw_history_file_path(self):
+    def test_raw_history_file_path(self) -> None:
         """Test raw_history_file constant value."""
         from newTrackon import persistence
 
         assert persistence.raw_history_file == "data/raw_data.json"
 
-    def test_submitted_history_file_path(self):
+    def test_submitted_history_file_path(self) -> None:
         """Test submitted_history_file constant value."""
         from newTrackon import persistence
 
@@ -451,61 +489,68 @@ class TestFilePathConstants:
 class TestRoundTripPersistence:
     """Test saving and loading deques preserves data."""
 
-    def test_round_trip_with_tracker_data(self, tmp_path):
+    def test_round_trip_with_tracker_data(self, tmp_path: Path) -> None:
         """Test that tracker data survives save/load cycle."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "trackers.json"
-        original_data = [
-            "udp://tracker1.example.com:6969/announce",
-            "http://tracker2.example.com:80/announce",
-            "wss://tracker3.example.com/announce",
+        original_data: list[HistoryData] = [
+            {"url": "udp://tracker1.example.com:6969/announce", "time": 1700000000, "status": 1, "ip": "1.2.3.4", "info": []},
+            {"url": "http://tracker2.example.com:80/announce", "time": 1700000001, "status": 1, "ip": "5.6.7.8", "info": []},
+            {"url": "wss://tracker3.example.com/announce", "time": 1700000002, "status": 1, "ip": "9.10.11.12", "info": []},
         ]
-        original_deque = deque(original_data, maxlen=10000)
+        original_deque: deque[HistoryData] = deque(original_data, maxlen=10000)
 
         save_deque_to_disk(original_deque, str(filepath))
 
         with open(filepath) as f:
-            loaded_data = json.load(f)
+            loaded_data: list[HistoryData] = json.load(f)
 
-        restored_deque = deque(loaded_data, maxlen=10000)
+        restored_deque: deque[HistoryData] = deque(loaded_data, maxlen=10000)
 
         assert list(restored_deque) == list(original_deque)
         assert restored_deque.maxlen == original_deque.maxlen
 
-    def test_round_trip_with_submission_data(self, tmp_path):
+    def test_round_trip_with_submission_data(self, tmp_path: Path) -> None:
         """Test that submission result data survives save/load cycle."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "submissions.json"
-        original_data = [
-            {"url": "tracker1.com", "timestamp": 1700000000, "result": "added"},
-            {"url": "tracker2.com", "timestamp": 1700000001, "result": "duplicate"},
-            {"url": "tracker3.com", "timestamp": 1700000002, "result": "invalid"},
+        original_data: list[HistoryData] = [
+            {"url": "udp://tracker1.com:6969", "time": 1700000000, "status": 1, "ip": "1.2.3.4", "info": "added"},
+            {"url": "udp://tracker2.com:6969", "time": 1700000001, "status": 0, "ip": "5.6.7.8", "info": "duplicate"},
+            {"url": "udp://tracker3.com:6969", "time": 1700000002, "status": 0, "ip": "9.10.11.12", "info": "invalid"},
         ]
-        original_deque = deque(original_data, maxlen=600)
+        original_deque: deque[HistoryData] = deque(original_data, maxlen=600)
 
         save_deque_to_disk(original_deque, str(filepath))
 
         with open(filepath) as f:
-            loaded_data = json.load(f)
+            loaded_data: list[HistoryData] = json.load(f)
 
-        restored_deque = deque(loaded_data, maxlen=600)
+        restored_deque: deque[HistoryData] = deque(loaded_data, maxlen=600)
 
         assert list(restored_deque) == list(original_deque)
 
-    def test_round_trip_preserves_order(self, tmp_path):
+    def test_round_trip_preserves_order(self, tmp_path: Path) -> None:
         """Test that item order is preserved through save/load cycle."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "ordered.json"
-        original_deque = deque(range(100), maxlen=600)
+        original_data: list[HistoryData] = [
+            {"url": "udp://tracker1.com:6969", "time": 1700000001, "status": 1, "ip": "1.2.3.1", "info": []},
+            {"url": "udp://tracker2.com:6969", "time": 1700000002, "status": 1, "ip": "1.2.3.2", "info": []},
+            {"url": "udp://tracker3.com:6969", "time": 1700000003, "status": 1, "ip": "1.2.3.3", "info": []},
+            {"url": "udp://tracker4.com:6969", "time": 1700000004, "status": 1, "ip": "1.2.3.4", "info": []},
+            {"url": "udp://tracker5.com:6969", "time": 1700000005, "status": 1, "ip": "1.2.3.5", "info": []},
+        ]
+        original_deque: deque[HistoryData] = deque(original_data, maxlen=600)
 
         save_deque_to_disk(original_deque, str(filepath))
 
         with open(filepath) as f:
-            loaded_data = json.load(f)
+            loaded_data: list[HistoryData] = json.load(f)
 
-        restored_deque = deque(loaded_data, maxlen=600)
+        restored_deque: deque[HistoryData] = deque(loaded_data, maxlen=600)
 
-        assert list(restored_deque) == list(range(100))
+        assert list(restored_deque) == original_data
