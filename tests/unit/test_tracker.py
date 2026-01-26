@@ -311,25 +311,25 @@ class TestFromUrl:
     def test_from_url_resolves_ipv6(self, mock_network: dict[str, Any]) -> None:
         """Test that from_url resolves IPv6 addresses."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
-            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2001:db8::1", 6969, 0, 0)),
+            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
 
         tracker = Tracker.from_url("udp://tracker.example.com:6969")
 
         assert tracker.ips is not None
-        assert "2001:db8::1" in tracker.ips
+        assert "2606:2800:21f:cb07:6820:80da:af6b:8b2c" in tracker.ips
 
     def test_from_url_orders_ipv6_first(self, mock_network: dict[str, Any]) -> None:
         """Test that from_url orders IPv6 addresses before IPv4."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("1.2.3.4", 6969)),
-            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2001:db8::1", 6969, 0, 0)),
+            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
 
         tracker = Tracker.from_url("udp://tracker.example.com:6969")
 
         assert tracker.ips is not None
-        assert tracker.ips[0] == "2001:db8::1"
+        assert tracker.ips[0] == "2606:2800:21f:cb07:6820:80da:af6b:8b2c"
         assert tracker.ips[1] == "1.2.3.4"
 
     def test_from_url_invalid_scheme_raises(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
@@ -448,44 +448,44 @@ class TestUpdateIps:
     def test_update_ips_resolves_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
         """Test that update_ips resolves IPv4 addresses."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
-            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("192.168.1.1", 6969)),
+            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
         ]
 
         sample_tracker.update_ips()
 
-        assert sample_tracker.ips == ["192.168.1.1"]
+        assert sample_tracker.ips == ["93.184.216.34"]
 
     def test_update_ips_resolves_ipv6(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
         """Test that update_ips resolves IPv6 addresses."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
-            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2001:db8::1", 6969, 0, 0)),
+            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
 
         sample_tracker.update_ips()
 
-        assert sample_tracker.ips == ["2001:db8::1"]
+        assert sample_tracker.ips == ["2606:2800:21f:cb07:6820:80da:af6b:8b2c"]
 
     def test_update_ips_orders_ipv6_before_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
         """Test that update_ips orders IPv6 addresses before IPv4."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
-            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("192.168.1.1", 6969)),
-            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2001:db8::1", 6969, 0, 0)),
+            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
+            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
 
         sample_tracker.update_ips()
 
-        assert sample_tracker.ips == ["2001:db8::1", "192.168.1.1"]
+        assert sample_tracker.ips == ["2606:2800:21f:cb07:6820:80da:af6b:8b2c", "93.184.216.34"]
 
     def test_update_ips_deduplicates(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
         """Test that update_ips removes duplicate IPs."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
-            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("192.168.1.1", 6969)),
-            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.1", 6969)),
+            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 6969)),
         ]
 
         sample_tracker.update_ips()
 
-        assert sample_tracker.ips == ["192.168.1.1"]
+        assert sample_tracker.ips == ["93.184.216.34"]
 
     def test_update_ips_dns_failure_raises(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
         """Test that update_ips raises RuntimeError on DNS failure."""
@@ -502,6 +502,54 @@ class TestUpdateIps:
 
         with pytest.raises(RuntimeError, match="Can't resolve IP"):
             sample_tracker.update_ips()
+
+    def test_update_ips_rejects_non_global_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+        """Test that update_ips rejects private/non-global IPv4 addresses."""
+        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("192.168.1.1", 6969)),
+        ]
+
+        with pytest.raises(RuntimeError, match="not globally routable"):
+            sample_tracker.update_ips()
+
+        assert sample_tracker.ips is None
+        assert sample_tracker.to_be_deleted is True
+
+    def test_update_ips_rejects_non_global_ipv6(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+        """Test that update_ips rejects non-global IPv6 addresses (documentation prefix)."""
+        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2001:db8::1", 6969, 0, 0)),
+        ]
+
+        with pytest.raises(RuntimeError, match="not globally routable"):
+            sample_tracker.update_ips()
+
+        assert sample_tracker.ips is None
+        assert sample_tracker.to_be_deleted is True
+
+    def test_update_ips_rejects_loopback(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+        """Test that update_ips rejects loopback addresses."""
+        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("127.0.0.1", 6969)),
+        ]
+
+        with pytest.raises(RuntimeError, match="not globally routable"):
+            sample_tracker.update_ips()
+
+        assert sample_tracker.ips is None
+        assert sample_tracker.to_be_deleted is True
+
+    def test_update_ips_rejects_unspecified(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+        """Test that update_ips rejects unspecified address (0.0.0.0)."""
+        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("0.0.0.0", 6969)),
+        ]
+
+        with pytest.raises(RuntimeError, match="not globally routable"):
+            sample_tracker.update_ips()
+
+        assert sample_tracker.ips is None
+        assert sample_tracker.to_be_deleted is True
 
 
 class TestUpdateStatus:
@@ -802,14 +850,14 @@ class TestEdgeCases:
     def test_tracker_with_ip_as_hostname_in_url(self, mock_network: dict[str, Any]) -> None:
         """Test tracker creation with IP address as hostname."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
-            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("192.168.1.1", 6969)),
+            (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
         ]
 
         # IP address as hostname should work (getaddrinfo resolves it)
-        tracker = Tracker.from_url("udp://192.168.1.1:6969")
+        tracker = Tracker.from_url("udp://93.184.216.34:6969")
 
-        assert tracker.host == "192.168.1.1"
-        assert tracker.ips == ["192.168.1.1"]
+        assert tracker.host == "93.184.216.34"
+        assert tracker.ips == ["93.184.216.34"]
 
     def test_empty_historic_deque(self, sample_tracker: Tracker) -> None:
         """Test update_uptime with empty historic deque raises."""
@@ -833,11 +881,11 @@ class TestEdgeCases:
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("1.2.3.4", 6969)),
             (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("1.2.3.4", 6969)),
-            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2001:db8::1", 6969, 0, 0)),
-            (socket.AF_INET6, socket.SOCK_STREAM, 6, "", ("2001:db8::1", 6969, 0, 0)),
+            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
+            (socket.AF_INET6, socket.SOCK_STREAM, 6, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
 
         sample_tracker.update_ips()
 
         # Should deduplicate and order IPv6 first
-        assert sample_tracker.ips == ["2001:db8::1", "1.2.3.4"]
+        assert sample_tracker.ips == ["2606:2800:21f:cb07:6820:80da:af6b:8b2c", "1.2.3.4"]
