@@ -24,12 +24,10 @@
                     </thead>
                     {% for response in data %}
                         <tr>
-                            <td>{{ response.get('time') | format_timestamp }}</td>
-                            <td>{{ response.get('url') }}</td>
+                            <td>{{ response.get("time") | format_timestamp }}</td>
+                            <td>{{ response.get("url") }}</td>
                             <td>
-                                {% if response.get('ip') %}
-                                    {{ response.get('ip') }}
-                                {% endif %}
+                                {% if response.get('ip') %}{{ response.get("ip") }}{% endif %}
                             </td>
                             {% if response.get('status') == 1 %}
                                 <td class="up">
@@ -40,7 +38,7 @@
                                     <b>Down</b>
                                 </td>
                             {% endif %}
-                            <td>{{ response.get('info') | e }}</td>
+                            <td>{{ response.get("info") | e }}</td>
                         </tr>
                     {% endfor %}
                 </table>

@@ -1,35 +1,41 @@
 {% extends "base.jinja" %}
 {% block head %}
-        <link rel="stylesheet"
-                href="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.css"/>
-        <link rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.3.2/css/flag-icons.min.css"
-                integrity="sha512-+WVTaUIzUw5LFzqIqXOT3JVAc5SrMuvHm230I9QAZa6s+QRk8NDPswbHo2miIZj3yiFyV9lAgzO1wVrjdoO4tw=="
-                crossorigin="anonymous"/>
-        <script src="https://cdn.datatables.net/v/bs/dt-1.10.15/r-2.1.1/datatables.min.js"></script>
-        <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/natural.js"></script>
-        <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/date-eu.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"
-                integrity="sha512-QoJS4DOhdmG8kbbHkxmB/rtPdN62cGWXAdAFWWJPvUFF1/zxcPSdAnn4HhYZSIlVoLVEJ0LesfNlusgm2bPfnA=="
-                crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js"
-                integrity="sha512-C3RIeaJCWeK5MLPSSrVssDBvSwamZW7Ugygc4r21guVqkeroy9wRBDaugQssAQ+m3HZsMWVvEigcNMr7juGXKA=="
-                crossorigin="anonymous"></script>
-        <noscript>
-            <style>#trackon_table {visibility: visible}</style>
-        </noscript>
+    <link rel="stylesheet"
+          href="https://cdn.datatables.net/2.3.6/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet"
+          href="https://cdn.datatables.net/responsive/3.0.7/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.5.0/css/flag-icons.min.css"
+          integrity="sha512-+WVTaUIzUw5LFzqIqXOT3JVAc5SrMuvHm230I9QAZa6s+QRk8NDPswbHo2miIZj3yiFyV9lAgzO1wVrjdoO4tw=="
+          crossorigin="anonymous" />
+    <script src="https://cdn.datatables.net/2.3.6/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.7/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.7/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/2.3.6/sorting/natural.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/2.3.6/sorting/date-eu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"
+            integrity="sha512-QoJS4DOhdmG8kbbHkxmB/rtPdN62cGWXAdAFWWJPvUFF1/zxcPSdAnn4HhYZSIlVoLVEJ0LesfNlusgm2bPfnA=="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/livestamp/1.1.2/livestamp.min.js"
+            integrity="sha512-C3RIeaJCWeK5MLPSSrVssDBvSwamZW7Ugygc4r21guVqkeroy9wRBDaugQssAQ+m3HZsMWVvEigcNMr7juGXKA=="
+            crossorigin="anonymous"></script>
+    <noscript>
+        <style>#trackon_table {visibility: visible}</style>
+    </noscript>
 {% endblock head %}
 {% block body %}
     <script>
     $(document).ready(function () {
         $('#trackon_table').DataTable({
-            "pageLength": 50,
-            "order": [[1, 'desc'], [9, 'asc']],
-            "columnDefs": [
-                {"orderable": false, "targets": [3, 5, 6, 7, 8]},
-                {"type": "natural", "targets": 4},
-                {"type": "date-eu", "targets": 9}
-            ]
+            pageLength: 50,
+            order: [[1, 'desc'], [9, 'asc']],
+            columnDefs: [
+                {orderable: false, targets: [3, 5, 6, 7, 8]},
+                {type: 'natural', targets: 4},
+                {type: 'date-eu', targets: 9}
+            ],
+            responsive: true
         });
         $(".initially-hidden").css("visibility", "visible");
     });
@@ -42,33 +48,33 @@
             torrents, or submit any other open/public trackers you might know of.
         </p>
         <p>
-            <b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a>
-        section.</b>
-    </p>
-    <hr>
-    <form method="POST" action="/">
-        <div class="form-group">
-            <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
-            <p>
-                {% if form_feedback == "EMPTY" %}
-                    <div class="alert alert-warning" role="alert">
-                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                        <span class="sr-only">Error:</span>
-                        No trackers were submitted
-                    </div>
-                {% elif form_feedback == "SUCCESS" %}
-                    <div class="alert alert-info" role="alert">
-                        Received, see the progress in the <strong><a style="color:white" href="/submitted">Submitted</a></strong> section
-                    </div>
-                {% endif %}
-            </p>
-            <span class="help-block">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
-            or check the <a href="/submitted">Submitted</a> section.</span>
-        </div>
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </div>
-    </form>
+        <b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a>
+    section.</b>
+</p>
+<hr>
+<form method="POST" action="/">
+    <div class="form-group">
+        <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
+        <p>
+            {% if form_feedback == "EMPTY" %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    <span class="visually-hidden">Error:</span>
+                    No trackers were submitted
+                </div>
+            {% elif form_feedback == "SUCCESS" %}
+                <div class="alert alert-info" role="alert">
+                    Received, see the progress in the <strong><a style="color:white" href="/submitted">Submitted</a></strong> section
+                </div>
+            {% endif %}
+        </p>
+        <small class="form-text text-muted">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
+        or check the <a href="/submitted">Submitted</a> section.</small>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+</form>
 </div>
 <div class="container-fluid table-responsive">
     <table id="trackon_table"
@@ -145,13 +151,13 @@
                 </tr>
             {% endfor %}
         {% endif %}
-    <caption style="text-align: right;"><b>Live trackers</b>: {{ lt.value }} / <b>Trackers down</b>: {{ dt.value }} / <b>Total
-trackers</b>: {{ trackers | count }}</caption>
-</table>
-<p style="text-align: right;">
-    * Based on the last 1000 checks. The time depends on the update interval set by the
-    tracker, and can vary from 6 to 40 days.
-</p>
+        <caption style="text-align: right;"><b>Live trackers</b>: {{ lt.value }} / <b>Trackers down</b>: {{ dt.value }} / <b>Total
+        trackers</b>: {{ trackers | count }}</caption>
+    </table>
+    <p style="text-align: right;">
+        * Based on the last 1000 checks. The time depends on the update interval set by the
+        tracker, and can vary from 6 to 40 days.
+    </p>
 </div>
 {% endblock %}
 {% set title = "newtrackon, Tracking the Trackers" %}

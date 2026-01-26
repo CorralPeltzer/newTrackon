@@ -11,63 +11,66 @@
         <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
         <link rel="manifest" href="/manifest.json">
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#25802c">
-        <link rel="stylesheet" href="/static/css/theme.css">
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css"
+              integrity="sha512-2bBQCjcnw658Lho4nlXJcc6WkV/UxpE/sAokbXPxQNGqmNdQrWqtw26Ns9kFF/yG792pKR1Sx8/Y1Lf1XN4GKA=="
+              crossorigin="anonymous" />
         <link rel="stylesheet" href="/static/css/custom.css">
         <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css?family=Roboto"/>
+              href="https://fonts.googleapis.com/css?family=Roboto" />
         <link rel="stylesheet"
               href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
               integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
-              crossorigin="anonymous"/>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha512-oBTprMeNEKCnqfuqKd6sbvFzmFQtlXS3e0C/RGFV0hD6QzhHV+ODfaQbAlmY6/q0ubbwlAM/nCJjkrgA3waLzg==" crossorigin="anonymous"></script>
-        {% block head %} {% endblock head %}
+              crossorigin="anonymous" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+                integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+                crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.bundle.min.js"
+                integrity="sha512-HvOjJrdwNpDbkGJIG2ZNqDlVqMo77qbs4Me4cah0HoDrfhrbA+8SBlZn1KrvAQw7cILLPFJvdwIgphzQmMm+Pw=="
+                crossorigin="anonymous"></script>
+        {% block head %}
+        {% endblock head %}
     </head>
     <body>
-        <div class="navbar navbar-default navbar-fixed-top">
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
             <div class="container">
-                <div class="navbar-header">
-                    <a href="./" class="navbar-brand">newTrackon</a>
-                    <button class="navbar-toggle"
-                            type="button"
-                            data-toggle="collapse"
-                            data-target="#navbar-main">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                </div>
-                {% set navigation = [
-                ('Home', 'fa-home', '/'),
-                ('List', 'fa-list', '/list'),
-                ('Submitted', 'fa-plus', '/submitted'),
-                ('FAQ', 'fa-question-circle', '/faq'),
-                ('API', 'fa-code', '/api'),
-                ('Raw data', 'fa-terminal', '/raw'),
-                ] %}
-                <div class="navbar-collapse collapse" id="navbar-main">
-                    <ul class="nav navbar-nav">
+                <a href="./" class="navbar-brand">newTrackon</a>
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#navbar-main"
+                        aria-controls="navbar-main"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                {% set navigation = [('Home', 'fa-home', '/'), ('List', 'fa-list', '/list'), ('Submitted', 'fa-plus', '/submitted'), ('FAQ', 'fa-question-circle', '/faq'), ('API', 'fa-code', '/api'), ('Raw data', 'fa-terminal', '/raw')] %}
+                <div class="collapse navbar-collapse" id="navbar-main">
+                    <ul class="navbar-nav me-auto">
                         {% for name, icon, url in navigation %}
-                            <li class="{% if active == name %}active{% endif %}">
-                                <a href="{{ url }}">
+                            <li class="nav-item">
+                                <a class="nav-link{% if active == name %} active{% endif %}"
+                                   href="{{ url }}">
                                     <i class="fas {{ icon }}"></i>
                                     {{ name }}
                                 </a>
                             </li>
                         {% endfor %}
-                        <li>
-                            <a href="https://github.com/CorralPeltzer/newTrackon"><i class="fab fa-github" aria-hidden="true"></i> Source</a>
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://github.com/CorralPeltzer/newTrackon"><i class="fab fa-github" aria-hidden="true"></i> Source</a>
                         </li>
                     </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                        <li class="{% if active == 'About' %}active{% endif %}">
-                            <a href="/about"><i class="fas fa-user" aria-hidden="true"></i> About</a>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link{% if active == 'About' %} active{% endif %}"
+                               href="/about"><i class="fas fa-user" aria-hidden="true"></i> About</a>
                         </li>
                     </ul>
                 </div>
             </div>
-        </div>
-        {% block body %} {% endblock body %}
+        </nav>
+        {% block body %}
+        {% endblock body %}
         <footer class="footer">
             <p class="text-center">
                 A <a href="https://twitter.com/CorralPeltzer">@CorralPeltzer</a> creation based on an <a href="http://uriel.cat-v.org/">Uriel</a> project

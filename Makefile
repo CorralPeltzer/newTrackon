@@ -18,7 +18,8 @@ check: venv
 	$(UV) run ruff check && \
 	$(UV) run ruff format && \
 	$(UV) run basedpyright && \
-	$(UV) run ty check
+	$(UV) run ty check && \
+	$(UV) run djlint newTrackon/tpl/ --reformat --quiet
 
 # Run test suite with coverage
 test: venv
