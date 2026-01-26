@@ -1,10 +1,16 @@
 """Unit tests for the database module."""
 
+from __future__ import annotations
+
 import json
 import sqlite3
 from collections import deque
+from collections.abc import Generator
+from pathlib import Path
+from typing import Any
 
 import pytest
+from pytest import MonkeyPatch
 
 from newTrackon import db
 from newTrackon.tracker import Tracker
@@ -13,33 +19,33 @@ from newTrackon.tracker import Tracker
 class ConnectionWrapper:
     """Wrapper that prevents closing the underlying connection."""
 
-    def __init__(self, conn):
+    def __init__(self, conn: sqlite3.Connection) -> None:
         self._conn = conn
 
-    def cursor(self):
+    def cursor(self) -> sqlite3.Cursor:
         return self._conn.cursor()
 
-    def commit(self):
-        return self._conn.commit()
+    def commit(self) -> None:
+        self._conn.commit()
 
-    def execute(self, *args, **kwargs):
+    def execute(self, *args: Any, **kwargs: Any) -> sqlite3.Cursor:
         return self._conn.execute(*args, **kwargs)
 
-    def close(self):
+    def close(self) -> None:
         # Don't actually close - we need to reuse the connection
         pass
 
     @property
-    def row_factory(self):
+    def row_factory(self) -> Any:
         return self._conn.row_factory
 
     @row_factory.setter
-    def row_factory(self, value):
+    def row_factory(self, value: Any) -> None:
         self._conn.row_factory = value
 
 
 @pytest.fixture
-def test_db():
+def test_db() -> Generator[sqlite3.Connection]:
     """Create an in-memory database with schema for testing."""
     conn = sqlite3.connect(":memory:")
     conn.execute("""
@@ -67,11 +73,11 @@ def test_db():
 
 
 @pytest.fixture
-def patched_db(test_db, monkeypatch):
+def patched_db(test_db: sqlite3.Connection, monkeypatch: MonkeyPatch) -> sqlite3.Connection:
     """Patch sqlite3.connect to use the test database with wrapper."""
     original_connect = sqlite3.connect
 
-    def patched_connect(database, *args, **kwargs):
+    def patched_connect(database: str, *args: Any, **kwargs: Any) -> sqlite3.Connection | ConnectionWrapper:
         if database == "data/trackon.db":
             return ConnectionWrapper(test_db)
         return original_connect(database, *args, **kwargs)
@@ -81,7 +87,7 @@ def patched_db(test_db, monkeypatch):
 
 
 @pytest.fixture
-def sample_tracker_dict():
+def sample_tracker_dict() -> dict[str, Any]:
     """Return sample tracker data as a dictionary."""
     return {
         "host": "tracker.example.com",
@@ -103,7 +109,7 @@ def sample_tracker_dict():
 
 
 @pytest.fixture
-def sample_tracker_obj(sample_tracker_dict):
+def sample_tracker_obj(sample_tracker_dict: dict[str, Any]) -> Tracker:
     """Create a sample Tracker instance for testing."""
     return Tracker(
         host=sample_tracker_dict["host"],
@@ -125,7 +131,7 @@ def sample_tracker_obj(sample_tracker_dict):
 
 
 @pytest.fixture
-def inserted_sample_tracker(patched_db, sample_tracker_dict):
+def inserted_sample_tracker(patched_db: sqlite3.Connection, sample_tracker_dict: dict[str, Any]) -> dict[str, Any]:
     """Insert sample tracker into the test database."""
     patched_db.execute(
         "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -154,7 +160,7 @@ def inserted_sample_tracker(patched_db, sample_tracker_dict):
 class TestInsertNewTracker:
     """Tests for insert_new_tracker function."""
 
-    def test_insert_new_tracker_stores_data_correctly(self, patched_db, sample_tracker_obj):
+    def test_insert_new_tracker_stores_data_correctly(self, patched_db: sqlite3.Connection, sample_tracker_obj: Tracker) -> None:
         """Verify that insert_new_tracker stores all tracker data correctly."""
         db.insert_new_tracker(sample_tracker_obj)
 
@@ -174,7 +180,7 @@ class TestInsertNewTracker:
         assert row[13] == sample_tracker_obj.last_downtime
         assert row[14] == sample_tracker_obj.last_uptime
 
-    def test_insert_new_tracker_json_serializes_ips(self, patched_db, sample_tracker_obj):
+    def test_insert_new_tracker_json_serializes_ips(self, patched_db: sqlite3.Connection, sample_tracker_obj: Tracker) -> None:
         """Verify that IPs are JSON serialized when inserted."""
         db.insert_new_tracker(sample_tracker_obj)
 
@@ -185,7 +191,9 @@ class TestInsertNewTracker:
         stored_ips = json.loads(row[0])
         assert stored_ips == sample_tracker_obj.ips
 
-    def test_insert_new_tracker_json_serializes_countries(self, patched_db, sample_tracker_obj):
+    def test_insert_new_tracker_json_serializes_countries(
+        self, patched_db: sqlite3.Connection, sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that countries are JSON serialized when inserted."""
         db.insert_new_tracker(sample_tracker_obj)
 
@@ -196,7 +204,9 @@ class TestInsertNewTracker:
         stored_countries = json.loads(row[0])
         assert stored_countries == sample_tracker_obj.countries
 
-    def test_insert_new_tracker_json_serializes_country_codes(self, patched_db, sample_tracker_obj):
+    def test_insert_new_tracker_json_serializes_country_codes(
+        self, patched_db: sqlite3.Connection, sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that country codes are JSON serialized when inserted."""
         db.insert_new_tracker(sample_tracker_obj)
 
@@ -207,7 +217,9 @@ class TestInsertNewTracker:
         stored_country_codes = json.loads(row[0])
         assert stored_country_codes == sample_tracker_obj.country_codes
 
-    def test_insert_new_tracker_json_serializes_networks(self, patched_db, sample_tracker_obj):
+    def test_insert_new_tracker_json_serializes_networks(
+        self, patched_db: sqlite3.Connection, sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that networks are JSON serialized when inserted."""
         db.insert_new_tracker(sample_tracker_obj)
 
@@ -218,7 +230,9 @@ class TestInsertNewTracker:
         stored_networks = json.loads(row[0])
         assert stored_networks == sample_tracker_obj.networks
 
-    def test_insert_new_tracker_json_serializes_historic(self, patched_db, sample_tracker_obj):
+    def test_insert_new_tracker_json_serializes_historic(
+        self, patched_db: sqlite3.Connection, sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that historic deque is JSON serialized when inserted."""
         db.insert_new_tracker(sample_tracker_obj)
 
@@ -229,7 +243,7 @@ class TestInsertNewTracker:
         stored_historic = json.loads(row[0])
         assert stored_historic == list(sample_tracker_obj.historic)
 
-    def test_insert_new_tracker_with_multiple_ips(self, patched_db):
+    def test_insert_new_tracker_with_multiple_ips(self, patched_db: sqlite3.Connection) -> None:
         """Verify that multiple IPs are stored correctly."""
         tracker = Tracker(
             host="multi.example.com",
@@ -262,50 +276,66 @@ class TestInsertNewTracker:
 class TestGetAllData:
     """Tests for get_all_data function."""
 
-    def test_get_all_data_returns_tracker_objects(self, patched_db, inserted_sample_tracker):
+    def test_get_all_data_returns_tracker_objects(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any]
+    ) -> None:
         """Verify that get_all_data returns a list of Tracker objects."""
         trackers = db.get_all_data()
 
         assert len(trackers) == 1
         assert isinstance(trackers[0], Tracker)
 
-    def test_get_all_data_returns_correct_host(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_returns_correct_host(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that returned Tracker has correct host."""
         trackers = db.get_all_data()
 
         assert trackers[0].host == sample_tracker_dict["host"]
 
-    def test_get_all_data_returns_correct_url(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_returns_correct_url(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that returned Tracker has correct URL."""
         trackers = db.get_all_data()
 
         assert trackers[0].url == sample_tracker_dict["url"]
 
-    def test_get_all_data_deserializes_ips(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_deserializes_ips(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that IPs are deserialized from JSON."""
         trackers = db.get_all_data()
 
         assert trackers[0].ips == sample_tracker_dict["ips"]
 
-    def test_get_all_data_deserializes_countries(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_deserializes_countries(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that countries are deserialized from JSON."""
         trackers = db.get_all_data()
 
         assert trackers[0].countries == sample_tracker_dict["countries"]
 
-    def test_get_all_data_deserializes_country_codes(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_deserializes_country_codes(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that country codes are deserialized from JSON."""
         trackers = db.get_all_data()
 
         assert trackers[0].country_codes == sample_tracker_dict["country_codes"]
 
-    def test_get_all_data_deserializes_networks(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_deserializes_networks(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that networks are deserialized from JSON."""
         trackers = db.get_all_data()
 
         assert trackers[0].networks == sample_tracker_dict["networks"]
 
-    def test_get_all_data_deserializes_historic_as_deque(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_deserializes_historic_as_deque(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that historic is deserialized as a deque with maxlen."""
         trackers = db.get_all_data()
 
@@ -313,7 +343,9 @@ class TestGetAllData:
         assert list(trackers[0].historic) == sample_tracker_dict["historic"]
         assert trackers[0].historic.maxlen == 1000
 
-    def test_get_all_data_returns_correct_scalar_fields(self, patched_db, inserted_sample_tracker, sample_tracker_dict):
+    def test_get_all_data_returns_correct_scalar_fields(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_dict: dict[str, Any]
+    ) -> None:
         """Verify that scalar fields are returned correctly."""
         trackers = db.get_all_data()
         tracker = trackers[0]
@@ -327,13 +359,13 @@ class TestGetAllData:
         assert tracker.last_downtime == sample_tracker_dict["last_downtime"]
         assert tracker.last_uptime == sample_tracker_dict["last_uptime"]
 
-    def test_get_all_data_returns_empty_list_when_no_trackers(self, patched_db):
+    def test_get_all_data_returns_empty_list_when_no_trackers(self, patched_db: sqlite3.Connection) -> None:
         """Verify that get_all_data returns empty list when DB is empty."""
         trackers = db.get_all_data()
 
         assert trackers == []
 
-    def test_get_all_data_orders_by_uptime_descending(self, patched_db):
+    def test_get_all_data_orders_by_uptime_descending(self, patched_db: sqlite3.Connection) -> None:
         """Verify that trackers are ordered by uptime in descending order."""
         # Insert trackers with different uptimes
         for i, uptime in enumerate([50, 99, 75]):
@@ -370,7 +402,9 @@ class TestGetAllData:
 class TestUpdateTracker:
     """Tests for update_tracker function."""
 
-    def test_update_tracker_updates_url(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_url(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates the URL field."""
         sample_tracker_obj.url = "http://tracker.example.com:8080/announce"
         db.update_tracker(sample_tracker_obj)
@@ -381,7 +415,9 @@ class TestUpdateTracker:
 
         assert row[0] == "http://tracker.example.com:8080/announce"
 
-    def test_update_tracker_updates_latency(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_latency(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates latency."""
         sample_tracker_obj.latency = 200
         db.update_tracker(sample_tracker_obj)
@@ -392,7 +428,9 @@ class TestUpdateTracker:
 
         assert row[0] == 200
 
-    def test_update_tracker_updates_status(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_status(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates status."""
         sample_tracker_obj.status = 0
         db.update_tracker(sample_tracker_obj)
@@ -403,7 +441,9 @@ class TestUpdateTracker:
 
         assert row[0] == 0
 
-    def test_update_tracker_updates_uptime(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_uptime(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates uptime."""
         sample_tracker_obj.uptime = 85
         db.update_tracker(sample_tracker_obj)
@@ -414,7 +454,9 @@ class TestUpdateTracker:
 
         assert row[0] == 85
 
-    def test_update_tracker_updates_ips_with_json(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_ips_with_json(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker JSON serializes updated IPs."""
         sample_tracker_obj.ips = ["2001:db8::1", "192.168.1.1"]
         db.update_tracker(sample_tracker_obj)
@@ -426,7 +468,9 @@ class TestUpdateTracker:
         stored_ips = json.loads(row[0])
         assert stored_ips == ["2001:db8::1", "192.168.1.1"]
 
-    def test_update_tracker_updates_historic_with_json(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_historic_with_json(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker JSON serializes updated historic."""
         sample_tracker_obj.historic = deque([1, 0, 1, 0, 1], maxlen=1000)
         db.update_tracker(sample_tracker_obj)
@@ -438,7 +482,9 @@ class TestUpdateTracker:
         stored_historic = json.loads(row[0])
         assert stored_historic == [1, 0, 1, 0, 1]
 
-    def test_update_tracker_updates_countries_with_json(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_countries_with_json(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker JSON serializes updated countries."""
         sample_tracker_obj.countries = ["Germany", "France"]
         db.update_tracker(sample_tracker_obj)
@@ -450,7 +496,9 @@ class TestUpdateTracker:
         stored_countries = json.loads(row[0])
         assert stored_countries == ["Germany", "France"]
 
-    def test_update_tracker_updates_country_codes_with_json(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_country_codes_with_json(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker JSON serializes updated country codes."""
         sample_tracker_obj.country_codes = ["de", "fr"]
         db.update_tracker(sample_tracker_obj)
@@ -462,7 +510,9 @@ class TestUpdateTracker:
         stored_country_codes = json.loads(row[0])
         assert stored_country_codes == ["de", "fr"]
 
-    def test_update_tracker_updates_networks_with_json(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_networks_with_json(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker JSON serializes updated networks."""
         sample_tracker_obj.networks = ["Deutsche Telekom", "Orange"]
         db.update_tracker(sample_tracker_obj)
@@ -474,7 +524,9 @@ class TestUpdateTracker:
         stored_networks = json.loads(row[0])
         assert stored_networks == ["Deutsche Telekom", "Orange"]
 
-    def test_update_tracker_updates_last_checked(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_last_checked(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates last_checked."""
         sample_tracker_obj.last_checked = 1700001000
         db.update_tracker(sample_tracker_obj)
@@ -485,7 +537,9 @@ class TestUpdateTracker:
 
         assert row[0] == 1700001000
 
-    def test_update_tracker_updates_interval(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_interval(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates interval."""
         sample_tracker_obj.interval = 3600
         db.update_tracker(sample_tracker_obj)
@@ -496,7 +550,9 @@ class TestUpdateTracker:
 
         assert row[0] == 3600
 
-    def test_update_tracker_updates_last_downtime(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_last_downtime(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates last_downtime."""
         sample_tracker_obj.last_downtime = 1700000500
         db.update_tracker(sample_tracker_obj)
@@ -507,7 +563,9 @@ class TestUpdateTracker:
 
         assert row[0] == 1700000500
 
-    def test_update_tracker_updates_last_uptime(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_tracker_updates_last_uptime(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that update_tracker updates last_uptime."""
         sample_tracker_obj.last_uptime = 1700000999
         db.update_tracker(sample_tracker_obj)
@@ -522,7 +580,9 @@ class TestUpdateTracker:
 class TestDeleteTracker:
     """Tests for delete_tracker function."""
 
-    def test_delete_tracker_removes_tracker(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_delete_tracker_removes_tracker(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that delete_tracker removes the tracker from DB."""
         db.delete_tracker(sample_tracker_obj)
 
@@ -532,7 +592,7 @@ class TestDeleteTracker:
 
         assert row is None
 
-    def test_delete_tracker_only_removes_specified_tracker(self, patched_db):
+    def test_delete_tracker_only_removes_specified_tracker(self, patched_db: sqlite3.Connection) -> None:
         """Verify that delete_tracker only removes the specified tracker."""
         # Insert two trackers
         for i in range(2):
@@ -585,7 +645,9 @@ class TestDeleteTracker:
         assert len(rows) == 1
         assert rows[0][0] == "tracker1.example.com"
 
-    def test_delete_tracker_no_error_for_nonexistent_tracker(self, patched_db, sample_tracker_obj):
+    def test_delete_tracker_no_error_for_nonexistent_tracker(
+        self, patched_db: sqlite3.Connection, sample_tracker_obj: Tracker
+    ) -> None:
         """Verify that delete_tracker doesn't raise error for nonexistent tracker."""
         # Should not raise an exception
         db.delete_tracker(sample_tracker_obj)
@@ -595,7 +657,7 @@ class TestGetApiData:
     """Tests for get_api_data function."""
 
     @pytest.fixture
-    def populated_db(self, patched_db):
+    def populated_db(self, patched_db: sqlite3.Connection) -> sqlite3.Connection:
         """Populate DB with various trackers for API tests."""
         trackers = [
             # HTTP tracker with high uptime
@@ -697,7 +759,7 @@ class TestGetApiData:
         patched_db.commit()
         return patched_db
 
-    def test_get_api_data_http_returns_http_and_https_trackers(self, populated_db):
+    def test_get_api_data_http_returns_http_and_https_trackers(self, populated_db: sqlite3.Connection) -> None:
         """Verify /api/http returns HTTP and HTTPS trackers with uptime >= 95."""
         result = db.get_api_data("/api/http")
 
@@ -706,7 +768,7 @@ class TestGetApiData:
         assert "udp://udp.example.com:6969/announce" not in result
         assert "http://down.example.com:8080/announce" not in result
 
-    def test_get_api_data_udp_returns_udp_trackers(self, populated_db):
+    def test_get_api_data_udp_returns_udp_trackers(self, populated_db: sqlite3.Connection) -> None:
         """Verify /api/udp returns only UDP trackers with uptime >= 95."""
         result = db.get_api_data("/api/udp")
 
@@ -716,7 +778,7 @@ class TestGetApiData:
         # Low uptime UDP tracker should not be included
         assert "udp://udp-low.example.com:6969/announce" not in result
 
-    def test_get_api_data_live_returns_all_live_trackers(self, populated_db):
+    def test_get_api_data_live_returns_all_live_trackers(self, populated_db: sqlite3.Connection) -> None:
         """Verify /api/live returns all trackers with status=1."""
         result = db.get_api_data("/api/live")
 
@@ -728,7 +790,7 @@ class TestGetApiData:
         # Down tracker should not be included
         assert "http://down.example.com:8080/announce" not in result
 
-    def test_get_api_data_percentage_returns_trackers_above_threshold(self, populated_db):
+    def test_get_api_data_percentage_returns_trackers_above_threshold(self, populated_db: sqlite3.Connection) -> None:
         """Verify percentage query returns trackers with uptime >= threshold."""
         result = db.get_api_data("percentage", uptime=80)
 
@@ -740,7 +802,7 @@ class TestGetApiData:
         assert "udp://udp-low.example.com:6969/announce" not in result
         assert "http://down.example.com:8080/announce" not in result
 
-    def test_get_api_data_percentage_zero_returns_all_trackers(self, populated_db):
+    def test_get_api_data_percentage_zero_returns_all_trackers(self, populated_db: sqlite3.Connection) -> None:
         """Verify percentage query with 0 returns all trackers."""
         result = db.get_api_data("percentage", uptime=0)
 
@@ -750,7 +812,7 @@ class TestGetApiData:
         assert "udp://udp-low.example.com:6969/announce" in result
         assert "http://down.example.com:8080/announce" in result
 
-    def test_get_api_data_returns_formatted_string(self, populated_db):
+    def test_get_api_data_returns_formatted_string(self, populated_db: sqlite3.Connection) -> None:
         """Verify get_api_data returns properly formatted string."""
         result = db.get_api_data("/api/live")
 
@@ -760,7 +822,7 @@ class TestGetApiData:
         urls = [line for line in lines if line.strip()]
         assert len(urls) == 4  # 4 live trackers
 
-    def test_get_api_data_orders_by_uptime_descending(self, populated_db):
+    def test_get_api_data_orders_by_uptime_descending(self, populated_db: sqlite3.Connection) -> None:
         """Verify results are ordered by uptime in descending order."""
         result = db.get_api_data("/api/live")
 
@@ -768,7 +830,7 @@ class TestGetApiData:
         # First result should be the highest uptime tracker
         assert lines[0] == "http://http.example.com:8080/announce"  # 98%
 
-    def test_get_api_data_exclude_ipv4_only(self, patched_db):
+    def test_get_api_data_exclude_ipv4_only(self, patched_db: sqlite3.Connection) -> None:
         """Verify include_ipv4_only=False filters out IPv4-only trackers."""
         # Insert tracker with only IPv4
         patched_db.execute(
@@ -819,7 +881,7 @@ class TestGetApiData:
         assert "udp://ipv4only.example.com:6969/announce" not in result
         assert "udp://dualstack.example.com:6969/announce" in result
 
-    def test_get_api_data_exclude_ipv6_only(self, patched_db):
+    def test_get_api_data_exclude_ipv6_only(self, patched_db: sqlite3.Connection) -> None:
         """Verify include_ipv6_only=False filters out IPv6-only trackers."""
         # Insert tracker with only IPv6
         patched_db.execute(
@@ -870,7 +932,7 @@ class TestGetApiData:
         assert "udp://ipv6only.example.com:6969/announce" not in result
         assert "udp://dualstack.example.com:6969/announce" in result
 
-    def test_get_api_data_empty_database(self, patched_db):
+    def test_get_api_data_empty_database(self, patched_db: sqlite3.Connection) -> None:
         """Verify get_api_data returns empty string for empty database."""
         result = db.get_api_data("/api/live")
 
@@ -880,7 +942,7 @@ class TestGetApiData:
 class TestJsonSerializationDeserialization:
     """Tests for JSON serialization/deserialization of list fields."""
 
-    def test_roundtrip_empty_lists(self, patched_db):
+    def test_roundtrip_empty_lists(self, patched_db: sqlite3.Connection) -> None:
         """Verify empty lists are properly serialized and deserialized."""
         tracker = Tracker(
             host="empty.example.com",
@@ -909,7 +971,7 @@ class TestJsonSerializationDeserialization:
         assert trackers[0].networks == []
         assert list(trackers[0].historic) == []
 
-    def test_roundtrip_special_characters_in_strings(self, patched_db):
+    def test_roundtrip_special_characters_in_strings(self, patched_db: sqlite3.Connection) -> None:
         """Verify strings with special characters are properly handled."""
         tracker = Tracker(
             host="special.example.com",
@@ -938,7 +1000,7 @@ class TestJsonSerializationDeserialization:
             'ISP with "double quotes"',
         ]
 
-    def test_roundtrip_unicode_characters(self, patched_db):
+    def test_roundtrip_unicode_characters(self, patched_db: sqlite3.Connection) -> None:
         """Verify Unicode characters are properly handled."""
         tracker = Tracker(
             host="unicode.example.com",
@@ -963,7 +1025,7 @@ class TestJsonSerializationDeserialization:
 
         assert trackers[0].countries == ["Deutschland", "Espana", "Nippon"]
 
-    def test_roundtrip_large_historic_deque(self, patched_db):
+    def test_roundtrip_large_historic_deque(self, patched_db: sqlite3.Connection) -> None:
         """Verify large historic deques are properly handled."""
         large_historic = [1] * 500 + [0] * 500
         tracker = Tracker(
@@ -990,7 +1052,7 @@ class TestJsonSerializationDeserialization:
         assert list(trackers[0].historic) == large_historic
         assert len(trackers[0].historic) == 1000
 
-    def test_roundtrip_multiple_ipv4_and_ipv6(self, patched_db):
+    def test_roundtrip_multiple_ipv4_and_ipv6(self, patched_db: sqlite3.Connection) -> None:
         """Verify multiple mixed IP addresses are properly handled."""
         mixed_ips = [
             "2001:db8::1",
@@ -1025,7 +1087,9 @@ class TestJsonSerializationDeserialization:
         assert len(trackers[0].countries) == 4
         assert len(trackers[0].networks) == 4
 
-    def test_update_preserves_json_structure(self, patched_db, inserted_sample_tracker, sample_tracker_obj):
+    def test_update_preserves_json_structure(
+        self, patched_db: sqlite3.Connection, inserted_sample_tracker: dict[str, Any], sample_tracker_obj: Tracker
+    ) -> None:
         """Verify update_tracker preserves JSON structure for list fields."""
         # Update with new list values
         sample_tracker_obj.ips = ["8.8.8.8", "8.8.4.4"]
@@ -1047,7 +1111,7 @@ class TestJsonSerializationDeserialization:
 class TestDatabaseCreation:
     """Tests for database creation functions."""
 
-    def test_create_db_creates_file(self, tmp_path, monkeypatch):
+    def test_create_db_creates_file(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         """Test that create_db creates the database file."""
         db_path = tmp_path / "data" / "trackon.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1058,7 +1122,7 @@ class TestDatabaseCreation:
 
         assert db_path.exists()
 
-    def test_create_db_creates_status_table(self, tmp_path, monkeypatch):
+    def test_create_db_creates_status_table(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         """Test that create_db creates the status table with correct schema."""
         db_path = tmp_path / "data" / "trackon.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1093,7 +1157,7 @@ class TestDatabaseCreation:
         }
         assert columns == expected_columns
 
-    def test_create_db_host_is_primary_key(self, tmp_path, monkeypatch):
+    def test_create_db_host_is_primary_key(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         """Test that host column is the primary key."""
         db_path = tmp_path / "data" / "trackon.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1111,7 +1175,7 @@ class TestDatabaseCreation:
 
         assert pk_columns == ["host"]
 
-    def test_ensure_db_existence_creates_db_when_missing(self, tmp_path, monkeypatch):
+    def test_ensure_db_existence_creates_db_when_missing(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         """Test that ensure_db_existence calls create_db when file doesn't exist."""
         db_path = tmp_path / "data" / "trackon.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1124,7 +1188,7 @@ class TestDatabaseCreation:
 
         assert db_path.exists()
 
-    def test_ensure_db_existence_does_not_recreate_existing_db(self, tmp_path, monkeypatch):
+    def test_ensure_db_existence_does_not_recreate_existing_db(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         """Test that ensure_db_existence doesn't recreate an existing database."""
         db_path = tmp_path / "data" / "trackon.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)

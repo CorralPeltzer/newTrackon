@@ -1,10 +1,21 @@
+import sqlite3
 import sys
 from collections.abc import Sequence
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from time import time
+from typing import TYPE_CHECKING
 from urllib.parse import ParseResult
 
 from flask import Response
+
+if TYPE_CHECKING:
+    from newTrackon.tracker import Tracker
+
+# Type alias for BEP34 protocol preferences: (protocol, port)
+ProtocolPref = tuple[str, int]
+
+# Type alias for tracker URL with its IP addresses
+TrackerEndpoint = tuple[str, list[str]]
 
 
 def add_api_headers(resp: Response) -> Response:
@@ -13,14 +24,14 @@ def add_api_headers(resp: Response) -> Response:
     return resp
 
 
-def dict_factory(cursor, row):
-    d = {}
+def dict_factory(cursor: sqlite3.Cursor, row: sqlite3.Row) -> dict[str, object]:
+    d: dict[str, object] = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
 
 
-def format_uptime_and_downtime_time(trackers_unprocessed):
+def format_uptime_and_downtime_time(trackers_unprocessed: list[Tracker]) -> list[Tracker]:
     for tracker in trackers_unprocessed:
         if tracker.status == 1:
             tracker.status_epoch = tracker.last_downtime
@@ -79,13 +90,13 @@ def format_time(last_time: int | float) -> str:
         return str(years) + " years"
 
 
-def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: int) -> list[tuple[str, list[str]]]:
+def remove_ipvx_only_trackers(raw_list: list[TrackerEndpoint], version: int) -> list[TrackerEndpoint]:
     ip_type_to_keep: type[IPv4Address | IPv6Address]
     if version == 6:
         ip_type_to_keep = IPv4Address
     else:
         ip_type_to_keep = IPv6Address
-    cleaned_list: list[tuple[str, list[str]]] = []
+    cleaned_list: list[TrackerEndpoint] = []
     for url, ips_list in raw_list:
         if ips_list:
             ips_parsed = [ip_address(ip) for ip in ips_list]
@@ -94,7 +105,7 @@ def remove_ipvx_only_trackers(raw_list: list[tuple[str, list[str]]], version: in
     return cleaned_list
 
 
-def format_list(raw_list: Sequence[tuple[str, list[str]]]) -> str:
+def format_list(raw_list: Sequence[TrackerEndpoint]) -> str:
     formatted_list = ""
     for url in raw_list:
         url_string = url[0]
@@ -102,9 +113,9 @@ def format_list(raw_list: Sequence[tuple[str, list[str]]]) -> str:
     return formatted_list
 
 
-def process_txt_prefs(txt_record: str) -> list[tuple[str, int]]:
+def process_txt_prefs(txt_record: str) -> list[ProtocolPref]:
     words = txt_record.split()
-    txt_preferences: list[tuple[str, int]] = []
+    txt_preferences: list[ProtocolPref] = []
     for word in words[1:11]:  # Get only the first 10 advertised trackers to avoid DoS
         if word.startswith("UDP:") and word[4:].isdigit():
             txt_preferences.append(("udp", int(word[4:])))

@@ -4,7 +4,7 @@ from collections import deque
 from os import path
 
 from newTrackon.tracker import Tracker
-from newTrackon.utils import dict_factory, format_list, remove_ipvx_only_trackers
+from newTrackon.utils import TrackerEndpoint, dict_factory, format_list, remove_ipvx_only_trackers
 
 db_file = "data/trackon.db"
 
@@ -55,7 +55,7 @@ def update_tracker(tracker: Tracker) -> None:
             tracker.status,
             tracker.interval,
             tracker.uptime,
-            json.dumps(list(tracker.historic)),
+            json.dumps(list(tracker.historic) if tracker.historic else []),
             json.dumps(tracker.countries),
             json.dumps(tracker.country_codes),
             json.dumps(tracker.networks),
@@ -83,7 +83,7 @@ def get_all_data() -> list[Tracker]:
     conn = sqlite3.connect(db_file)
     conn.row_factory = dict_factory
     c = conn.cursor()
-    trackers_from_db = []
+    trackers_from_db: list[Tracker] = []
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
         tracker_in_db = Tracker(
             host=row.get("host"),
@@ -121,10 +121,10 @@ def get_api_data(query: str, uptime: int = 0, include_ipv4_only: bool = True, in
             "SELECT URL, IP FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC",
             (uptime,),
         )
-    urls_and_ips = c.fetchall()
+    raw_rows = c.fetchall()
     conn.close()
 
-    urls_and_ips = [(url, json.loads(ips)) for url, ips in urls_and_ips]
+    urls_and_ips: list[TrackerEndpoint] = [(url, json.loads(ips)) for url, ips in raw_rows]
 
     if not include_ipv4_only:
         urls_and_ips = remove_ipvx_only_trackers(urls_and_ips, version=4)
@@ -153,7 +153,7 @@ def insert_new_tracker(tracker: Tracker) -> None:
             json.dumps(tracker.country_codes),
             json.dumps(tracker.networks),
             tracker.added,
-            json.dumps(list(tracker.historic)),
+            json.dumps(list(tracker.historic) if tracker.historic else []),
             tracker.last_downtime,
             tracker.last_uptime,
         ),

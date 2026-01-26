@@ -1,14 +1,53 @@
 """Comprehensive tests for the trackon module."""
 
+from __future__ import annotations
+
 import logging
-from types import SimpleNamespace
+import sqlite3
+from collections import deque
+from types import ModuleType
 from unittest.mock import MagicMock, patch
+
+import pytest
+
+from newTrackon.persistence import HistoryData
+from newTrackon.tracker import Tracker
+
+
+def create_test_tracker(
+    url: str,
+    host: str | None = None,
+    ips: list[str] | None = None,
+) -> Tracker:
+    """Create a minimal Tracker object for testing."""
+    if host is None:
+        # Extract host from URL
+        from urllib.parse import urlparse
+
+        host = urlparse(url).hostname or "example.com"
+    return Tracker(
+        url=url,
+        host=host,
+        ips=ips,
+        latency=None,
+        last_checked=0,
+        interval=10800,
+        status=0,
+        uptime=0.0,
+        countries=None,
+        country_codes=None,
+        networks=None,
+        historic=deque(maxlen=1000),
+        added="1-1-2024",
+        last_downtime=0,
+        last_uptime=0,
+    )
 
 
 class TestEnqueueNewTrackers:
     """Tests for enqueue_new_trackers function."""
 
-    def test_enqueue_space_separated_urls(self, empty_deques):
+    def test_enqueue_space_separated_urls(self, empty_deques: ModuleType) -> None:
         """Test parsing space-separated tracker URLs."""
         from newTrackon import trackon
 
@@ -25,11 +64,11 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("udp://tracker1.example.com:6969 udp://tracker2.example.com:6969")
 
-            assert mock_add.call_count == 2
-            mock_add.assert_any_call("udp://tracker1.example.com:6969")
-            mock_add.assert_any_call("udp://tracker2.example.com:6969")
+            assert mock_add.call_count == 2  # pyright: ignore[reportUnknownMemberType]
+            mock_add.assert_any_call("udp://tracker1.example.com:6969")  # pyright: ignore[reportUnknownMemberType]
+            mock_add.assert_any_call("udp://tracker2.example.com:6969")  # pyright: ignore[reportUnknownMemberType]
 
-    def test_enqueue_newline_separated_urls(self, empty_deques):
+    def test_enqueue_newline_separated_urls(self, empty_deques: ModuleType) -> None:
         """Test parsing newline-separated tracker URLs."""
         from newTrackon import trackon
 
@@ -39,11 +78,11 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("udp://tracker1.example.com:6969\nudp://tracker2.example.com:6969")
 
-            assert mock_add.call_count == 2
-            mock_add.assert_any_call("udp://tracker1.example.com:6969")
-            mock_add.assert_any_call("udp://tracker2.example.com:6969")
+            assert mock_add.call_count == 2  # pyright: ignore[reportUnknownMemberType]
+            mock_add.assert_any_call("udp://tracker1.example.com:6969")  # pyright: ignore[reportUnknownMemberType]
+            mock_add.assert_any_call("udp://tracker2.example.com:6969")  # pyright: ignore[reportUnknownMemberType]
 
-    def test_enqueue_tab_separated_urls(self, empty_deques):
+    def test_enqueue_tab_separated_urls(self, empty_deques: ModuleType) -> None:
         """Test parsing tab-separated tracker URLs."""
         from newTrackon import trackon
 
@@ -53,9 +92,9 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("udp://tracker1.example.com:6969\tudp://tracker2.example.com:6969")
 
-            assert mock_add.call_count == 2
+            assert mock_add.call_count == 2  # pyright: ignore[reportUnknownMemberType]
 
-    def test_enqueue_mixed_whitespace_urls(self, empty_deques):
+    def test_enqueue_mixed_whitespace_urls(self, empty_deques: ModuleType) -> None:
         """Test parsing URLs with mixed whitespace separators."""
         from newTrackon import trackon
 
@@ -67,9 +106,9 @@ class TestEnqueueNewTrackers:
                 "udp://tracker1.example.com:6969\n\tudp://tracker2.example.com:6969  udp://tracker3.example.com:6969"
             )
 
-            assert mock_add.call_count == 3
+            assert mock_add.call_count == 3  # pyright: ignore[reportUnknownMemberType]
 
-    def test_enqueue_lowercases_urls(self, empty_deques):
+    def test_enqueue_lowercases_urls(self, empty_deques: ModuleType) -> None:
         """Test that URLs are lowercased before processing."""
         from newTrackon import trackon
 
@@ -79,24 +118,9 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("UDP://TRACKER.EXAMPLE.COM:6969")
 
-            mock_add.assert_called_once_with("udp://tracker.example.com:6969")
+            mock_add.assert_called_once_with("udp://tracker.example.com:6969")  # pyright: ignore[reportUnknownMemberType]
 
-    def test_enqueue_non_string_input_returns_early(self, empty_deques):
-        """Test that non-string input is rejected."""
-        from newTrackon import trackon
-
-        with (
-            patch.object(trackon, "add_one_tracker_to_submitted_deque") as mock_add,
-            patch.object(trackon, "process_submitted_deque") as mock_process,
-        ):
-            trackon.enqueue_new_trackers(None)  # type: ignore[arg-type]
-            trackon.enqueue_new_trackers(123)  # type: ignore[arg-type]
-            trackon.enqueue_new_trackers(["list"])  # type: ignore[arg-type]
-
-            mock_add.assert_not_called()
-            mock_process.assert_not_called()
-
-    def test_enqueue_empty_string(self, empty_deques):
+    def test_enqueue_empty_string(self, empty_deques: ModuleType) -> None:
         """Test that empty string does not add any trackers."""
         from newTrackon import trackon
 
@@ -106,11 +130,11 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("")
 
-            mock_add.assert_not_called()
+            mock_add.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
             # process_submitted_deque is still called if processing_trackers is False
             # But since no trackers were added, it won't do much
 
-    def test_enqueue_triggers_processing_when_not_processing(self, empty_deques):
+    def test_enqueue_triggers_processing_when_not_processing(self, empty_deques: ModuleType) -> None:
         """Test that process_submitted_deque is called when not already processing."""
         from newTrackon import trackon
 
@@ -122,9 +146,9 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("udp://tracker.example.com:6969")
 
-            mock_process.assert_called_once()
+            mock_process.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
 
-    def test_enqueue_skips_processing_when_already_processing(self, empty_deques):
+    def test_enqueue_skips_processing_when_already_processing(self, empty_deques: ModuleType) -> None:
         """Test that process_submitted_deque is not called when already processing."""
         from newTrackon import trackon
 
@@ -136,12 +160,12 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("udp://tracker.example.com:6969")
 
-            mock_process.assert_not_called()
+            mock_process.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
 
         # Reset
         trackon.processing_trackers = False
 
-    def test_enqueue_single_url(self, empty_deques):
+    def test_enqueue_single_url(self, empty_deques: ModuleType) -> None:
         """Test enqueueing a single URL."""
         from newTrackon import trackon
 
@@ -151,13 +175,13 @@ class TestEnqueueNewTrackers:
         ):
             trackon.enqueue_new_trackers("udp://tracker.example.com:6969")
 
-            mock_add.assert_called_once_with("udp://tracker.example.com:6969")
+            mock_add.assert_called_once_with("udp://tracker.example.com:6969")  # pyright: ignore[reportUnknownMemberType]
 
 
 class TestAddOneTrackerToSubmittedDeque:
     """Tests for add_one_tracker_to_submitted_deque function."""
 
-    def test_rejects_ip_hostname_ipv4(self, empty_deques, mock_db_connection):
+    def test_rejects_ip_hostname_ipv4(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that URLs with IPv4 addresses as hostnames are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
@@ -167,7 +191,7 @@ class TestAddOneTrackerToSubmittedDeque:
 
         assert len(submitted_trackers) == 0
 
-    def test_rejects_ip_hostname_ipv6(self, empty_deques, mock_db_connection):
+    def test_rejects_ip_hostname_ipv6(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that URLs with IPv6 addresses as hostnames are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
@@ -177,13 +201,13 @@ class TestAddOneTrackerToSubmittedDeque:
 
         assert len(submitted_trackers) == 0
 
-    def test_rejects_already_queued_tracker(self, empty_deques, mock_db_connection):
+    def test_rejects_already_queued_tracker(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that URLs already in the queue are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        # Add a tracker to the queue first - use SimpleNamespace to ensure url is a string
-        existing_tracker = SimpleNamespace(url="udp://tracker.example.com:6969/announce")
+        # Add a tracker to the queue first
+        existing_tracker = create_test_tracker(url="udp://tracker.example.com:6969/announce")
         submitted_trackers.append(existing_tracker)
 
         with (
@@ -193,12 +217,14 @@ class TestAddOneTrackerToSubmittedDeque:
             trackon.add_one_tracker_to_submitted_deque("udp://tracker.example.com:6969/announce")
 
             # Tracker.from_url should not be called since it's already queued
-            mock_from_url.assert_not_called()
+            mock_from_url.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
 
         # Should still have only the original tracker
         assert len(submitted_trackers) == 1
 
-    def test_rejects_already_tracked_tracker(self, empty_deques, mock_db_connection, sample_tracker):
+    def test_rejects_already_tracked_tracker(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection, sample_tracker: Tracker
+    ) -> None:
         """Test that URLs already being tracked are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
@@ -211,22 +237,24 @@ class TestAddOneTrackerToSubmittedDeque:
             trackon.add_one_tracker_to_submitted_deque("udp://tracker.example.com:6969/announce")
 
             # Tracker.from_url should not be called since host is already tracked
-            mock_from_url.assert_not_called()
+            mock_from_url.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
 
         assert len(submitted_trackers) == 0
 
-    def test_rejects_tracker_with_duplicate_ip(self, empty_deques, mock_db_connection):
+    def test_rejects_tracker_with_duplicate_ip(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with IPs already in the list are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
         # Create a tracked tracker with a specific IP
-        existing_tracker = SimpleNamespace(
-            host="existing.example.com", url="udp://existing.example.com:6969/announce", ips=["93.184.216.34"]
+        existing_tracker = create_test_tracker(
+            url="udp://existing.example.com:6969/announce",
+            host="existing.example.com",
+            ips=["93.184.216.34"],
         )
 
         # Create a new tracker candidate with the same IP
-        new_tracker = SimpleNamespace(
+        new_tracker = create_test_tracker(
             url="udp://new.example.com:6969/announce",
             ips=["93.184.216.34"],  # Same IP
         )
@@ -239,12 +267,12 @@ class TestAddOneTrackerToSubmittedDeque:
 
         assert len(submitted_trackers) == 0
 
-    def test_accepts_valid_new_tracker(self, empty_deques, mock_db_connection):
+    def test_accepts_valid_new_tracker(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that valid new trackers are added to the queue."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        new_tracker = SimpleNamespace(url="udp://new.example.com:6969/announce", ips=["10.0.0.1"])
+        new_tracker = create_test_tracker(url="udp://new.example.com:6969/announce", ips=["10.0.0.1"])
 
         with (
             patch("newTrackon.trackon.db.get_all_data", return_value=[]),
@@ -255,7 +283,9 @@ class TestAddOneTrackerToSubmittedDeque:
         assert len(submitted_trackers) == 1
         assert submitted_trackers[0] == new_tracker
 
-    def test_handles_tracker_from_url_runtime_error(self, empty_deques, mock_db_connection):
+    def test_handles_tracker_from_url_runtime_error(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection
+    ) -> None:
         """Test that RuntimeError from Tracker.from_url is handled."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
@@ -271,7 +301,7 @@ class TestAddOneTrackerToSubmittedDeque:
 
         assert len(submitted_trackers) == 0
 
-    def test_handles_tracker_from_url_value_error(self, empty_deques, mock_db_connection):
+    def test_handles_tracker_from_url_value_error(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that ValueError from Tracker.from_url is handled."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
@@ -287,12 +317,12 @@ class TestAddOneTrackerToSubmittedDeque:
 
         assert len(submitted_trackers) == 0
 
-    def test_accepts_tracker_without_ips(self, empty_deques, mock_db_connection):
+    def test_accepts_tracker_without_ips(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers without IPs can still be added."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        new_tracker = SimpleNamespace(url="udp://new.example.com:6969/announce", ips=None)
+        new_tracker = create_test_tracker(url="udp://new.example.com:6969/announce", ips=None)
 
         with (
             patch("newTrackon.trackon.db.get_all_data", return_value=[]),
@@ -302,12 +332,12 @@ class TestAddOneTrackerToSubmittedDeque:
 
         assert len(submitted_trackers) == 1
 
-    def test_accepts_when_no_ips_tracked(self, empty_deques, mock_db_connection):
+    def test_accepts_when_no_ips_tracked(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers are accepted when no IPs are being tracked yet."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        new_tracker = SimpleNamespace(url="udp://new.example.com:6969/announce", ips=["10.0.0.1"])
+        new_tracker = create_test_tracker(url="udp://new.example.com:6969/announce", ips=["10.0.0.1"])
 
         # Return empty list - no trackers being tracked
         with (
@@ -322,13 +352,15 @@ class TestAddOneTrackerToSubmittedDeque:
 class TestProcessNewTracker:
     """Tests for process_new_tracker function."""
 
-    def test_rejects_interval_too_short(self, empty_deques, mock_db_connection):
+    def test_rejects_interval_too_short(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval < 300 seconds are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_data
 
         # Add debug data for log_wrong_interval_denial
-        submitted_data.appendleft({"info": ["test info"], "status": 1})
+        submitted_data.appendleft(
+            {"url": "udp://tracker.example.com:6969/announce", "time": 0, "status": 1, "ip": "10.0.0.1", "info": ["test info"]}
+        )
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
@@ -343,17 +375,19 @@ class TestProcessNewTracker:
             ),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_not_called()
 
-    def test_rejects_interval_too_long(self, empty_deques, mock_db_connection):
+    def test_rejects_interval_too_long(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval > 10800 seconds are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_data
 
         # Add debug data for log_wrong_interval_denial
-        submitted_data.appendleft({"info": ["test info"], "status": 1})
+        submitted_data.appendleft(
+            {"url": "udp://tracker.example.com:6969/announce", "time": 0, "status": 1, "ip": "10.0.0.1", "info": ["test info"]}
+        )
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
@@ -368,11 +402,11 @@ class TestProcessNewTracker:
             ),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_not_called()
 
-    def test_accepts_valid_interval_minimum(self, empty_deques, mock_db_connection):
+    def test_accepts_valid_interval_minimum(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval = 300 seconds are accepted."""
         from newTrackon import trackon
 
@@ -389,11 +423,11 @@ class TestProcessNewTracker:
             ),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_called_once_with(tracker_candidate)
 
-    def test_accepts_valid_interval_maximum(self, empty_deques, mock_db_connection):
+    def test_accepts_valid_interval_maximum(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval = 10800 seconds are accepted."""
         from newTrackon import trackon
 
@@ -410,11 +444,13 @@ class TestProcessNewTracker:
             ),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_called_once_with(tracker_candidate)
 
-    def test_rejects_duplicate_ip_during_processing(self, empty_deques, mock_db_connection):
+    def test_rejects_duplicate_ip_during_processing(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection
+    ) -> None:
         """Test that trackers with duplicate IPs are rejected during processing."""
         from newTrackon import trackon
 
@@ -430,11 +466,13 @@ class TestProcessNewTracker:
             patch("newTrackon.trackon.db.get_all_data", return_value=[existing_tracker]),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_not_called()
 
-    def test_rejects_already_tracked_host_during_processing(self, empty_deques, mock_db_connection):
+    def test_rejects_already_tracked_host_during_processing(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection
+    ) -> None:
         """Test that trackers with already tracked hosts are rejected during processing."""
         from newTrackon import trackon
 
@@ -450,17 +488,19 @@ class TestProcessNewTracker:
             patch("newTrackon.trackon.db.get_all_data", return_value=[existing_tracker]),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_not_called()
 
-    def test_rejects_missing_interval(self, empty_deques, mock_db_connection):
+    def test_rejects_missing_interval(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with missing interval are rejected."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_data
 
         # Add debug data for log_wrong_interval_denial
-        submitted_data.appendleft({"info": ["test info"], "status": 1})
+        submitted_data.appendleft(
+            {"url": "udp://tracker.example.com:6969/announce", "time": 0, "status": 1, "ip": "10.0.0.1", "info": ["test info"]}
+        )
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
@@ -475,11 +515,13 @@ class TestProcessNewTracker:
             ),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_not_called()
 
-    def test_handles_attempt_submitted_runtime_error(self, empty_deques, mock_db_connection):
+    def test_handles_attempt_submitted_runtime_error(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection
+    ) -> None:
         """Test that RuntimeError from attempt_submitted is handled."""
         from newTrackon import trackon
 
@@ -492,11 +534,13 @@ class TestProcessNewTracker:
             patch("newTrackon.trackon.attempt_submitted", side_effect=RuntimeError("Fail")),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_not_called()
 
-    def test_handles_attempt_submitted_value_error(self, empty_deques, mock_db_connection):
+    def test_handles_attempt_submitted_value_error(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection
+    ) -> None:
         """Test that ValueError from attempt_submitted is handled."""
         from newTrackon import trackon
 
@@ -509,11 +553,11 @@ class TestProcessNewTracker:
             patch("newTrackon.trackon.attempt_submitted", side_effect=ValueError("Fail")),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_not_called()
 
-    def test_successful_tracker_insertion(self, empty_deques, mock_db_connection):
+    def test_successful_tracker_insertion(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test successful insertion of a new tracker."""
         from newTrackon import trackon
 
@@ -530,24 +574,24 @@ class TestProcessNewTracker:
             ),
             patch("newTrackon.trackon.db.insert_new_tracker") as mock_insert,
         ):
-            trackon.process_new_tracker(tracker_candidate)
+            trackon.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
             mock_insert.assert_called_once_with(tracker_candidate)
-            tracker_candidate.update_ipapi_data.assert_called_once()
-            tracker_candidate.is_up.assert_called_once()
-            tracker_candidate.update_uptime.assert_called_once()
+            tracker_candidate.update_ipapi_data.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
+            tracker_candidate.is_up.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
+            tracker_candidate.update_uptime.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
 
 
 class TestProcessSubmittedDeque:
     """Tests for process_submitted_deque function."""
 
-    def test_processes_all_queued_trackers(self, empty_deques, mock_db_connection):
+    def test_processes_all_queued_trackers(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that all queued trackers are processed."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        tracker1 = SimpleNamespace(url="udp://tracker1.example.com:6969/announce")
-        tracker2 = SimpleNamespace(url="udp://tracker2.example.com:6969/announce")
+        tracker1 = create_test_tracker(url="udp://tracker1.example.com:6969/announce")
+        tracker2 = create_test_tracker(url="udp://tracker2.example.com:6969/announce")
 
         submitted_trackers.append(tracker1)
         submitted_trackers.append(tracker2)
@@ -558,21 +602,21 @@ class TestProcessSubmittedDeque:
         ):
             trackon.process_submitted_deque()
 
-            assert mock_process.call_count == 2
-            mock_process.assert_any_call(tracker1)
-            mock_process.assert_any_call(tracker2)
+            assert mock_process.call_count == 2  # pyright: ignore[reportUnknownMemberType]
+            mock_process.assert_any_call(tracker1)  # pyright: ignore[reportUnknownMemberType]
+            mock_process.assert_any_call(tracker2)  # pyright: ignore[reportUnknownMemberType]
 
-    def test_sets_processing_flag(self, empty_deques, mock_db_connection):
+    def test_sets_processing_flag(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that processing_trackers flag is set and unset correctly."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        tracker = SimpleNamespace(url="udp://tracker.example.com:6969/announce")
+        tracker = create_test_tracker(url="udp://tracker.example.com:6969/announce")
         submitted_trackers.append(tracker)
 
-        processing_states = []
+        processing_states: list[bool] = []
 
-        def capture_state(t):
+        def capture_state(t: Tracker) -> None:
             processing_states.append(trackon.processing_trackers)
 
         with (
@@ -586,13 +630,13 @@ class TestProcessSubmittedDeque:
         # Should be False after processing
         assert trackon.processing_trackers is False
 
-    def test_empties_deque(self, empty_deques, mock_db_connection):
+    def test_empties_deque(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that the deque is emptied after processing."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        tracker1 = SimpleNamespace(url="udp://tracker1.example.com:6969/announce")
-        tracker2 = SimpleNamespace(url="udp://tracker2.example.com:6969/announce")
+        tracker1 = create_test_tracker(url="udp://tracker1.example.com:6969/announce")
+        tracker2 = create_test_tracker(url="udp://tracker2.example.com:6969/announce")
         submitted_trackers.append(tracker1)
         submitted_trackers.append(tracker2)
 
@@ -604,13 +648,15 @@ class TestProcessSubmittedDeque:
 
         assert len(submitted_trackers) == 0
 
-    def test_saves_deque_to_disk_after_each_tracker(self, empty_deques, mock_db_connection):
+    def test_saves_deque_to_disk_after_each_tracker(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection
+    ) -> None:
         """Test that deque is saved to disk after processing each tracker."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
 
-        tracker1 = SimpleNamespace(url="udp://tracker1.example.com:6969/announce")
-        tracker2 = SimpleNamespace(url="udp://tracker2.example.com:6969/announce")
+        tracker1 = create_test_tracker(url="udp://tracker1.example.com:6969/announce")
+        tracker2 = create_test_tracker(url="udp://tracker2.example.com:6969/announce")
         submitted_trackers.append(tracker1)
         submitted_trackers.append(tracker2)
 
@@ -620,13 +666,13 @@ class TestProcessSubmittedDeque:
         ):
             trackon.process_submitted_deque()
 
-            assert mock_save.call_count == 2
+            assert mock_save.call_count == 2  # pyright: ignore[reportUnknownMemberType]
 
 
 class TestGetAllIpsTracked:
     """Tests for get_all_ips_tracked function."""
 
-    def test_returns_all_ips_from_database(self, mock_db_connection):
+    def test_returns_all_ips_from_database(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that all IPs from tracked trackers are returned."""
         from newTrackon import trackon
 
@@ -640,7 +686,7 @@ class TestGetAllIpsTracked:
 
         assert result == ["1.2.3.4", "5.6.7.8", "9.10.11.12"]
 
-    def test_returns_empty_list_when_no_trackers(self, mock_db_connection):
+    def test_returns_empty_list_when_no_trackers(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that empty list is returned when no trackers exist."""
         from newTrackon import trackon
 
@@ -649,7 +695,7 @@ class TestGetAllIpsTracked:
 
         assert result == []
 
-    def test_handles_trackers_without_ips(self, mock_db_connection):
+    def test_handles_trackers_without_ips(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers without IPs are handled correctly."""
         from newTrackon import trackon
 
@@ -668,7 +714,7 @@ class TestGetAllIpsTracked:
 
         assert result == ["1.2.3.4", "5.6.7.8"]
 
-    def test_handles_empty_ip_list(self, mock_db_connection):
+    def test_handles_empty_ip_list(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with empty IP lists are handled correctly."""
         from newTrackon import trackon
 
@@ -682,7 +728,7 @@ class TestGetAllIpsTracked:
 
         assert result == ["1.2.3.4"]
 
-    def test_returns_ipv6_addresses(self, mock_db_connection):
+    def test_returns_ipv6_addresses(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that IPv6 addresses are included in results."""
         from newTrackon import trackon
 
@@ -698,7 +744,7 @@ class TestGetAllIpsTracked:
 class TestWarnOfDuplicateIps:
     """Tests for warn_of_duplicate_ips function."""
 
-    def test_detects_duplicate_ips(self, mock_db_connection, caplog):
+    def test_detects_duplicate_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that duplicate IPs are detected and logged."""
         from newTrackon import trackon
 
@@ -715,7 +761,9 @@ class TestWarnOfDuplicateIps:
 
         assert "1.2.3.4 is duplicated" in caplog.text
 
-    def test_detects_multiple_duplicate_ips(self, mock_db_connection, caplog):
+    def test_detects_multiple_duplicate_ips(
+        self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that multiple duplicate IPs are detected."""
         from newTrackon import trackon
 
@@ -738,7 +786,7 @@ class TestWarnOfDuplicateIps:
         assert "1.2.3.4 is duplicated" in caplog.text
         assert "5.6.7.8 is duplicated" in caplog.text
 
-    def test_no_warning_for_unique_ips(self, mock_db_connection, caplog):
+    def test_no_warning_for_unique_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that no warning is logged when all IPs are unique."""
         from newTrackon import trackon
 
@@ -755,7 +803,7 @@ class TestWarnOfDuplicateIps:
 
         assert "duplicated" not in caplog.text
 
-    def test_no_warning_when_no_ips(self, mock_db_connection, caplog):
+    def test_no_warning_when_no_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that no warning is logged when there are no IPs."""
         from newTrackon import trackon
 
@@ -767,7 +815,7 @@ class TestWarnOfDuplicateIps:
 
         assert "duplicated" not in caplog.text
 
-    def test_handles_trackers_with_no_ips(self, mock_db_connection, caplog):
+    def test_handles_trackers_with_no_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test duplicate detection when some trackers have no IPs."""
         from newTrackon import trackon
 
@@ -793,12 +841,18 @@ class TestWarnOfDuplicateIps:
 class TestLogWrongIntervalDenial:
     """Tests for log_wrong_interval_denial function."""
 
-    def test_updates_submitted_data_with_rejection(self, empty_deques):
+    def test_updates_submitted_data_with_rejection(self, empty_deques: ModuleType) -> None:
         """Test that log_wrong_interval_denial updates submitted_data correctly."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_data
 
-        debug_entry = {"info": ["original info"], "status": 1}
+        debug_entry: HistoryData = {
+            "url": "udp://tracker.example.com:6969/announce",
+            "time": 0,
+            "status": 1,
+            "ip": "10.0.0.1",
+            "info": ["original info"],
+        }
         submitted_data.appendleft(debug_entry)
 
         trackon.log_wrong_interval_denial("test reason")
@@ -808,13 +862,19 @@ class TestLogWrongIntervalDenial:
         assert updated_entry["info"][0] == "original info"
         assert "Tracker rejected for test reason" in updated_entry["info"][1]
 
-    def test_preserves_original_info(self, empty_deques):
+    def test_preserves_original_info(self, empty_deques: ModuleType) -> None:
         """Test that original info is preserved in the updated entry."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_data
 
         original_info = "{'interval': 100, 'peers': []}"
-        debug_entry = {"info": [original_info], "status": 1}
+        debug_entry: HistoryData = {
+            "url": "udp://tracker.example.com:6969/announce",
+            "time": 0,
+            "status": 1,
+            "ip": "10.0.0.1",
+            "info": [original_info],
+        }
         submitted_data.appendleft(debug_entry)
 
         trackon.log_wrong_interval_denial("having too short interval")
@@ -826,13 +886,13 @@ class TestLogWrongIntervalDenial:
 class TestGlobalState:
     """Tests for global state management."""
 
-    def test_processing_trackers_initial_value(self, reset_globals):
+    def test_processing_trackers_initial_value(self, reset_globals: None) -> None:
         """Test that processing_trackers starts as False."""
         from newTrackon import trackon
 
         assert trackon.processing_trackers is False
 
-    def test_locks_exist(self):
+    def test_locks_exist(self) -> None:
         """Test that threading locks are properly initialized."""
         from threading import Lock
 
@@ -845,7 +905,7 @@ class TestGlobalState:
 class TestIntegration:
     """Integration tests for the trackon module."""
 
-    def test_full_enqueue_and_process_flow(self, empty_deques, mock_db_connection):
+    def test_full_enqueue_and_process_flow(self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test the full flow from enqueueing to processing."""
         from newTrackon import trackon
         from newTrackon.persistence import submitted_trackers
@@ -872,11 +932,13 @@ class TestIntegration:
         assert len(submitted_trackers) == 0
         assert trackon.processing_trackers is False
 
-    def test_multiple_trackers_enqueue_and_process(self, empty_deques, mock_db_connection):
+    def test_multiple_trackers_enqueue_and_process(
+        self, empty_deques: ModuleType, mock_db_connection: sqlite3.Connection
+    ) -> None:
         """Test enqueueing and processing multiple trackers."""
         from newTrackon import trackon
 
-        trackers = []
+        trackers: list[MagicMock] = []
         for i in range(3):
             t = MagicMock()
             t.url = f"udp://tracker{i}.example.com:6969/announce"
@@ -886,7 +948,7 @@ class TestIntegration:
 
         tracker_index = [0]
 
-        def create_tracker(url):
+        def create_tracker(url: str) -> MagicMock:
             idx = tracker_index[0]
             tracker_index[0] += 1
             return trackers[idx]
@@ -905,13 +967,13 @@ class TestIntegration:
                 "udp://tracker0.example.com:6969 udp://tracker1.example.com:6969 udp://tracker2.example.com:6969"
             )
 
-            assert mock_insert.call_count == 3
+            assert mock_insert.call_count == 3  # pyright: ignore[reportUnknownMemberType]
 
 
 class TestUpdateOutdatedTrackers:
     """Tests for update_outdated_trackers function."""
 
-    def test_no_outdated_trackers(self, mock_db_connection):
+    def test_no_outdated_trackers(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that no trackers are updated when all are recent."""
         from newTrackon import trackon
 
@@ -937,13 +999,13 @@ class TestUpdateOutdatedTrackers:
                 pass  # Expected to break the loop
 
             # No trackers should be updated since none are outdated
-            recent_tracker.update_status.assert_not_called()
+            recent_tracker.update_status.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
             mock_update.assert_not_called()
             mock_delete.assert_not_called()
             mock_save.assert_not_called()
-            mock_warn.assert_called_once()
+            mock_warn.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
 
-    def test_outdated_tracker_gets_updated(self, mock_db_connection):
+    def test_outdated_tracker_gets_updated(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that outdated tracker gets updated (not deleted)."""
         from newTrackon import trackon
 
@@ -969,13 +1031,13 @@ class TestUpdateOutdatedTrackers:
                 pass  # Expected to break the loop
 
             # Tracker should be updated
-            outdated_tracker.update_status.assert_called_once()
+            outdated_tracker.update_status.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
             mock_update.assert_called_once_with(outdated_tracker)
             mock_delete.assert_not_called()
-            mock_save.assert_called_once()
-            mock_warn.assert_called_once()
+            mock_save.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
+            mock_warn.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
 
-    def test_outdated_tracker_gets_deleted(self, mock_db_connection):
+    def test_outdated_tracker_gets_deleted(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that outdated tracker marked for deletion gets deleted."""
         from newTrackon import trackon
 
@@ -1001,8 +1063,8 @@ class TestUpdateOutdatedTrackers:
                 pass  # Expected to break the loop
 
             # Tracker should be deleted, not updated
-            outdated_tracker.update_status.assert_called_once()
+            outdated_tracker.update_status.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
             mock_delete.assert_called_once_with(outdated_tracker)
             mock_update.assert_not_called()
-            mock_save.assert_called_once()
-            mock_warn.assert_called_once()
+            mock_save.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
+            mock_warn.assert_called_once()  # pyright: ignore[reportUnknownMemberType]

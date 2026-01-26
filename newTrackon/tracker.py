@@ -5,10 +5,11 @@ from collections import deque
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from logging import getLogger
-from time import gmtime, sleep, strftime, time
+from time import sleep, time
 from urllib import parse, request
 
 from newTrackon import persistence, scraper
+from newTrackon.persistence import HistoryData
 
 logger = getLogger("newtrackon")
 
@@ -16,24 +17,43 @@ max_downtime: int = 47304000  # 1.5 years
 
 
 class Tracker:
+    url: str
+    host: str
+    ips: list[str] | None
+    latency: int | None
+    last_checked: int
+    interval: int
+    status: int
+    uptime: float
+    countries: list[str] | None
+    country_codes: list[str] | None
+    networks: list[str] | None
+    historic: deque[int]
+    added: str
+    last_downtime: int
+    last_uptime: int
+    to_be_deleted: bool
+    status_epoch: int | None
+    status_readable: str | None
+
     def __init__(
         self,
-        url,
-        host,
-        ips,
-        latency,
-        last_checked,
-        interval,
-        status,
-        uptime,
-        countries,
-        country_codes,
-        networks,
-        historic,
-        added,
-        last_downtime,
-        last_uptime,
-    ):
+        url: str,
+        host: str,
+        ips: list[str] | None,
+        latency: int | None,
+        last_checked: int,
+        interval: int,
+        status: int,
+        uptime: float,
+        countries: list[str] | None,
+        country_codes: list[str] | None,
+        networks: list[str] | None,
+        historic: deque[int],
+        added: str,
+        last_downtime: int,
+        last_uptime: int,
+    ) -> None:
         self.url = url
         self.host = host
         self.ips = ips
@@ -55,30 +75,35 @@ class Tracker:
 
     @classmethod
     def from_url(cls, url: str) -> Tracker:
+        # Parse the URL to get hostname first (validate_url will normalize it)
+        parsed = parse.urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            raise RuntimeError("Invalid URL: cannot extract hostname")
+
+        date = datetime.now()
         tracker = cls(
-            url,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            [],
-            [],
-            [],
-            None,
-            None,
-            None,
-            None,
+            url=url,
+            host=hostname,
+            ips=None,
+            latency=None,
+            last_checked=0,
+            interval=10800,  # Default interval (3 hours)
+            status=0,
+            uptime=0.0,
+            countries=[],
+            country_codes=[],
+            networks=[],
+            historic=deque(maxlen=1000),
+            added=f"{date.day}-{date.month}-{date.year}",
+            last_downtime=0,
+            last_uptime=0,
         )
         tracker.validate_url()
         logger.info("Preprocessing %s", url)
-        tracker.host = parse.urlparse(tracker.url).hostname
+        # Update host from the validated/normalized URL
+        tracker.host = parse.urlparse(tracker.url).hostname or hostname
         tracker.update_ips()
-        tracker.historic = deque(maxlen=1000)
-        date = datetime.now()
-        tracker.added = f"{date.day}-{date.month}-{date.year}"
         return tracker
 
     def update_status(self) -> None:
@@ -98,29 +123,37 @@ class Tracker:
         self.last_checked = int(time())
         pp = pprint.PrettyPrinter(width=999999, compact=True)
         t1 = time()
-        debug = {
-            "url": self.url,
-            "ip": next(iter(self.ips)) if self.ips else None,
-            "time": strftime("%H:%M:%S UTC", gmtime(t1)),
-        }
         try:
             if parse.urlparse(self.url).scheme == "udp":
                 response, _ = scraper.announce_udp(self.url)
             else:
                 response = scraper.announce_http(self.url)
 
-            self.interval = response["interval"]
+            interval = response.get("interval")
+            if isinstance(interval, int):
+                self.interval = interval
             pretty_data = scraper.redact_origin(pp.pformat(response))
-            debug["info"] = pretty_data
+            debug: HistoryData = {
+                "url": self.url,
+                "ip": next(iter(self.ips)) if self.ips else "",
+                "time": int(t1),
+                "info": pretty_data,
+                "status": 1,
+            }
             persistence.raw_data.appendleft(debug)
             self.latency = int((time() - t1) * 1000)
             self.is_up()
-            debug["status"] = 1
             logger.info("%s status is UP", self.url)
         except RuntimeError as e:
             logger.info("%s status is DOWN. Cause: %s", self.url, e)
-            debug.update({"info": str(e), "status": 0})
-            persistence.raw_data.appendleft(debug)
+            debug_down: HistoryData = {
+                "url": self.url,
+                "ip": next(iter(self.ips)) if self.ips else "",
+                "time": int(t1),
+                "info": str(e),
+                "status": 0,
+            }
+            persistence.raw_data.appendleft(debug_down)
             self.is_down()
         if self.uptime == 0:
             self.interval = 10800
@@ -133,7 +166,7 @@ class Tracker:
                 logger.info("Hostname denies connection via BEP34, removing tracker %s", self.url)
                 self.to_be_deleted = True
                 raise RuntimeError("Host denied connection according to BEP34, removed")
-            elif bep_34_info:
+            else:
                 logger.info(
                     "Tracker %s sets protocol and port preferences from BEP34: %s",
                     self.url,
@@ -160,10 +193,10 @@ class Tracker:
         self.update_uptime()
         if self.uptime == 0:
             self.interval = 10800
-        debug = {
+        debug: HistoryData = {
             "url": self.url,
-            "ip": None,
-            "time": strftime("%H:%M:%S UTC", gmtime(time())),
+            "ip": "",
+            "time": int(time()),
             "status": 0,
             "info": reason,
         }
@@ -174,9 +207,13 @@ class Tracker:
         url = parse.urlparse(self.url)
         if url.scheme not in ["udp", "http", "https"]:
             raise RuntimeError("Tracker URLs have to start with 'udp://', 'http://' or 'https://'")
-        if uchars.match(url.netloc):
+        netloc = url.netloc
+        assert isinstance(netloc, str)
+        if uchars.match(netloc):
             url = url._replace(path="/announce")
-            self.url = url.geturl()
+            new_url = url.geturl()
+            assert isinstance(new_url, str)
+            self.url = new_url
         else:
             raise RuntimeError("Invalid announce URL")
 
@@ -196,9 +233,14 @@ class Tracker:
             pass
         if temp_ips:  # Order IPs per protocol, IPv6 first
             parsed_ips: list[IPv4Address | IPv6Address] = []
-            [parsed_ips.append(ip_address(ip)) for ip in temp_ips]
-            [self.ips.append(str(ip)) for ip in parsed_ips if ip.version == 6]
-            [self.ips.append(str(ip)) for ip in parsed_ips if ip.version == 4]
+            for ip in temp_ips:
+                parsed_ips.append(ip_address(ip))
+            for ip in parsed_ips:
+                if ip.version == 6:
+                    self.ips.append(str(ip))
+            for ip in parsed_ips:
+                if ip.version == 4:
+                    self.ips.append(str(ip))
         elif not self.ips:
             self.ips = None
             raise RuntimeError("Can't resolve IP")

@@ -1,5 +1,6 @@
 """Comprehensive tests for newTrackon.utils module."""
 
+from typing import Any
 from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
@@ -57,6 +58,14 @@ class TestAddApiHeaders:
         assert result.headers["Access-Control-Allow-Origin"] == "*"
 
 
+def _make_mock_row(values: tuple[Any, ...]) -> MagicMock:  # pyright: ignore[reportExplicitAny]
+    """Create a MagicMock that behaves like sqlite3.Row (supports indexing and len)."""
+    row = MagicMock()
+    row.__getitem__ = lambda self, i: values[i]  # pyright: ignore[reportUnknownLambdaType]
+    row.__len__ = lambda self: len(values)  # pyright: ignore[reportUnknownLambdaType]
+    return row
+
+
 class TestDictFactory:
     """Tests for dict_factory SQLite row factory."""
 
@@ -64,7 +73,7 @@ class TestDictFactory:
         """Should create a dictionary mapping column names to row values."""
         cursor = MagicMock()
         cursor.description = [("id",), ("name",), ("value",)]
-        row = (1, "test", 42)
+        row = _make_mock_row((1, "test", 42))
 
         result = dict_factory(cursor, row)
 
@@ -74,7 +83,7 @@ class TestDictFactory:
         """Should handle empty rows."""
         cursor = MagicMock()
         cursor.description = []
-        row = ()
+        row = _make_mock_row(())
 
         result = dict_factory(cursor, row)
 
@@ -84,7 +93,7 @@ class TestDictFactory:
         """Should handle single column rows."""
         cursor = MagicMock()
         cursor.description = [("count",)]
-        row = (100,)
+        row = _make_mock_row((100,))
 
         result = dict_factory(cursor, row)
 
@@ -94,7 +103,7 @@ class TestDictFactory:
         """Should preserve None values in the row."""
         cursor = MagicMock()
         cursor.description = [("id",), ("nullable_col",)]
-        row = (1, None)
+        row = _make_mock_row((1, None))
 
         result = dict_factory(cursor, row)
 
@@ -104,7 +113,7 @@ class TestDictFactory:
         """Should handle various SQLite data types."""
         cursor = MagicMock()
         cursor.description = [("int_col",), ("float_col",), ("text_col",), ("blob_col",)]
-        row = (42, 3.14, "hello", b"binary")
+        row = _make_mock_row((42, 3.14, "hello", b"binary"))
 
         result = dict_factory(cursor, row)
 
@@ -423,11 +432,11 @@ class TestFormatUptimeAndDowntimeTime:
 
         assert result == []
 
-    def test_returns_same_list(self):
+    def test_returns_same_list(self) -> None:
         """Should return the same list object passed in."""
-        trackers = []
+        trackers: list[Any] = []  # pyright: ignore[reportExplicitAny]
 
-        result = format_uptime_and_downtime_time(trackers)
+        result = format_uptime_and_downtime_time(trackers)  # pyright: ignore[reportUnknownArgumentType]
 
         assert result is trackers
 
@@ -486,9 +495,9 @@ class TestRemoveIpvxOnlyTrackers:
 
         assert result == []
 
-    def test_tracker_with_empty_ips_list(self):
+    def test_tracker_with_empty_ips_list(self) -> None:
         """Should filter out trackers with empty IP lists."""
-        raw_list = [
+        raw_list: list[tuple[str, list[str]]] = [
             ("udp://tracker1.example.com:6969", []),
             ("udp://tracker2.example.com:6969", ["192.168.1.1"]),
         ]
@@ -583,10 +592,10 @@ class TestFormatList:
         assert "1.1.1.1" not in result
         assert result == "udp://tracker.example.com:6969\n\n"
 
-    def test_preserves_url_exactly(self):
+    def test_preserves_url_exactly(self) -> None:
         """Should preserve URL exactly as provided."""
         url = "http://tracker.example.com:8080/announce?passkey=abc123"
-        raw_list = [(url, [])]
+        raw_list: list[tuple[str, list[str]]] = [(url, [])]
 
         result = format_list(raw_list)
 
