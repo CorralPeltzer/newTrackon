@@ -125,14 +125,19 @@ td {
   border-color: #6c757d;
 }
 
+/* Status column - override DataTables dt-type-numeric right alignment */
+th.status-col,
+td.up,
+td.down {
+  text-align: left !important;
+}
+
 td.up {
   background-color: #98ee99!important;
-  text-align: left;
 }
 
 td.down {
   background-color: #ff867c!important;
-  text-align: left;
 }
 
 td.rejected {
