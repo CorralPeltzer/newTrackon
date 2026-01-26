@@ -77,7 +77,7 @@ def new_trackers():
 def new_trackers_api():
     new_trackers = request.form.get("new_trackers")
     if not new_trackers:
-        abort(400)
+        return abort(400)
     if len(new_trackers) > max_input_length:
         abort(413)
     check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_trackers,))

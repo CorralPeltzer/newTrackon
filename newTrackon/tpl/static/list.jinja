@@ -1,27 +1,29 @@
 {% extends "base.jinja" %}
 {% block head %}
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"
-                integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw=="
-                crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"
+            integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw=="
+            crossorigin="anonymous"></script>
 {% endblock head %}
 {% block body %}
     <script>
     var selectedList = 'api/stable?include_ipv4_only_trackers=1&include_ipv6_only_trackers=0'
 
-    $('button').tooltip({
-        trigger: 'click',
-        placement: 'bottom'
-    });
-
     function setTooltip(btn, message) {
-        $(btn).tooltip('hide')
-                .attr('data-original-title', message)
-                .tooltip('show');
+        var tooltip = bootstrap.Tooltip.getInstance(btn);
+        if (tooltip) {
+            tooltip.hide();
+        }
+        btn.setAttribute('data-bs-title', message);
+        tooltip = new bootstrap.Tooltip(btn, {trigger: 'manual', placement: 'bottom'});
+        tooltip.show();
     }
 
     function hideTooltip(btn) {
         setTimeout(function () {
-            $(btn).tooltip('hide');
+            var tooltip = bootstrap.Tooltip.getInstance(btn);
+            if (tooltip) {
+                tooltip.hide();
+            }
         }, 1000);
     }
 
@@ -60,7 +62,7 @@
         });
     });
 
-    var clipboard = new ClipboardJS('.btn');
+    var clipboard = new ClipboardJS('.btn-copy');
 
     clipboard.on('success', function (e) {
         setTooltip(e.trigger, 'Copied!');
@@ -81,7 +83,7 @@
         <div class="row">
             <div class="col-lg-3">
                 <p>
-                    <button class="btn btn-primary"
+                    <button class="btn btn-primary btn-copy"
                             data-clipboard-action="copy"
                             data-clipboard-target="#tocopy">
                         Copy <b id="size"></b>
@@ -91,7 +93,7 @@
             </div>
             <div class="col-lg-3">
                 <p>
-                    <label class="btn btn-default">
+                    <label class="btn btn-secondary">
                         <input type="checkbox" id="include_ipv4_only" checked>
                         Include IPv4-only trackers
                     </label>
@@ -99,7 +101,7 @@
             </div>
             <div class="col-lg-3">
                 <p>
-                    <label class="btn btn-default">
+                    <label class="btn btn-secondary">
                         <input type="checkbox" id="include_ipv6_only">
                         Include IPv6-only trackers
                     </label>

@@ -17,6 +17,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "freezegun",
+    "djlint",
 ]
 
 [tool.setuptools.packages.find]
@@ -37,4 +38,8 @@ extend-select = ["I", "UP", "Q", "G", "PLE", "PLC", "RUF"]
 
 [tool.pyright]
 typeCheckingMode = "strict"
+
+[tool.djlint]
+profile = "jinja"
+extension = "jinja"
 

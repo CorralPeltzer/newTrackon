@@ -1,23 +1,12 @@
 {% extends "base.jinja" %}
 {% block head %}
-        <script src="https://cdn.jsdelivr.net/npm/rapidoc@9.3.3/dist/rapidoc-min.js"
-                integrity="sha512-IqwxAUOKeDBseg67em0HTCqiklC6Bhu8E74aNEiM/1CqvozxFFiuMrcWhbn31Wbh8liSSoERRvP8tFqI2M9e4g=="
-                crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/rapidoc@9.3.3/dist/rapidoc-min.js"
+            integrity="sha512-IqwxAUOKeDBseg67em0HTCqiklC6Bhu8E74aNEiM/1CqvozxFFiuMrcWhbn31Wbh8liSSoERRvP8tFqI2M9e4g=="
+            crossorigin="anonymous"></script>
 {% endblock head %}
 {% block body %}
     <div class="container rapidoc">
-        <rapi-doc
-        spec-url="api.yml"
-        theme=light
-        render-style=view
-        font-size=largest
-        show-header=false
-        regular-font=roboto
-        layout=column
-        default-schema-tab=example
-        allow-authentication=false
-        primary-color=#054f16
-        >
+        <rapi-doc spec-url="api.yml" theme=light render-style=view font-size=largest show-header=false regular-font=roboto layout=column default-schema-tab=example allow-authentication=false primary-color=#054f16>
         </rapi-doc>
     </div>
 {% endblock body %}
