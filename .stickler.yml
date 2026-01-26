@@ -1,5 +1,0 @@
-linters:
-  black:
-    fixer: true
-fixers:
-  enable: true
