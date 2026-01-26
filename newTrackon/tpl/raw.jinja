@@ -24,7 +24,7 @@
                     </thead>
                     {% for response in data %}
                         <tr>
-                            <td>{{ response.get('time') }}</td>
+                            <td>{{ response.get('time') | format_timestamp }}</td>
                             <td>{{ response.get('url') }}</td>
                             <td>
                                 {% if response.get('ip') %}

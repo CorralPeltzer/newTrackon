@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from logging import ERROR, INFO, basicConfig, getLogger
 from sys import stdout
 from threading import Thread
@@ -29,6 +30,16 @@ class RegexConverter(BaseConverter):
 
 
 app.url_map.converters["regex"] = RegexConverter
+
+
+@app.template_filter("format_timestamp")
+def format_timestamp(timestamp: int | float | None) -> str:
+    """Convert Unix timestamp to HH:MM:SS UTC format."""
+    if timestamp is None:
+        return ""
+    return datetime.fromtimestamp(timestamp, tz=UTC).strftime("%H:%M:%S UTC")
+
+
 basicConfig(
     level=INFO,
     format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
