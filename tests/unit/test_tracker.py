@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from newTrackon.scraper import ScraperResult
 from newTrackon.tracker import Tracker, max_downtime
 
 
@@ -676,7 +677,7 @@ class TestUpdateSchemeFromBep34:
 
     def test_bep34_denies_connection(self, sample_tracker: Tracker) -> None:
         """Test that BEP34 denial marks tracker for deletion."""
-        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, None)):
+        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [])):
             with pytest.raises(RuntimeError, match="Host denied connection"):
                 sample_tracker.update_scheme_from_bep_34()
 
@@ -692,12 +693,46 @@ class TestUpdateSchemeFromBep34:
             assert sample_tracker.url.startswith("udp://")
             assert ":6969" in sample_tracker.url
 
-    def test_bep34_updates_port(self, sample_tracker: Tracker) -> None:
-        """Test that BEP34 updates port."""
+    def test_bep34_tcp_probes_when_switching_from_udp(self, sample_tracker: Tracker) -> None:
+        """Test that BEP34 TCP probes HTTPS/HTTP when current scheme is UDP."""
+        assert sample_tracker.url == "udp://tracker.example.com:6969/announce"
+        with (
+            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 443)])),
+            patch(
+                "newTrackon.tracker.scraper.attempt_https_http",
+                return_value=ScraperResult(1800, "https://tracker.example.com:443/announce", 50),
+            ),
+        ):
+            sample_tracker.update_scheme_from_bep_34()
+
+            assert sample_tracker.url == "https://tracker.example.com:443/announce"
+
+    def test_bep34_tcp_probe_failure_keeps_udp_url(self, sample_tracker: Tracker) -> None:
+        """Test that BEP34 TCP keeps existing URL when probe fails."""
+        original_url = sample_tracker.url
+        with (
+            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 443)])),
+            patch("newTrackon.tracker.scraper.attempt_https_http", return_value=None),
+        ):
+            sample_tracker.update_scheme_from_bep_34()
+
+            assert sample_tracker.url == original_url
+
+    def test_bep34_tcp_preserves_existing_http_scheme(self, sample_tracker: Tracker) -> None:
+        """Test that BEP34 TCP preserves existing HTTP scheme and only updates port."""
+        sample_tracker.url = "http://tracker.example.com:80/announce"
         with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 8080)])):
             sample_tracker.update_scheme_from_bep_34()
 
-            assert ":8080" in sample_tracker.url
+            assert sample_tracker.url == "http://tracker.example.com:8080/announce"
+
+    def test_bep34_tcp_preserves_existing_https_scheme(self, sample_tracker: Tracker) -> None:
+        """Test that BEP34 TCP preserves existing HTTPS scheme and only updates port."""
+        sample_tracker.url = "https://tracker.example.com:443/announce"
+        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 8080)])):
+            sample_tracker.update_scheme_from_bep_34()
+
+            assert sample_tracker.url == "https://tracker.example.com:8080/announce"
 
     def test_bep34_no_valid_record(self, sample_tracker: Tracker) -> None:
         """Test that no BEP34 record doesn't modify URL."""

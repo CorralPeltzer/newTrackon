@@ -141,16 +141,18 @@ def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str) -> Scrap
     raise RuntimeError
 
 
-def attempt_https_http(failover_ip: str, url: ParseResult) -> ScraperResult | None:
+def attempt_https_http(
+    failover_ip: str, url: ParseResult, log_to_submitted: bool = True
+) -> ScraperResult | None:
     # HTTPS scrape
-    https_result = attempt_httpx(failover_ip, url, tls=True)
+    https_result = attempt_httpx(failover_ip, url, tls=True, log_to_submitted=log_to_submitted)
     if https_result.status and https_result.interval is not None:
         return ScraperResult(https_result.interval, https_result.url, https_result.latency)
 
     logger.info("%s HTTPS failed", https_result.url)
 
     # HTTP scrape
-    http_result = attempt_httpx(failover_ip, url, tls=False)
+    http_result = attempt_httpx(failover_ip, url, tls=False, log_to_submitted=log_to_submitted)
     if http_result.status and http_result.interval is not None:
         return ScraperResult(http_result.interval, http_result.url, http_result.latency)
 
@@ -158,7 +160,9 @@ def attempt_https_http(failover_ip: str, url: ParseResult) -> ScraperResult | No
     return None
 
 
-def attempt_httpx(failover_ip: str, submitted_url: ParseResult, tls: bool = True) -> AttemptResult:
+def attempt_httpx(
+    failover_ip: str, submitted_url: ParseResult, tls: bool = True, log_to_submitted: bool = True
+) -> AttemptResult:
     http_url = build_httpx_url(submitted_url, tls)
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     t1 = time()
@@ -178,8 +182,9 @@ def attempt_httpx(failover_ip: str, submitted_url: ParseResult, tls: bool = True
     except RuntimeError as e:
         info = [redact_origin(str(e))]
         status = 0
-    debug_http: HistoryData = {"url": http_url, "time": int(t1), "ip": failover_ip, "info": info, "status": status}
-    submitted_data.appendleft(debug_http)
+    if log_to_submitted:
+        debug_http: HistoryData = {"url": http_url, "time": int(t1), "ip": failover_ip, "info": info, "status": status}
+        submitted_data.appendleft(debug_http)
     return AttemptResult(status, interval, http_url, latency)
 
 

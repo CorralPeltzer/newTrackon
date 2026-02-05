@@ -161,29 +161,47 @@ class Tracker:
 
     def update_scheme_from_bep_34(self) -> None:
         valid_bep_34, bep_34_info = scraper.get_bep_34(self.host)
-        if valid_bep_34:  # Hostname has a valid TXT record as per BEP34
-            if not bep_34_info:
-                logger.info("Hostname denies connection via BEP34, removing tracker %s", self.url)
-                self.to_be_deleted = True
-                raise RuntimeError("Host denied connection according to BEP34, removed")
-            else:
-                logger.info(
-                    "Tracker %s sets protocol and port preferences from BEP34: %s",
-                    self.url,
-                    bep_34_info,
-                )
-                parsed_url = parse.urlparse(self.url)
-                # Update tracker with the first protocol and URL set by TXT record
-                first_bep_34_protocol, first_bep_34_port = bep_34_info[0]
-                existing_scheme = parsed_url.scheme
-                new_scheme = "udp" if first_bep_34_protocol == "udp" else existing_scheme
+        if not valid_bep_34:  # No valid BEP34, attempting existing URL
+            return
+        if not bep_34_info:
+            logger.info("Hostname denies connection via BEP34, removing tracker %s", self.url)
+            self.to_be_deleted = True
+            raise RuntimeError("Host denied connection according to BEP34, removed")
+
+        logger.info(
+            "Tracker %s sets protocol and port preferences from BEP34: %s",
+            self.url,
+            bep_34_info,
+        )
+        parsed_url = parse.urlparse(self.url)
+        first_bep_34_protocol, first_bep_34_port = bep_34_info[0]
+
+        if first_bep_34_protocol == "udp":
+            if parsed_url.scheme == "udp" and parsed_url.port == first_bep_34_port:
+                return
+            self.url = parsed_url._replace(
+                scheme="udp",
+                netloc=f"{parsed_url.hostname}:{first_bep_34_port}",
+            ).geturl()
+            return
+
+        if first_bep_34_protocol == "tcp":
+            if parsed_url.scheme in ("http", "https"):
+                if parsed_url.port == first_bep_34_port:
+                    return
                 self.url = parsed_url._replace(
-                    scheme=new_scheme,
                     netloc=f"{parsed_url.hostname}:{first_bep_34_port}",
                 ).geturl()
                 return
-        else:  # No valid BEP34, attempting existing URL
-            return
+
+            # Switching from UDP to TCP: probe HTTPS then HTTP to find correct scheme
+            candidate_url = parsed_url._replace(
+                netloc=f"{parsed_url.hostname}:{first_bep_34_port}"
+            )
+            failover_ip = next(iter(self.ips), "") if self.ips else ""
+            http_result = scraper.attempt_https_http(failover_ip, candidate_url, log_to_submitted=False)
+            if http_result is not None:
+                self.url = http_result.url
 
     def clear_tracker(self, reason: str) -> None:
         self.countries, self.networks, self.country_codes = None, None, None
