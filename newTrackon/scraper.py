@@ -278,7 +278,6 @@ def announce_http(url: str, thash: bytes = urandom(20)) -> BDecodeResponse:
 def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[UDPAnnounceResponse, str | None]:
     parsed_tracker = urlparse(udp_url)
     logger.info("%s Scraping UDP", udp_url)
-    sock: socket.socket | None = None
     ip: str | None = None
     getaddr_responses: list[AddrInfo] = []
     try:
@@ -287,54 +286,58 @@ def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[UDPAnnounceR
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")
 
-    for res in getaddr_responses:
-        af, socktype, proto, _, sa = res
-        ip = str(sa[0])
+    last_error = RuntimeError("UDP announce failed")
+    for attempt in range(2):
+        logger.info("%s UDP attempt %d", udp_url, attempt + 1)
+
+        sock: socket.socket | None = None
+        for res in getaddr_responses:
+            af, socktype, proto, _, sa = res
+            ip = str(sa[0])
+            try:
+                sock = socket.socket(af, socktype, proto)
+                sock.settimeout(10)
+            except OSError:
+                sock = None
+                continue
+            try:
+                sock.connect(sa)
+            except OSError:
+                sock.close()
+                sock = None
+                continue
+            break
+        if sock is None:
+            raise RuntimeError("UDP connection error")
+
         try:
-            sock = socket.socket(af, socktype, proto)
-            sock.settimeout(10)
-        except OSError:
-            sock = None
-            continue
-        try:
-            sock.connect(sa)
-        except OSError:
+            # Get connection ID
+            req, transaction_id = udp_create_binary_connection_request()
+            sock.sendall(req)
+            buf = sock.recv(2048)
+            connection_id = udp_parse_connection_response(buf, transaction_id)
+
+            # Announce
+            req, transaction_id = udp_create_announce_request(connection_id, thash)
+            sock.sendall(req)
+            buf = sock.recv(2048)
+            ip_family = sock.family
             sock.close()
-            sock = None
-            continue
-        break
-    if sock is None:
-        raise RuntimeError("UDP connection error")
 
-    # Get connection ID
-    req, transaction_id = udp_create_binary_connection_request()
-    try:
-        sock.sendall(req)
-        buf = sock.recv(2048)
-    except ConnectionRefusedError:
-        raise RuntimeError("UDP connection failed")
-    except TimeoutError:
-        raise RuntimeError("UDP timeout")
-    except OSError as err:
-        raise RuntimeError(f"UDP error: {err}")
+            parsed_response, _raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
+            logger.info("%s response: %s", udp_url, parsed_response)
+            return parsed_response, ip
+        except ConnectionRefusedError:
+            last_error = RuntimeError("UDP connection failed")
+        except TimeoutError:
+            last_error = RuntimeError("UDP timeout")
+        except OSError as err:
+            last_error = RuntimeError(f"UDP error: {err}")
+        except RuntimeError as err:
+            last_error = err
+        sock.close()
 
-    connection_id = udp_parse_connection_response(buf, transaction_id)
-    # Scrape away
-    req, transaction_id = udp_create_announce_request(connection_id, thash)
-    try:
-        sock.sendall(req)
-        buf = sock.recv(2048)
-    except ConnectionRefusedError:
-        raise RuntimeError("UDP connection failed")
-    except TimeoutError:
-        raise RuntimeError("UDP timeout")
-    except OSError as err:
-        raise RuntimeError(f"UDP error: {err}")
-    ip_family = sock.family
-    sock.close()
-    parsed_response, _raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
-    logger.info("%s response: %s", udp_url, parsed_response)
-    return parsed_response, ip
+    raise last_error
 
 
 def udp_create_binary_connection_request() -> tuple[bytes, int]:
