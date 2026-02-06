@@ -61,7 +61,7 @@ def test_db() -> Generator[sqlite3.Connection]:
             country TEXT,
             country_code TEXT,
             network TEXT,
-            added TEXT,
+            added INTEGER,
             historic TEXT,
             last_downtime INTEGER,
             last_uptime INTEGER
@@ -101,7 +101,7 @@ def sample_tracker_dict() -> dict[str, Any]:
         "countries": ["United States"],
         "country_codes": ["us"],
         "networks": ["Example ISP"],
-        "added": "01-01-2024",
+        "added": 1704067200,
         "historic": [1] * 100,
         "last_downtime": 1699990000,
         "last_uptime": 1700000000,
@@ -258,7 +258,7 @@ class TestInsertNewTracker:
             country_codes=["de", "us", "ca"],
             networks=["ISP1", "ISP2", "ISP3"],
             historic=deque([1, 1, 1, 0, 1], maxlen=1000),
-            added="15-01-2024",
+            added=1705276800,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -631,7 +631,7 @@ class TestDeleteTracker:
             country_codes=["us"],
             networks=["ISP"],
             historic=deque([1] * 10, maxlen=1000),
-            added="01-01-2024",
+            added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -957,7 +957,7 @@ class TestJsonSerializationDeserialization:
             country_codes=[],
             networks=[],
             historic=deque([], maxlen=1000),
-            added="01-01-2024",
+            added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -986,7 +986,7 @@ class TestJsonSerializationDeserialization:
             country_codes=["ci", "st"],
             networks=["ISP with 'quotes'", 'ISP with "double quotes"'],
             historic=deque([1, 0, 1], maxlen=1000),
-            added="01-01-2024",
+            added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -1015,7 +1015,7 @@ class TestJsonSerializationDeserialization:
             country_codes=["de", "es", "jp"],
             networks=["Telekom", "Telefonica", "NTT"],
             historic=deque([1, 1, 1], maxlen=1000),
-            added="01-01-2024",
+            added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -1041,7 +1041,7 @@ class TestJsonSerializationDeserialization:
             country_codes=["us"],
             networks=["ISP"],
             historic=deque(large_historic, maxlen=1000),
-            added="01-01-2024",
+            added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -1073,7 +1073,7 @@ class TestJsonSerializationDeserialization:
             country_codes=["us", "us", "uk", "de"],
             networks=["ISP1", "ISP2", "ISP3", "ISP4"],
             historic=deque([1, 1, 1], maxlen=1000),
-            added="01-01-2024",
+            added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -1150,7 +1150,7 @@ class TestDatabaseCreation:
             "country": "TEXT",
             "country_code": "TEXT",
             "network": "TEXT",
-            "added": "TEXT",
+            "added": "INTEGER",
             "historic": "TEXT",
             "last_downtime": "INTEGER",
             "last_uptime": "INTEGER",

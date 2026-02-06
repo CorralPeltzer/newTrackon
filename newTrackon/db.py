@@ -30,7 +30,7 @@ def create_db() -> None:
         `country`	TEXT,
         `country_code`	TEXT,
         `network`	TEXT,
-        `added`		TEXT,
+        `added`		INTEGER,
         `historic`	TEXT,
         `last_downtime` INTEGER,
         `last_uptime`	INTEGER,

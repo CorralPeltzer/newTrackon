@@ -141,9 +141,7 @@ def attempt_all_protocols(submitted_url: ParseResult, failover_ip: str) -> Scrap
     raise RuntimeError
 
 
-def attempt_https_http(
-    failover_ip: str, url: ParseResult, log_to_submitted: bool = True
-) -> ScraperResult | None:
+def attempt_https_http(failover_ip: str, url: ParseResult, log_to_submitted: bool = True) -> ScraperResult | None:
     # HTTPS scrape
     https_result = attempt_httpx(failover_ip, url, tls=True, log_to_submitted=log_to_submitted)
     if https_result.status and https_result.interval is not None:
@@ -160,9 +158,7 @@ def attempt_https_http(
     return None
 
 
-def attempt_httpx(
-    failover_ip: str, submitted_url: ParseResult, tls: bool = True, log_to_submitted: bool = True
-) -> AttemptResult:
+def attempt_httpx(failover_ip: str, submitted_url: ParseResult, tls: bool = True, log_to_submitted: bool = True) -> AttemptResult:
     http_url = build_httpx_url(submitted_url, tls)
     pp = pprint.PrettyPrinter(width=999999, compact=True)
     t1 = time()

@@ -2,7 +2,6 @@ import pprint
 import re
 import socket
 from collections import deque
-from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from logging import getLogger
 from time import sleep, time
@@ -29,7 +28,7 @@ class Tracker:
     country_codes: list[str] | None
     networks: list[str] | None
     historic: deque[int]
-    added: str
+    added: int
     last_downtime: int
     last_uptime: int
     to_be_deleted: bool
@@ -50,7 +49,7 @@ class Tracker:
         country_codes: list[str] | None,
         networks: list[str] | None,
         historic: deque[int],
-        added: str,
+        added: int,
         last_downtime: int,
         last_uptime: int,
     ) -> None:
@@ -81,7 +80,6 @@ class Tracker:
         if not hostname:
             raise RuntimeError("Invalid URL: cannot extract hostname")
 
-        date = datetime.now()
         tracker = cls(
             url=url,
             host=hostname,
@@ -95,7 +93,7 @@ class Tracker:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added=f"{date.day}-{date.month}-{date.year}",
+            added=int(time()),
             last_downtime=0,
             last_uptime=0,
         )
@@ -195,9 +193,7 @@ class Tracker:
                 return
 
             # Switching from UDP to TCP: probe HTTPS then HTTP to find correct scheme
-            candidate_url = parsed_url._replace(
-                netloc=f"{parsed_url.hostname}:{first_bep_34_port}"
-            )
+            candidate_url = parsed_url._replace(netloc=f"{parsed_url.hostname}:{first_bep_34_port}")
             failover_ip = next(iter(self.ips), "") if self.ips else ""
             http_result = scraper.attempt_https_http(failover_ip, candidate_url, log_to_submitted=False)
             if http_result is not None:

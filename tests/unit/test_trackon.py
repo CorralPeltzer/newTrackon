@@ -38,7 +38,7 @@ def create_test_tracker(
         country_codes=None,
         networks=None,
         historic=deque(maxlen=1000),
-        added="1-1-2024",
+        added=1704067200,
         last_downtime=0,
         last_uptime=0,
     )

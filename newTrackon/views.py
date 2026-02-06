@@ -40,6 +40,15 @@ def format_timestamp(timestamp: int | float | None) -> str:
     return datetime.fromtimestamp(timestamp, tz=UTC).strftime("%H:%M:%S UTC")
 
 
+@app.template_filter("format_date")
+def format_date(timestamp: int | float | None) -> str:
+    """Convert Unix timestamp to D-M-YYYY date format."""
+    if timestamp is None:
+        return ""
+    dt = datetime.fromtimestamp(timestamp, tz=UTC)
+    return f"{dt.day}-{dt.month}-{dt.year}"
+
+
 basicConfig(
     level=INFO,
     format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",

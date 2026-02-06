@@ -30,7 +30,7 @@ class TestTrackerInit:
             country_codes=["us"],
             networks=["Example ISP"],
             historic=deque([1] * 100, maxlen=1000),
-            added="01-01-2024",
+            added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
         )
@@ -47,7 +47,7 @@ class TestTrackerInit:
         assert tracker.country_codes == ["us"]
         assert tracker.networks == ["Example ISP"]
         assert len(tracker.historic) == 100
-        assert tracker.added == "01-01-2024"
+        assert tracker.added == 1704067200
         assert tracker.last_downtime == 1699990000
         assert tracker.last_uptime == 1700000000
         assert tracker.to_be_deleted is False
@@ -67,7 +67,7 @@ class TestTrackerInit:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -96,7 +96,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -118,7 +118,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -140,7 +140,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -162,7 +162,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -184,7 +184,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -206,7 +206,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -228,7 +228,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -250,7 +250,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -272,7 +272,7 @@ class TestValidateUrl:
             country_codes=None,
             networks=None,
             historic=deque(maxlen=1000),
-            added="1-1-2024",
+            added=1704067200,
             last_downtime=0,
             last_uptime=0,
         )
@@ -345,18 +345,18 @@ class TestFromUrl:
         with pytest.raises(RuntimeError, match="Can't resolve IP"):
             Tracker.from_url("udp://nonexistent.tracker.com:6969")
 
-    def test_from_url_sets_added_date(self, mock_network: dict[str, Any]) -> None:
-        """Test that from_url sets the added date."""
+    def test_from_url_sets_added_timestamp(self, mock_network: dict[str, Any]) -> None:
+        """Test that from_url sets the added timestamp."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("1.2.3.4", 6969)),
         ]
 
+        before = int(time())
         tracker = Tracker.from_url("udp://tracker.example.com:6969")
+        after = int(time())
 
-        assert tracker.added is not None
-        # Check format is day-month-year
-        parts = tracker.added.split("-")
-        assert len(parts) == 3
+        assert isinstance(tracker.added, int)
+        assert before <= tracker.added <= after
 
 
 class TestUpdateUptime:

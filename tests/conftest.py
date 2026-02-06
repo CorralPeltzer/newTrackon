@@ -59,7 +59,7 @@ def in_memory_db() -> Generator[Connection]:
             country TEXT,
             country_code TEXT,
             network TEXT,
-            added TEXT,
+            added INTEGER,
             historic TEXT,
             last_downtime INTEGER,
             last_uptime INTEGER
@@ -99,7 +99,7 @@ def sample_tracker_data() -> TrackerDataDict:
         "countries": ["United States"],
         "country_codes": ["us"],
         "networks": ["Example ISP"],
-        "added": "01-01-2024",
+        "added": 1704067200,
         "historic": [1] * 100,
         "last_downtime": 1699990000,
         "last_uptime": 1700000000,

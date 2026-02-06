@@ -37,7 +37,7 @@ def shared_memory_db(monkeypatch: MonkeyPatch) -> Generator[Connection]:
             country TEXT,
             country_code TEXT,
             network TEXT,
-            added TEXT,
+            added INTEGER,
             historic TEXT,
             last_downtime INTEGER,
             last_uptime INTEGER
@@ -389,7 +389,7 @@ class TestNewTrackerSubmissionFlow:
             country_codes=["us"],
             networks=["Example ISP"],
             historic=deque([1], maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=int(time()),
             last_uptime=int(time()),
         )
@@ -436,7 +436,7 @@ class TestNewTrackerSubmissionFlow:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=0,
             last_uptime=0,
         )
@@ -628,7 +628,7 @@ class TestIntervalValidation:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=0,
             last_uptime=0,
         )
@@ -677,7 +677,7 @@ class TestIntervalValidation:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=0,
             last_uptime=0,
         )
@@ -726,7 +726,7 @@ class TestIntervalValidation:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=0,
             last_uptime=0,
         )
@@ -777,7 +777,7 @@ class TestIntervalValidation:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=0,
             last_uptime=0,
         )
@@ -823,7 +823,7 @@ class TestIntervalValidation:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=0,
             last_uptime=0,
         )
@@ -870,7 +870,7 @@ class TestIntervalValidation:
             country_codes=[],
             networks=[],
             historic=deque(maxlen=1000),
-            added="18-1-2026",
+            added=1737158400,
             last_downtime=0,
             last_uptime=0,
         )
