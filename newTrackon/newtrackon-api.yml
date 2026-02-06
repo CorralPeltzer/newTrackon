@@ -22,7 +22,7 @@ paths:
       summary: Get stable trackers
       tags:
         - Tracker operations
-      description: Returns a two line delimited list of trackers that have an uptime of equal or more than 95%
+      description: Returns a two line delimited list of trackers that have an uptime of equal or more than 95% and have been tracked for at least 10 days
       responses:
         "200":
           description: Stable trackers

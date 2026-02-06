@@ -107,7 +107,13 @@ def get_all_data() -> list[Tracker]:
     return trackers_from_db
 
 
-def get_api_data(query: str, uptime: int = 0, include_ipv4_only: bool = True, include_ipv6_only: bool = True) -> str:
+def get_api_data(
+    query: str,
+    uptime: int = 0,
+    include_ipv4_only: bool = True,
+    include_ipv6_only: bool = True,
+    added_before: int | None = None,
+) -> str:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     if query == "/api/http":
@@ -117,10 +123,16 @@ def get_api_data(query: str, uptime: int = 0, include_ipv4_only: bool = True, in
     elif query == "/api/live":
         c.execute("SELECT URL, IP FROM STATUS WHERE STATUS = 1 ORDER BY UPTIME DESC")
     elif query == "percentage":
-        c.execute(
-            "SELECT URL, IP FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC",
-            (uptime,),
-        )
+        if added_before is not None:
+            c.execute(
+                "SELECT URL, IP FROM STATUS WHERE UPTIME >= ? AND ADDED <= ? ORDER BY UPTIME DESC",
+                (uptime, added_before),
+            )
+        else:
+            c.execute(
+                "SELECT URL, IP FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC",
+                (uptime,),
+            )
     raw_rows = c.fetchall()
     conn.close()
 

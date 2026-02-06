@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from logging import ERROR, INFO, basicConfig, getLogger
 from sys import stdout
 from threading import Thread
+from time import time
 
 from flask import (
     Flask,
@@ -129,7 +130,7 @@ def raw():
 
 
 @app.route("/api/<int:percentage>")
-def api_percentage(percentage: int) -> Response:
+def api_percentage(percentage: int, added_before: int | None = None) -> Response:
     include_upv4_only = (
         False if request.args.get("include_ipv4_only_trackers", default="true").lower() in ("false", "0") else True
     )
@@ -137,7 +138,7 @@ def api_percentage(percentage: int) -> Response:
         False if request.args.get("include_ipv6_only_trackers", default="true").lower() in ("false", "0") else True
     )
     if 0 <= percentage <= 100:
-        formatted_list = db.get_api_data("percentage", percentage, include_upv4_only, include_upv6_only)
+        formatted_list = db.get_api_data("percentage", percentage, include_upv4_only, include_upv6_only, added_before)
         resp = make_response(formatted_list)
         resp = utils.add_api_headers(resp)
         return resp
@@ -151,9 +152,13 @@ def api_percentage(percentage: int) -> Response:
         )
 
 
+stable_min_age: int = 10 * 86400  # 10 days in seconds
+
+
 @app.route("/api/stable")
 def api_stable():
-    return api_percentage(95)
+    added_before = int(time()) - stable_min_age
+    return api_percentage(95, added_before=added_before)
 
 
 @app.route("/api/best")
