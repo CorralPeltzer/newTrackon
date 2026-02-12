@@ -5,7 +5,7 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.wsgi import WSGIContainer
 
-from newTrackon import db, scraper, trackerlist_project, trackon
+from newTrackon import db, ingest, scraper, trackerlist_project, trackon
 from newTrackon.scraper import get_server_ip
 from newTrackon.views import app
 
@@ -40,6 +40,14 @@ if __name__ == "__main__":
     update_status = Thread(target=trackon.update_outdated_trackers)
     update_status.daemon = True
     update_status.start()
+
+    warning_worker = Thread(target=trackon.warn_of_ip_conflicts_periodically)
+    warning_worker.daemon = True
+    warning_worker.start()
+
+    submission_worker = Thread(target=ingest.submission_worker)
+    submission_worker.daemon = True
+    submission_worker.start()
 
     get_trackerlist_project_list = Thread(target=trackerlist_project.main)
     get_trackerlist_project_list.daemon = True

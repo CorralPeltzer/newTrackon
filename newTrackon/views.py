@@ -16,7 +16,7 @@ from flask import (
 )
 from werkzeug.routing import BaseConverter, Map
 
-from newTrackon import db, trackon, utils
+from newTrackon import db, ingest, persistence, utils
 
 max_input_length: int = 1000000
 
@@ -77,7 +77,7 @@ def new_trackers():
     elif new_trackers == "":
         return main(form_feedback="EMPTY")
     else:
-        check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_trackers,))
+        check_all_trackers = Thread(target=ingest.enqueue_new_trackers, args=(new_trackers,))
         check_all_trackers.daemon = True
         check_all_trackers.start()
     return main(form_feedback="SUCCESS")
@@ -90,7 +90,7 @@ def new_trackers_api():
         return abort(400)
     if len(new_trackers) > max_input_length:
         abort(413)
-    check_all_trackers = Thread(target=trackon.enqueue_new_trackers, args=(new_trackers,))
+    check_all_trackers = Thread(target=ingest.enqueue_new_trackers, args=(new_trackers,))
     check_all_trackers.daemon = True
     check_all_trackers.start()
     resp = Response(status=204, headers={"Access-Control-Allow-Origin": "*"})
@@ -102,8 +102,8 @@ def submitted():
     return render_template(
         "submitted.jinja",
         # Iterating a deque while rendering can cause RuntimeError: deque mutated during iteration, so we cast it to a list
-        data=list(trackon.submitted_data),
-        size=len(trackon.submitted_trackers),
+        data=list(persistence.submitted_data),
+        size=persistence.submitted_queue.qsize(),
         active="Submitted",
     )
 
@@ -126,7 +126,7 @@ def api_docs():
 @app.route("/raw")
 def raw():
     # Iterating a deque while rendering can cause RuntimeError: deque mutated during iteration, so we cast it to a list
-    return render_template("raw.jinja", data=list(trackon.raw_data), active="Raw data")
+    return render_template("raw.jinja", data=list(persistence.raw_data), active="Raw data")
 
 
 @app.route("/api/<int:percentage>")

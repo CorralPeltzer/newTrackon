@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from collections import deque
 from os import path
+from queue import Queue
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ class HistoryData(TypedDict):
     info: list[str] | str
 
 
-submitted_trackers: deque[Tracker] = deque(maxlen=10000)
+submitted_queue: Queue[Tracker] = Queue(maxsize=10000)
 raw_history_file = "data/raw_data.json"
 submitted_history_file = "data/submitted_data.json"
 

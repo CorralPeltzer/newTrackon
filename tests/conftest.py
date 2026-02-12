@@ -6,6 +6,7 @@ import json
 import sqlite3
 from collections import deque
 from collections.abc import Generator
+from queue import Empty
 from sqlite3 import Connection
 from types import ModuleType
 from typing import TYPE_CHECKING, Any
@@ -21,25 +22,31 @@ if TYPE_CHECKING:
 TrackerDataDict = dict[str, Any]
 
 
+def drain_submitted_queue(persistence: ModuleType) -> None:
+    while True:
+        try:
+            persistence.submitted_queue.get_nowait()
+            persistence.submitted_queue.task_done()
+        except Empty:
+            break
+
+
 @pytest.fixture(autouse=True)
 def clean_global_state() -> Generator[None]:
     """Automatically clean global state before and after each test."""
     import newTrackon.persistence as persistence
-    import newTrackon.trackon as trackon
 
     # Clear before test
-    persistence.submitted_trackers.clear()
+    drain_submitted_queue(persistence)
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
-    trackon.processing_trackers = False
 
     yield
 
     # Clear after test
-    persistence.submitted_trackers.clear()
+    drain_submitted_queue(persistence)
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
-    trackon.processing_trackers = False
 
 
 @pytest.fixture
@@ -184,38 +191,34 @@ def reset_globals() -> Generator[None]:
     """Reset global state between tests."""
     import newTrackon.persistence as persistence
     import newTrackon.scraper as scraper
-    import newTrackon.trackon as trackon
 
     # Save original scalar values
     old_ipv4 = scraper.my_ipv4
     old_ipv6 = scraper.my_ipv6
-    old_processing = trackon.processing_trackers
 
-    # Clear deques at the start to ensure clean state
-    persistence.submitted_trackers.clear()
+    # Clear buffers at the start to ensure clean state
+    drain_submitted_queue(persistence)
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
-    trackon.processing_trackers = False
 
     yield
 
     # Restore original scalar values
     scraper.my_ipv4 = old_ipv4
     scraper.my_ipv6 = old_ipv6
-    trackon.processing_trackers = old_processing
 
-    # Clear deques after test (don't restore old contents - start fresh for next test)
-    persistence.submitted_trackers.clear()
+    # Clear buffers after test (don't restore old contents - start fresh for next test)
+    drain_submitted_queue(persistence)
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
 
 
 @pytest.fixture
-def empty_deques(reset_globals: None) -> Generator[ModuleType]:
-    """Provide empty deques for testing."""
+def empty_queues(reset_globals: None) -> Generator[ModuleType]:
+    """Provide empty buffers for testing."""
     import newTrackon.persistence as persistence
 
-    persistence.submitted_trackers.clear()
+    drain_submitted_queue(persistence)
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
     yield persistence

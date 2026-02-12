@@ -13,14 +13,14 @@ import pytest
 from newTrackon.persistence import HistoryData
 
 
-class TestDequeMaxlenValues:
-    """Test that deques have correct maxlen values."""
+class TestBufferMaxsizeValues:
+    """Test that buffers have correct size limits."""
 
-    def test_submitted_trackers_maxlen(self) -> None:
-        """Verify submitted_trackers has maxlen of 10000."""
+    def test_submitted_queue_maxsize(self) -> None:
+        """Verify submitted_queue has maxsize of 10000."""
         from newTrackon import persistence
 
-        assert persistence.submitted_trackers.maxlen == 10000
+        assert persistence.submitted_queue.maxsize == 10000
 
     def test_raw_data_maxlen(self) -> None:
         """Verify raw_data has maxlen of 600."""
@@ -163,31 +163,31 @@ class TestSaveDequeToDisk:
         json.loads(content)
 
 
-class TestDequeOverflow:
-    """Test that deques correctly handle overflow at maxlen."""
+class TestBufferOverflow:
+    """Test that buffers correctly handle overflow at their size limits."""
 
-    def test_submitted_trackers_overflow(self, empty_deques: ModuleType) -> None:
-        """Test submitted_trackers removes oldest when full."""
-        persistence = empty_deques
-        maxlen = persistence.submitted_trackers.maxlen  # pyright: ignore[reportUnknownMemberType]
+    def test_submitted_queue_overflow(self, empty_queues: ModuleType) -> None:
+        """Test submitted_queue rejects inserts when full."""
+        from queue import Full
 
-        # Fill deque to capacity
-        for i in range(maxlen):  # pyright: ignore[reportUnknownArgumentType]
-            persistence.submitted_trackers.append(f"tracker_{i}")  # pyright: ignore[reportUnknownMemberType]
+        persistence = empty_queues
+        maxsize = persistence.submitted_queue.maxsize  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.submitted_trackers) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-        assert persistence.submitted_trackers[0] == "tracker_0"  # pyright: ignore[reportUnknownMemberType]
+        # Fill queue to capacity
+        for i in range(maxsize):  # pyright: ignore[reportUnknownArgumentType]
+            persistence.submitted_queue.put_nowait(f"tracker_{i}")  # pyright: ignore[reportUnknownMemberType]
 
-        # Add one more item
-        persistence.submitted_trackers.append("new_tracker")  # pyright: ignore[reportUnknownMemberType]
+        assert persistence.submitted_queue.qsize() == maxsize  # pyright: ignore[reportUnknownMemberType]
 
-        assert len(persistence.submitted_trackers) == maxlen  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-        assert persistence.submitted_trackers[0] == "tracker_1"  # pyright: ignore[reportUnknownMemberType]
-        assert persistence.submitted_trackers[-1] == "new_tracker"  # pyright: ignore[reportUnknownMemberType]
+        # Adding one more item should fail
+        with pytest.raises(Full):
+            persistence.submitted_queue.put_nowait("new_tracker")  # pyright: ignore[reportUnknownMemberType]
 
-    def test_raw_data_overflow(self, empty_deques: ModuleType) -> None:
+        assert persistence.submitted_queue.qsize() == maxsize  # pyright: ignore[reportUnknownMemberType]
+
+    def test_raw_data_overflow(self, empty_queues: ModuleType) -> None:
         """Test raw_data removes oldest when full."""
-        persistence = empty_deques
+        persistence = empty_queues
         maxlen = persistence.raw_data.maxlen  # pyright: ignore[reportUnknownMemberType]
 
         # Fill deque to capacity
@@ -204,9 +204,9 @@ class TestDequeOverflow:
         assert persistence.raw_data[0] == {"id": 1}  # pyright: ignore[reportUnknownMemberType]
         assert persistence.raw_data[-1] == {"id": maxlen}  # pyright: ignore[reportUnknownMemberType]
 
-    def test_submitted_data_overflow(self, empty_deques: ModuleType) -> None:
+    def test_submitted_data_overflow(self, empty_queues: ModuleType) -> None:
         """Test submitted_data removes oldest when full."""
-        persistence = empty_deques
+        persistence = empty_queues
         maxlen = persistence.submitted_data.maxlen  # pyright: ignore[reportUnknownMemberType]
 
         # Fill deque to capacity
@@ -223,60 +223,59 @@ class TestDequeOverflow:
         assert persistence.submitted_data[0] == {"submission": 1}  # pyright: ignore[reportUnknownMemberType]
         assert persistence.submitted_data[-1] == {"submission": maxlen}  # pyright: ignore[reportUnknownMemberType]
 
-    def test_deque_fifo_order_preserved(self, empty_deques: ModuleType) -> None:
+    def test_history_fifo_order_preserved(self, empty_queues: ModuleType) -> None:
         """Test that FIFO order is maintained during overflow."""
-        test_deque: deque[int] = deque(maxlen=5)
+        test_buffer: deque[int] = deque(maxlen=5)
 
         # Add items
         for i in range(10):
-            test_deque.append(i)
+            test_buffer.append(i)
 
         # Should contain last 5 items in order
-        assert list(test_deque) == [5, 6, 7, 8, 9]
+        assert list(test_buffer) == [5, 6, 7, 8, 9]
 
 
-class TestEmptyDequeHandling:
-    """Test handling of empty deques."""
+class TestEmptyBufferHandling:
+    """Test handling of empty buffers."""
 
-    def test_empty_submitted_trackers(self, empty_deques: ModuleType) -> None:
-        """Test empty submitted_trackers deque."""
-        persistence = empty_deques
+    def test_empty_submitted_queue(self, empty_queues: ModuleType) -> None:
+        """Test empty submitted_queue buffer."""
+        persistence = empty_queues
 
-        assert len(persistence.submitted_trackers) == 0  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-        assert list(persistence.submitted_trackers) == []  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-        assert persistence.submitted_trackers.maxlen == 10000  # pyright: ignore[reportUnknownMemberType]
+        assert persistence.submitted_queue.qsize() == 0  # pyright: ignore[reportUnknownMemberType]
+        assert persistence.submitted_queue.maxsize == 10000  # pyright: ignore[reportUnknownMemberType]
 
-    def test_empty_raw_data(self, empty_deques: ModuleType) -> None:
-        """Test empty raw_data deque."""
-        persistence = empty_deques
+    def test_empty_raw_data(self, empty_queues: ModuleType) -> None:
+        """Test empty raw_data buffer."""
+        persistence = empty_queues
 
         assert len(persistence.raw_data) == 0  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         assert list(persistence.raw_data) == []  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         assert persistence.raw_data.maxlen == 600  # pyright: ignore[reportUnknownMemberType]
 
-    def test_empty_submitted_data(self, empty_deques: ModuleType) -> None:
-        """Test empty submitted_data deque."""
-        persistence = empty_deques
+    def test_empty_submitted_data(self, empty_queues: ModuleType) -> None:
+        """Test empty submitted_data buffer."""
+        persistence = empty_queues
 
         assert len(persistence.submitted_data) == 0  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         assert list(persistence.submitted_data) == []  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
         assert persistence.submitted_data.maxlen == 600  # pyright: ignore[reportUnknownMemberType]
 
-    def test_save_and_load_empty_deque(self, tmp_path: Path) -> None:
-        """Test saving and loading an empty deque."""
+    def test_save_and_load_empty_history(self, tmp_path: Path) -> None:
+        """Test saving and loading an empty history buffer."""
         from newTrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "empty_test.json"
-        empty_deque: deque[HistoryData] = deque(maxlen=600)
+        empty_history: deque[HistoryData] = deque(maxlen=600)
 
-        save_deque_to_disk(empty_deque, str(filepath))
+        save_deque_to_disk(empty_history, str(filepath))
 
         with open(filepath) as f:
             loaded_data: list[HistoryData] = json.load(f)
 
-        restored_deque: deque[HistoryData] = deque(loaded_data, maxlen=600)
-        assert len(restored_deque) == 0
-        assert restored_deque.maxlen == 600
+        restored_history: deque[HistoryData] = deque(loaded_data, maxlen=600)
+        assert len(restored_history) == 0
+        assert restored_history.maxlen == 600
 
 
 class TestLoadingBehavior:
@@ -332,6 +331,10 @@ class TestLoadingBehavior:
 
         importlib.reload(trackon)
 
+        import newTrackon.ingest as ingest
+
+        importlib.reload(ingest)
+
         assert len(persistence.raw_data) == 2
         assert list(persistence.raw_data) == test_data
 
@@ -385,6 +388,10 @@ class TestLoadingBehavior:
 
         importlib.reload(trackon)
 
+        import newTrackon.ingest as ingest
+
+        importlib.reload(ingest)
+
         assert len(persistence.submitted_data) == 2
         assert list(persistence.submitted_data) == test_data
 
@@ -408,6 +415,10 @@ class TestLoadingBehavior:
         import newTrackon.trackon as trackon
 
         importlib.reload(trackon)
+
+        import newTrackon.ingest as ingest
+
+        importlib.reload(ingest)
 
         assert len(persistence.raw_data) == 0
         assert len(persistence.submitted_data) == 0
@@ -463,6 +474,10 @@ class TestLoadingBehavior:
         import newTrackon.trackon as trackon
 
         importlib.reload(trackon)
+
+        import newTrackon.ingest as ingest
+
+        importlib.reload(ingest)
 
         # Deque should only keep last 600 items
         assert len(persistence.raw_data) == 600

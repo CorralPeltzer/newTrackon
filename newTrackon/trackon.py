@@ -1,136 +1,38 @@
 import logging
-from ipaddress import ip_address
-from threading import Lock
 from time import sleep, time
 from typing import NoReturn
-from urllib.parse import urlparse
 
 from newTrackon import db
 from newTrackon.persistence import (
-    HistoryData,
     raw_data,
     raw_history_file,
     save_deque_to_disk,
-    submitted_data,
-    submitted_history_file,
-    submitted_trackers,
 )
-from newTrackon.scraper import attempt_submitted
 from newTrackon.tracker import Tracker
-
-processing_trackers: bool = False
-deque_lock: Lock = Lock()
-list_lock: Lock = Lock()
 
 logger: logging.Logger = logging.getLogger("newtrackon")
 
 
-def enqueue_new_trackers(input_string: str) -> None:
-    input_string = input_string.lower()
-    new_trackers_list = input_string.split()
-    for url in new_trackers_list:
-        logger.info("Tracker %s submitted to the queue", url)
-        add_one_tracker_to_submitted_deque(url)
-    if processing_trackers is False:
-        process_submitted_deque()
-
-
-def add_one_tracker_to_submitted_deque(url: str) -> None:
-    try:
-        parsed_url = urlparse(url)
-        if parsed_url.hostname:
-            ip_address(parsed_url.hostname)
-            logger.info("Tracker %s denied, hostname is IP", url)
-            return
-    except ValueError:
-        pass
-    with deque_lock:
-        for tracker_in_deque in submitted_trackers:
-            if urlparse(tracker_in_deque.url).netloc == urlparse(url).netloc:
-                logger.info("Tracker %s denied, already in the queue", url)
-                return
-    with list_lock:
-        for tracker in db.get_all_data():
-            if tracker.host == urlparse(url).hostname:
-                logger.info("Tracker %s denied, already being tracked", url)
-                return
-    try:
-        tracker_candidate = Tracker.from_url(url)
-    except (RuntimeError, ValueError) as e:
-        logger.info("Tracker %s preprocessing failed, reason: %s", url, e)
-        return
-    all_ips_tracked = get_all_ips_tracked()
-    if tracker_candidate.ips and all_ips_tracked:
-        exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
-        if exists_ip:
-            logger.info("Tracker %s denied, IP of the tracker is already in the list", url)
-            return
-    with deque_lock:
-        submitted_trackers.append(tracker_candidate)
-    logger.info("Tracker %s added to the submitted queue", url)
-
-
-def process_submitted_deque() -> None:
-    global processing_trackers
-    processing_trackers = True
-    while submitted_trackers:
-        with deque_lock:
-            tracker = submitted_trackers.popleft()
-        logger.info("Size of queue: %d", len(submitted_trackers))
-        process_new_tracker(tracker)
-        save_deque_to_disk(submitted_data, submitted_history_file)
-    logger.info("Finished processing new trackers")
-    processing_trackers = False
-
-
-def process_new_tracker(tracker_candidate: Tracker) -> None:
-    logger.info("Processing new tracker: %s", tracker_candidate.url)
-    all_ips_tracked = get_all_ips_tracked()
-    if tracker_candidate.ips and all_ips_tracked:
-        exists_ip = set(tracker_candidate.ips).intersection(all_ips_tracked)
-        if exists_ip:
-            logger.info(
-                "Tracker %s denied, IP of the tracker is already in the list",
-                tracker_candidate.url,
-            )
-            return
-        with list_lock:
-            for tracker in db.get_all_data():
-                if tracker.host == urlparse(tracker_candidate.url).hostname:
-                    logger.info("Tracker %s denied, already being tracked", tracker_candidate.url)
-                    return
-
-    tracker_candidate.last_downtime = int(time())
-    tracker_candidate.last_checked = int(time())
-    try:
-        attempt_results = attempt_submitted(tracker_candidate)
-        if attempt_results:
-            (
-                tracker_candidate.interval,
-                tracker_candidate.url,
-                tracker_candidate.latency,
-            ) = attempt_results
-    except RuntimeError, ValueError:
-        return
-    if not tracker_candidate.interval:
-        log_wrong_interval_denial("missing interval field")
-        return
-    if 300 > tracker_candidate.interval or tracker_candidate.interval > 10800:  # trackers with an update interval
-        # less than 5' and more than 3h
-        log_wrong_interval_denial(reason="having an interval shorter than 5 minutes or longer than 3 hours")
-        return
-    tracker_candidate.update_ipapi_data()
-    tracker_candidate.is_up()
-    tracker_candidate.update_uptime()
-    db.insert_new_tracker(tracker_candidate)
-    logger.info("New tracker %s added to newTrackon", tracker_candidate.url)
+def build_ip_indexes(trackers: list[Tracker]) -> tuple[list[str], dict[str, set[str]]]:
+    all_ips_of_all_trackers: list[str] = []
+    recent_index: dict[str, set[str]] = {}
+    for tracker_in_list in trackers:
+        if tracker_in_list.recent_ips:
+            recent_ips = tracker_in_list.recent_ips.keys()
+            all_ips_of_all_trackers.extend(recent_ips)
+            for ip in recent_ips:
+                recent_index.setdefault(ip, set()).add(tracker_in_list.host)
+        elif tracker_in_list.ips:
+            all_ips_of_all_trackers.extend(tracker_in_list.ips)
+    return all_ips_of_all_trackers, recent_index
 
 
 def update_outdated_trackers() -> NoReturn:
     while True:
         now = int(time())
+        trackers_all = db.get_all_data()
         trackers_outdated: list[Tracker] = []
-        for tracker in db.get_all_data():
+        for tracker in trackers_all:
             if (now - tracker.last_checked) > tracker.interval:
                 trackers_outdated.append(tracker)
         for tracker in trackers_outdated:
@@ -140,32 +42,14 @@ def update_outdated_trackers() -> NoReturn:
             if tracker.to_be_deleted:
                 logger.info("Removing %s", tracker.url)
                 db.delete_tracker(tracker)
+                trackers_all.remove(tracker)
             else:
                 db.update_tracker(tracker)
             save_deque_to_disk(raw_data, raw_history_file)
-        warn_of_duplicate_ips()
-        warn_of_recent_ip_overlaps()
         sleep(5)
 
 
-def log_wrong_interval_denial(reason: str) -> None:
-    debug: HistoryData = submitted_data.popleft()
-    info = debug["info"]
-    first_info = info[0] if isinstance(info, list) else info
-    debug.update(
-        {
-            "status": 0,
-            "info": [
-                first_info,
-                f"Tracker rejected for {reason}",
-            ],
-        }
-    )
-    submitted_data.appendleft(debug)
-
-
-def warn_of_duplicate_ips() -> None:
-    all_ips = get_all_ips_tracked()
+def warn_of_duplicate_ips(all_ips: list[str]) -> None:
     if all_ips:
         seen: set[str] = set()
         duplicates: set[str] = set()
@@ -178,15 +62,9 @@ def warn_of_duplicate_ips() -> None:
             logger.warning("IP %s is duplicated, manual action required", duplicate_ip)
 
 
-def warn_of_recent_ip_overlaps() -> None:
-    trackers = db.get_all_data()
+def warn_of_recent_ip_overlaps(trackers: list[Tracker], recent_index: dict[str, set[str]]) -> None:
     if not trackers:
         return
-    recent_index: dict[str, set[str]] = {}
-    for tracker in trackers:
-        if tracker.recent_ips:
-            for ip in tracker.recent_ips:
-                recent_index.setdefault(ip, set()).add(tracker.host)
     if not recent_index:
         return
     warned: set[tuple[str, str, str]] = set()
@@ -210,12 +88,14 @@ def warn_of_recent_ip_overlaps() -> None:
             )
 
 
-def get_all_ips_tracked() -> list[str]:
-    all_ips_of_all_trackers: list[str] = []
-    all_data = db.get_all_data()
-    for tracker_in_list in all_data:
-        if tracker_in_list.recent_ips:
-            all_ips_of_all_trackers.extend(tracker_in_list.recent_ips.keys())
-        elif tracker_in_list.ips:
-            all_ips_of_all_trackers.extend(tracker_in_list.ips)
-    return all_ips_of_all_trackers
+def warn_of_ip_conflicts() -> None:
+    trackers = db.get_all_data()
+    all_ips, recent_index = build_ip_indexes(trackers)
+    warn_of_duplicate_ips(all_ips)
+    warn_of_recent_ip_overlaps(trackers, recent_index)
+
+
+def warn_of_ip_conflicts_periodically() -> NoReturn:
+    while True:
+        warn_of_ip_conflicts()
+        sleep(120)

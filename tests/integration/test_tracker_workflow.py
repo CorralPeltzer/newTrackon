@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest import MonkeyPatch
 
+import newTrackon.persistence as persistence
 from newTrackon.tracker import Tracker
 
 
@@ -346,12 +347,11 @@ class TestTrackerGoesDown:
 class TestNewTrackerSubmissionFlow:
     """Test end-to-end new tracker submission workflow."""
 
-    def test_add_tracker_to_submitted_deque(self, shared_memory_db: Connection, empty_deques: Any) -> None:
-        """Call add_one_tracker_to_submitted_deque with valid URL,
-        verify tracker added to submitted_trackers deque.
+    def test_add_tracker_to_submitted_queue(self, shared_memory_db: Connection, empty_queues: Any) -> None:
+        """Call add_one_tracker_to_submitted_queue with valid URL,
+        verify tracker added to submitted queue.
         """
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
@@ -363,20 +363,20 @@ class TestNewTrackerSubmissionFlow:
 
         with (
             patch.object(Tracker, "from_url", return_value=mock_tracker),
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
         ):
-            trackon.add_one_tracker_to_submitted_deque(test_url)
+            ingest.add_one_tracker_to_submitted_queue(test_url)
 
-        # Verify tracker was added to submitted_trackers deque
-        assert len(submitted_trackers) == 1
-        assert submitted_trackers[0] == mock_tracker
+        # Verify tracker was added to submitted queue
+        assert persistence.submitted_queue.qsize() == 1
+        with persistence.submitted_queue.mutex:
+            queued = list(persistence.submitted_queue.queue)
+        assert queued[0] == mock_tracker
 
     def test_tracker_ends_up_in_database_after_processing(
-        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Verify tracker ends up in database after full submission processing."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
@@ -402,15 +402,14 @@ class TestNewTrackerSubmissionFlow:
         # Mock attempt_submitted to return success
         mock_attempt_result = (1800, test_url, 50)
 
-        # Add tracker to submitted_trackers deque
-        submitted_trackers.append(mock_tracker)
+        # Add tracker to submitted queue
+        persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
         ):
-            trackon.process_submitted_deque()
+            ingest.process_submitted_queue()
 
         # Verify tracker was inserted into database
         cursor = shared_memory_db.cursor()
@@ -420,10 +419,9 @@ class TestNewTrackerSubmissionFlow:
         assert row[0] == mock_tracker.host
         assert row[1] == test_url
 
-    def test_full_submission_flow_integration(self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None) -> None:
+    def test_full_submission_flow_integration(self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None) -> None:
         """Test complete flow from URL submission to database insertion."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         test_url = "udp://complete-flow.example.com:6969/announce"
 
@@ -450,20 +448,19 @@ class TestNewTrackerSubmissionFlow:
 
         with (
             patch.object(Tracker, "from_url", return_value=mock_tracker),
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
-            # Step 1: Add to submission deque
-            trackon.add_one_tracker_to_submitted_deque(test_url)
-            assert len(submitted_trackers) == 1
+            # Step 1: Add to submission queue
+            ingest.add_one_tracker_to_submitted_queue(test_url)
+            assert persistence.submitted_queue.qsize() == 1
 
-            # Step 2: Process the deque
-            trackon.process_submitted_deque()
+            # Step 2: Process the queue
+            ingest.process_submitted_queue()
 
-        # Verify empty deque after processing
-        assert len(submitted_trackers) == 0
+        # Verify empty queue after processing
+        assert persistence.submitted_queue.qsize() == 0
 
         # Verify tracker in database
         cursor = shared_memory_db.cursor()
@@ -476,13 +473,12 @@ class TestDuplicateIPRejection:
     """Test rejection of trackers with duplicate IPs."""
 
     def test_reject_tracker_with_duplicate_ip(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_deques: Any
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
     ) -> None:
         """Insert tracker with IP 1.2.3.4, try to add new tracker that
         resolves to same IP, verify rejection.
         """
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         # Insert an existing tracker with known IP
         shared_memory_db.execute(
@@ -516,17 +512,16 @@ class TestDuplicateIPRejection:
         mock_tracker.ips = ["1.2.3.4"]  # Same IP as existing tracker  # pyright: ignore[reportAttributeAccessIssue]
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
-            trackon.add_one_tracker_to_submitted_deque(new_url)
+            ingest.add_one_tracker_to_submitted_queue(new_url)
 
-        # Verify tracker was NOT added to submitted_trackers deque
-        assert len(submitted_trackers) == 0
+        # Verify tracker was NOT added to the submission queue
+        assert persistence.submitted_queue.qsize() == 0
 
     def test_reject_tracker_with_overlapping_ips(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_deques: Any
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
     ) -> None:
         """Test rejection when new tracker has any IP overlapping with existing."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         # Insert existing tracker with multiple IPs
         shared_memory_db.execute(
@@ -560,17 +555,16 @@ class TestDuplicateIPRejection:
         mock_tracker.ips = ["9.10.11.12", "5.6.7.8"]  # 5.6.7.8 overlaps  # pyright: ignore[reportAttributeAccessIssue]
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
-            trackon.add_one_tracker_to_submitted_deque(new_url)
+            ingest.add_one_tracker_to_submitted_queue(new_url)
 
         # Should be rejected
-        assert len(submitted_trackers) == 0
+        assert persistence.submitted_queue.qsize() == 0
 
     def test_allow_tracker_with_unique_ip(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_deques: Any
+        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
     ) -> None:
         """Test that tracker with unique IP is allowed."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         # Insert existing tracker with known IP
         shared_memory_db.execute(
@@ -604,22 +598,24 @@ class TestDuplicateIPRejection:
         mock_tracker.ips = ["9.10.11.12"]  # Different IP  # pyright: ignore[reportAttributeAccessIssue]
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
-            trackon.add_one_tracker_to_submitted_deque(new_url)
+            ingest.add_one_tracker_to_submitted_queue(new_url)
 
         # Should be allowed
-        assert len(submitted_trackers) == 1
-        assert submitted_trackers[0] == mock_tracker
+        assert persistence.submitted_queue.qsize() == 1
+        with persistence.submitted_queue.mutex:
+            queued = list(persistence.submitted_queue.queue)
+        assert queued[0] == mock_tracker
 
 
 class TestIntervalValidation:
     """Test interval validation during tracker submission."""
 
     def test_reject_tracker_with_interval_below_minimum(
-        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Mock scraper to return interval < 300, verify tracker rejected."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_data, submitted_trackers
+        from newTrackon import ingest
+        from newTrackon.persistence import submitted_data
 
         test_url = "udp://low-interval.example.com:6969/announce"
 
@@ -647,15 +643,14 @@ class TestIntervalValidation:
         # Pre-populate submitted_data with expected debug entry
         submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "ip": "", "info": ["Response data"]})
 
-        submitted_trackers.append(mock_tracker)
+        persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
-            trackon.process_submitted_deque()
+            ingest.process_submitted_queue()
 
         # Verify tracker was NOT inserted into database
         cursor = shared_memory_db.cursor()
@@ -664,11 +659,11 @@ class TestIntervalValidation:
         assert row is None
 
     def test_reject_tracker_with_interval_above_maximum(
-        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Mock scraper to return interval > 10800, verify tracker rejected."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_data, submitted_trackers
+        from newTrackon import ingest
+        from newTrackon.persistence import submitted_data
 
         test_url = "udp://high-interval.example.com:6969/announce"
 
@@ -696,15 +691,14 @@ class TestIntervalValidation:
         # Pre-populate submitted_data with expected debug entry
         submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "ip": "", "info": ["Response data"]})
 
-        submitted_trackers.append(mock_tracker)
+        persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
-            trackon.process_submitted_deque()
+            ingest.process_submitted_queue()
 
         # Verify tracker was NOT inserted into database
         cursor = shared_memory_db.cursor()
@@ -713,11 +707,10 @@ class TestIntervalValidation:
         assert row is None
 
     def test_accept_tracker_with_valid_interval(
-        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Verify tracker with interval between 300 and 10800 is accepted."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         test_url = "udp://valid-interval.example.com:6969/announce"
 
@@ -742,15 +735,14 @@ class TestIntervalValidation:
         # Valid interval of 1800 (30 minutes)
         mock_attempt_result = (1800, test_url, 50)
 
-        submitted_trackers.append(mock_tracker)
+        persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
-            trackon.process_submitted_deque()
+            ingest.process_submitted_queue()
 
         # Verify tracker WAS inserted into database
         cursor = shared_memory_db.cursor()
@@ -761,14 +753,13 @@ class TestIntervalValidation:
         assert row[1] == 1800
 
     def test_accept_tracker_with_exactly_minimum_interval(
-        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Interval of exactly 300 should be accepted (boundary condition).
 
         Per code logic: "300 > tracker_candidate.interval" means 300 is NOT rejected.
         """
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         test_url = "udp://boundary-low.example.com:6969/announce"
 
@@ -793,15 +784,14 @@ class TestIntervalValidation:
         # Interval of exactly 300 - boundary condition
         mock_attempt_result = (300, test_url, 50)
 
-        submitted_trackers.append(mock_tracker)
+        persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
-            trackon.process_submitted_deque()
+            ingest.process_submitted_queue()
 
         # Based on "300 > interval" - 300 > 300 is False, so 300 should be accepted
         cursor = shared_memory_db.cursor()
@@ -810,11 +800,10 @@ class TestIntervalValidation:
         assert row is not None
 
     def test_accept_tracker_with_exactly_maximum_interval(
-        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Interval of exactly 10800 should be accepted."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         test_url = "udp://boundary-high.example.com:6969/announce"
 
@@ -839,15 +828,14 @@ class TestIntervalValidation:
         # Interval of exactly 10800 - boundary condition
         mock_attempt_result = (10800, test_url, 50)
 
-        submitted_trackers.append(mock_tracker)
+        persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
-            trackon.process_submitted_deque()
+            ingest.process_submitted_queue()
 
         # Based on "interval > 10800" - 10800 > 10800 is False, so accepted
         cursor = shared_memory_db.cursor()
@@ -857,11 +845,10 @@ class TestIntervalValidation:
         assert row[1] == 10800
 
     def test_reject_tracker_with_missing_interval(
-        self, shared_memory_db: Connection, empty_deques: Any, reset_globals: None
+        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Verify tracker with missing interval is rejected."""
-        from newTrackon import trackon
-        from newTrackon.persistence import submitted_trackers
+        from newTrackon import ingest
 
         test_url = "udp://no-interval.example.com:6969/announce"
 
@@ -886,16 +873,15 @@ class TestIntervalValidation:
         # No interval returned (None)
         mock_attempt_result = (None, test_url, 50)
 
-        submitted_trackers.append(mock_tracker)
+        persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch.object(trackon, "get_all_ips_tracked", return_value=[]),
-            patch("newTrackon.trackon.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.trackon.save_deque_to_disk"),
+            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newTrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
-            patch("newTrackon.trackon.log_wrong_interval_denial"),  # Mock to avoid deque pop error
+            patch("newTrackon.ingest.log_wrong_interval_denial"),  # Mock to avoid buffer pop error
         ):
-            trackon.process_submitted_deque()
+            ingest.process_submitted_queue()
 
         # Verify tracker was NOT inserted into database
         cursor = shared_memory_db.cursor()
