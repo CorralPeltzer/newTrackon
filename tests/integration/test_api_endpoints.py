@@ -153,6 +153,70 @@ class TestApiPercentageEndpoint:
         response = flask_client.get("/api/-1")
         assert response.status_code == 404
 
+    def test_get_api_percentage_with_min_age_days_filters_new_trackers(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """GET /api/<percentage> should apply min_age_days filtering."""
+        now = int(time())
+        old_added = now - (11 * 86400)
+        new_added = now - (2 * 86400)
+
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "old.percentage.tracker.com",
+                "udp://old.percentage.tracker.com:6969/announce",
+                json.dumps(["1.1.1.1"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                old_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "new.percentage.tracker.com",
+                "udp://new.percentage.tracker.com:6969/announce",
+                json.dumps(["2.2.2.2"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                new_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.commit()
+
+        response_filtered = flask_client.get("/api/95?min_age_days=10")
+        assert response_filtered.status_code == 200
+        assert b"old.percentage.tracker.com" in response_filtered.data
+        assert b"new.percentage.tracker.com" not in response_filtered.data
+
+    def test_get_api_percentage_with_invalid_min_age_days_returns_400(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """GET /api/<percentage> should reject invalid min_age_days values."""
+        response = flask_client.get("/api/95?min_age_days=abc")
+        assert response.status_code == 400
+
 
 class TestApiStableEndpoint:
     """Tests for the /api/stable endpoint."""
@@ -323,6 +387,63 @@ class TestApiAllEndpoint:
         assert response.status_code == 200
         assert b"low.uptime.tracker.com" in response.data
 
+    def test_get_api_all_with_min_age_days_filters_new_trackers(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """GET /api/all should apply min_age_days filtering."""
+        now = int(time())
+        old_added = now - (11 * 86400)
+        new_added = now - (2 * 86400)
+
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "old.all.tracker.com",
+                "udp://old.all.tracker.com:6969/announce",
+                json.dumps(["1.1.1.1"]),
+                50,
+                now,
+                1800,
+                1,
+                10,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                old_added,
+                json.dumps([1] * 10 + [0] * 90),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "new.all.tracker.com",
+                "udp://new.all.tracker.com:6969/announce",
+                json.dumps(["2.2.2.2"]),
+                50,
+                now,
+                1800,
+                1,
+                10,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                new_added,
+                json.dumps([1] * 10 + [0] * 90),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.commit()
+
+        response = flask_client.get("/api/all?min_age_days=10")
+        assert response.status_code == 200
+        assert b"old.all.tracker.com" in response.data
+        assert b"new.all.tracker.com" not in response.data
+
 
 class TestApiLiveEndpoint:
     """Tests for the /api/live endpoint."""
@@ -366,6 +487,63 @@ class TestApiLiveEndpoint:
         response = flask_client.get("/api/live")
         assert response.status_code == 200
         assert b"offline.tracker.com" not in response.data
+
+    def test_get_api_live_with_min_age_days_filters_new_trackers(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """GET /api/live should apply min_age_days filtering."""
+        now = int(time())
+        old_added = now - (11 * 86400)
+        new_added = now - (2 * 86400)
+
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "old.live.tracker.com",
+                "udp://old.live.tracker.com:6969/announce",
+                json.dumps(["1.1.1.1"]),
+                50,
+                now,
+                1800,
+                1,
+                60,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                old_added,
+                json.dumps([1] * 60 + [0] * 40),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "new.live.tracker.com",
+                "udp://new.live.tracker.com:6969/announce",
+                json.dumps(["2.2.2.2"]),
+                50,
+                now,
+                1800,
+                1,
+                60,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                new_added,
+                json.dumps([1] * 60 + [0] * 40),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.commit()
+
+        response = flask_client.get("/api/live?min_age_days=10")
+        assert response.status_code == 200
+        assert b"old.live.tracker.com" in response.data
+        assert b"new.live.tracker.com" not in response.data
 
 
 class TestApiUdpEndpoint:
@@ -438,6 +616,63 @@ class TestApiUdpEndpoint:
         response = flask_client.get("/api/udp")
         assert response.status_code == 200
         assert b"low.udp.tracker.com" not in response.data
+
+    def test_get_api_udp_with_min_age_days_filters_new_trackers(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """GET /api/udp should apply min_age_days filtering."""
+        now = int(time())
+        old_added = now - (11 * 86400)
+        new_added = now - (2 * 86400)
+
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "old.udp.tracker.com",
+                "udp://old.udp.tracker.com:6969/announce",
+                json.dumps(["1.1.1.1"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                old_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "new.udp.tracker.com",
+                "udp://new.udp.tracker.com:6969/announce",
+                json.dumps(["2.2.2.2"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                new_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.commit()
+
+        response = flask_client.get("/api/udp?min_age_days=10")
+        assert response.status_code == 200
+        assert b"old.udp.tracker.com" in response.data
+        assert b"new.udp.tracker.com" not in response.data
 
 
 class TestApiHttpEndpoint:
@@ -512,6 +747,63 @@ class TestApiHttpEndpoint:
         response = flask_client.get("/api/http")
         assert response.status_code == 200
         assert b"udp://tracker.example.com" not in response.data
+
+    def test_get_api_http_with_min_age_days_filters_new_trackers(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """GET /api/http should apply min_age_days filtering."""
+        now = int(time())
+        old_added = now - (11 * 86400)
+        new_added = now - (2 * 86400)
+
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "old.http.tracker.com",
+                "http://old.http.tracker.com:6969/announce",
+                json.dumps(["1.1.1.1"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                old_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "new.http.tracker.com",
+                "http://new.http.tracker.com:6969/announce",
+                json.dumps(["2.2.2.2"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                new_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.commit()
+
+        response = flask_client.get("/api/http?min_age_days=10")
+        assert response.status_code == 200
+        assert b"old.http.tracker.com" in response.data
+        assert b"new.http.tracker.com" not in response.data
 
 
 class TestIpv4Ipv6Filtering:

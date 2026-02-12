@@ -35,6 +35,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
       - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+      - $ref: "#/components/parameters/MinAgeDays"
       - name: uptime
         in: path
         description: Uptime percentage
@@ -58,6 +59,8 @@ paths:
         "400":
           description: Invalid percentage
   /live:
+    parameters:
+      - $ref: "#/components/parameters/MinAgeDays"
     get:
       summary: Get working trackers
       tags:
@@ -71,6 +74,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trackers"
   /udp:
+    parameters:
+      - $ref: "#/components/parameters/MinAgeDays"
     get:
       summary: Get stable UDP trackers
       tags:
@@ -90,6 +95,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trackers"
   /http:
+    parameters:
+      - $ref: "#/components/parameters/MinAgeDays"
     get:
       summary: Get stable HTTP/HTTPS trackers
       tags:
@@ -113,6 +120,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
       - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+      - $ref: "#/components/parameters/MinAgeDays"
     get:
       summary: Get all trackers
       tags:
@@ -168,20 +176,21 @@ components:
     IncludeIPv4OnlyTrackers:
       in: query
       name: include_ipv4_only_trackers
+      description: Include trackers that resolve only to IPv4 addresses.
       schema:
         type: boolean
         default: true
     IncludeIPv6OnlyTrackers:
       in: query
       name: include_ipv6_only_trackers
+      description: Include trackers that resolve only to IPv6 addresses.
       schema:
         type: boolean
         default: true
     MinAgeDays:
       in: query
       name: min_age_days
-      description: Minimum tracker age in days for /stable. Set to 0 to include newer trackers.
+      description: Minimum tracker age in days. Default is 10 for /stable and 0 for all other list endpoints.
       schema:
         type: integer
         minimum: 0
-        default: 10

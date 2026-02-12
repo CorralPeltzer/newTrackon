@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 from logging import ERROR, INFO, basicConfig, getLogger
 from sys import stdout
 from threading import Thread
-from time import time
 
 from flask import (
     Flask,
@@ -131,6 +130,8 @@ def raw():
 
 @app.route("/api/<int:percentage>")
 def api_percentage(percentage: int, added_before: int | None = None) -> Response:
+    if added_before is None:
+        added_before = get_added_before_or_abort()
     include_upv4_only = (
         False if request.args.get("include_ipv4_only_trackers", default="true").lower() in ("false", "0") else True
     )
@@ -155,29 +156,22 @@ def api_percentage(percentage: int, added_before: int | None = None) -> Response
 stable_min_age_days_default: int = 10
 
 
+def get_added_before_or_abort(default_min_age_days: int = 0) -> int | None:
+    try:
+        return utils.get_added_before_from_query_args(request.args, default_min_age_days=default_min_age_days)
+    except ValueError as exc:
+        abort(
+            Response(
+                str(exc),
+                400,
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+        )
+
+
 @app.route("/api/stable")
 def api_stable():
-    min_age_days_raw = request.args.get("min_age_days", default=str(stable_min_age_days_default))
-    try:
-        min_age_days = int(min_age_days_raw)
-    except ValueError:
-        abort(
-            Response(
-                "min_age_days has to be an integer",
-                400,
-                headers={"Access-Control-Allow-Origin": "*"},
-            )
-        )
-    if min_age_days < 0:
-        abort(
-            Response(
-                "min_age_days has to be greater or equal than 0",
-                400,
-                headers={"Access-Control-Allow-Origin": "*"},
-            )
-        )
-    added_before = int(time()) - (min_age_days * 86400)
-    return api_percentage(95, added_before=added_before)
+    return api_percentage(95, added_before=get_added_before_or_abort(stable_min_age_days_default))
 
 
 @app.route("/api/best")
@@ -187,14 +181,14 @@ def api_best():
 
 @app.route("/api/all")
 def api_all():
-    return api_percentage(0)
+    return api_percentage(0, added_before=get_added_before_or_abort())
 
 
 @app.route("/api/live")
 @app.route("/api/udp")
 @app.route("/api/http")
 def api_multiple():
-    resp = make_response(db.get_api_data(request.path))
+    resp = make_response(db.get_api_data(request.path, added_before=get_added_before_or_abort()))
     resp = utils.add_api_headers(resp)
     return resp
 

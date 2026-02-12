@@ -120,23 +120,26 @@ def get_api_data(
 ) -> str:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
+    sql = ""
+    params: tuple[int, ...] = ()
+
     if query == "/api/http":
-        c.execute('SELECT URL, IP FROM STATUS WHERE URL LIKE "http%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
+        sql = 'SELECT URL, IP FROM STATUS WHERE URL LIKE "http%" AND UPTIME >= 95'
     elif query == "/api/udp":
-        c.execute('SELECT URL, IP FROM STATUS WHERE URL LIKE "udp://%" AND UPTIME >= 95 ORDER BY UPTIME DESC')
+        sql = 'SELECT URL, IP FROM STATUS WHERE URL LIKE "udp://%" AND UPTIME >= 95'
     elif query == "/api/live":
-        c.execute("SELECT URL, IP FROM STATUS WHERE STATUS = 1 ORDER BY UPTIME DESC")
+        sql = "SELECT URL, IP FROM STATUS WHERE STATUS = 1"
     elif query == "percentage":
-        if added_before is not None:
-            c.execute(
-                "SELECT URL, IP FROM STATUS WHERE UPTIME >= ? AND ADDED <= ? ORDER BY UPTIME DESC",
-                (uptime, added_before),
-            )
-        else:
-            c.execute(
-                "SELECT URL, IP FROM STATUS WHERE UPTIME >= ? ORDER BY UPTIME DESC",
-                (uptime,),
-            )
+        sql = "SELECT URL, IP FROM STATUS WHERE UPTIME >= ?"
+        params = (uptime,)
+
+    if added_before is not None:
+        sql += " AND ADDED <= ?"
+        params += (added_before,)
+
+    sql += " ORDER BY UPTIME DESC"
+    c.execute(sql, params)
+
     raw_rows = c.fetchall()
     conn.close()
 

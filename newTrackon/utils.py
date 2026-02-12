@@ -1,6 +1,6 @@
 import sqlite3
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from time import time
 from typing import TYPE_CHECKING
@@ -105,7 +105,7 @@ def remove_ipvx_only_trackers(raw_list: list[TrackerEndpoint], version: int) -> 
     return cleaned_list
 
 
-def format_list(raw_list: Sequence[TrackerEndpoint]) -> str:
+def format_list(raw_list: list[TrackerEndpoint]) -> str:
     formatted_list = ""
     for url in raw_list:
         url_string = url[0]
@@ -136,3 +136,16 @@ def build_httpx_url(submitted_url: ParseResult, tls: bool) -> str:
     else:
         http_url = scheme + submitted_url.netloc + "/announce"
     return http_url
+
+
+def get_added_before_from_query_args(args: Mapping[str, str], default_min_age_days: int = 0) -> int | None:
+    min_age_days_raw = args.get("min_age_days", str(default_min_age_days))
+    try:
+        min_age_days = int(min_age_days_raw)
+    except ValueError as exc:
+        raise ValueError("min_age_days has to be an integer") from exc
+    if min_age_days < 0:
+        raise ValueError("min_age_days has to be greater or equal than 0")
+    if min_age_days == 0:
+        return None
+    return int(time()) - (min_age_days * 86400)
