@@ -152,12 +152,31 @@ def api_percentage(percentage: int, added_before: int | None = None) -> Response
         )
 
 
-stable_min_age: int = 10 * 86400  # 10 days in seconds
+stable_min_age_days_default: int = 10
 
 
 @app.route("/api/stable")
 def api_stable():
-    added_before = int(time()) - stable_min_age
+    min_age_days_raw = request.args.get("min_age_days", default=str(stable_min_age_days_default))
+    try:
+        min_age_days = int(min_age_days_raw)
+    except ValueError:
+        abort(
+            Response(
+                "min_age_days has to be an integer",
+                400,
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+        )
+    if min_age_days < 0:
+        abort(
+            Response(
+                "min_age_days has to be greater or equal than 0",
+                400,
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+        )
+    added_before = int(time()) - (min_age_days * 86400)
     return api_percentage(95, added_before=added_before)
 
 

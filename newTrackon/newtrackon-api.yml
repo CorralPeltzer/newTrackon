@@ -18,11 +18,12 @@ paths:
     parameters:
       - $ref: "#/components/parameters/IncludeIPv4OnlyTrackers"
       - $ref: "#/components/parameters/IncludeIPv6OnlyTrackers"
+      - $ref: "#/components/parameters/MinAgeDays"
     get:
       summary: Get stable trackers
       tags:
         - Tracker operations
-      description: Returns a two line delimited list of trackers that have an uptime of equal or more than 95% and have been tracked for at least 10 days
+      description: Returns a two line delimited list of trackers that have an uptime of equal or more than 95% and have been tracked for at least min_age_days days (default 10)
       responses:
         "200":
           description: Stable trackers
@@ -176,3 +177,11 @@ components:
       schema:
         type: boolean
         default: true
+    MinAgeDays:
+      in: query
+      name: min_age_days
+      description: Minimum tracker age in days for /stable. Set to 0 to include newer trackers.
+      schema:
+        type: integer
+        minimum: 0
+        default: 10

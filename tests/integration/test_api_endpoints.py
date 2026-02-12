@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from time import time
 from typing import Any
 from unittest.mock import patch
 
@@ -195,6 +196,73 @@ class TestApiStableEndpoint:
         response = flask_client.get("/api/stable")
         assert response.status_code == 200
         assert b"low.uptime.tracker.com" not in response.data
+
+    def test_get_api_stable_with_min_age_days_zero_includes_new_trackers(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """min_age_days=0 should disable the age filter and include newer trackers."""
+        now = int(time())
+        old_added = now - (11 * 86400)
+        new_added = now - (2 * 86400)
+
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "old.stable.tracker.com",
+                "udp://old.stable.tracker.com:6969/announce",
+                json.dumps(["1.1.1.1"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                old_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.execute(
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "new.stable.tracker.com",
+                "udp://new.stable.tracker.com:6969/announce",
+                json.dumps(["2.2.2.2"]),
+                50,
+                now,
+                1800,
+                1,
+                95,
+                json.dumps(["United States"]),
+                json.dumps(["us"]),
+                json.dumps(["ISP"]),
+                new_added,
+                json.dumps([1] * 100),
+                now,
+                now,
+                json.dumps({}),
+            ),
+        )
+        mock_db_connection.commit()
+
+        response_including_new = flask_client.get("/api/stable?min_age_days=0")
+        assert response_including_new.status_code == 200
+        assert b"old.stable.tracker.com" in response_including_new.data
+        assert b"new.stable.tracker.com" in response_including_new.data
+
+    def test_get_api_stable_with_invalid_min_age_days_returns_400(
+        self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
+    ) -> None:
+        """min_age_days should be a non-negative integer."""
+        response = flask_client.get("/api/stable?min_age_days=abc")
+        assert response.status_code == 400
+
+        response_negative = flask_client.get("/api/stable?min_age_days=-1")
+        assert response_negative.status_code == 400
 
 
 class TestApiBestEndpoint:
