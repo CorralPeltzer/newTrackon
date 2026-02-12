@@ -2,6 +2,7 @@ import json
 import sqlite3
 from collections import deque
 from os import path
+from typing import Any, cast
 
 from newTrackon.tracker import Tracker
 from newTrackon.utils import TrackerEndpoint, dict_factory, format_list, remove_ipvx_only_trackers
@@ -34,6 +35,7 @@ def create_db() -> None:
         `historic`	TEXT,
         `last_downtime` INTEGER,
         `last_uptime`	INTEGER,
+        `recent_ip`	TEXT,
         PRIMARY KEY(`host`)
         );"""
     )
@@ -46,7 +48,7 @@ def update_tracker(tracker: Tracker) -> None:
     c = conn.cursor()
     c.execute(
         "UPDATE status SET url=?, ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-        " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=? WHERE host=?",
+        " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=?, recent_ip=? WHERE host=?",
         (
             tracker.url,
             json.dumps(tracker.ips),
@@ -61,6 +63,7 @@ def update_tracker(tracker: Tracker) -> None:
             json.dumps(tracker.networks),
             tracker.last_downtime,
             tracker.last_uptime,
+            json.dumps(tracker.recent_ips),
             tracker.host,
         ),
     ).fetchone()
@@ -81,7 +84,7 @@ def delete_tracker(tracker: Tracker) -> None:
 
 def get_all_data() -> list[Tracker]:
     conn = sqlite3.connect(db_file)
-    conn.row_factory = dict_factory
+    conn.row_factory = cast(Any, dict_factory)
     c = conn.cursor()
     trackers_from_db: list[Tracker] = []
     for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
@@ -101,6 +104,7 @@ def get_all_data() -> list[Tracker]:
             networks=json.loads(row.get("network")),
             last_downtime=row.get("last_downtime"),
             last_uptime=row.get("last_uptime"),
+            recent_ips=json.loads(row.get("recent_ip") or "{}"),
         )
         trackers_from_db.append(tracker_in_db)
     conn.close()
@@ -151,7 +155,7 @@ def insert_new_tracker(tracker: Tracker) -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
-        "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             tracker.host,
             tracker.url,
@@ -168,6 +172,7 @@ def insert_new_tracker(tracker: Tracker) -> None:
             json.dumps(list(tracker.historic) if tracker.historic else []),
             tracker.last_downtime,
             tracker.last_uptime,
+            json.dumps(tracker.recent_ips),
         ),
     )
     conn.commit()

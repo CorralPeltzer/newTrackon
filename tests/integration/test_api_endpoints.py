@@ -170,7 +170,7 @@ class TestApiStableEndpoint:
         """GET /api/stable should exclude trackers below 95% uptime."""
         # Insert a tracker with 90% uptime
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "low.uptime.tracker.com",
                 "udp://low.uptime.tracker.com:6969/announce",
@@ -187,6 +187,7 @@ class TestApiStableEndpoint:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -228,7 +229,7 @@ class TestApiAllEndpoint:
         """GET /api/all should include trackers with low uptime."""
         # Insert a tracker with 10% uptime
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "low.uptime.tracker.com",
                 "udp://low.uptime.tracker.com:6969/announce",
@@ -245,6 +246,7 @@ class TestApiAllEndpoint:
                 json.dumps([0] * 90 + [1] * 10),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -271,7 +273,7 @@ class TestApiLiveEndpoint:
         """GET /api/live should exclude offline trackers."""
         # Insert an offline tracker
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "offline.tracker.com",
                 "udp://offline.tracker.com:6969/announce",
@@ -288,6 +290,7 @@ class TestApiLiveEndpoint:
                 json.dumps([0] * 50 + [1] * 50),
                 1700000000,
                 1699990000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -312,7 +315,7 @@ class TestApiUdpEndpoint:
         """GET /api/udp should exclude HTTP trackers."""
         # Insert an HTTP tracker with high uptime
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "http.tracker.com",
                 "http://http.tracker.com:6969/announce",
@@ -329,6 +332,7 @@ class TestApiUdpEndpoint:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -341,7 +345,7 @@ class TestApiUdpEndpoint:
         """GET /api/udp should exclude UDP trackers with < 95% uptime."""
         # Insert a UDP tracker with low uptime
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "low.udp.tracker.com",
                 "udp://low.udp.tracker.com:6969/announce",
@@ -358,6 +362,7 @@ class TestApiUdpEndpoint:
                 json.dumps([1] * 80 + [0] * 20),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -374,7 +379,7 @@ class TestApiHttpEndpoint:
         """GET /api/http should return HTTP trackers with >= 95% uptime."""
         # Insert an HTTP tracker with high uptime
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "http.tracker.com",
                 "http://http.tracker.com:6969/announce",
@@ -391,6 +396,7 @@ class TestApiHttpEndpoint:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -406,7 +412,7 @@ class TestApiHttpEndpoint:
         """GET /api/http should include HTTPS trackers (starts with http)."""
         # Insert an HTTPS tracker with high uptime
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "https.tracker.com",
                 "https://https.tracker.com:443/announce",
@@ -423,6 +429,7 @@ class TestApiHttpEndpoint:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -446,7 +453,7 @@ class TestIpv4Ipv6Filtering:
     def insert_ipv4_only_tracker(self, mock_db_connection: sqlite3.Connection) -> str:
         """Insert a tracker with only IPv4 address."""
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "ipv4only.tracker.com",
                 "udp://ipv4only.tracker.com:6969/announce",
@@ -463,6 +470,7 @@ class TestIpv4Ipv6Filtering:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -472,7 +480,7 @@ class TestIpv4Ipv6Filtering:
     def insert_ipv6_only_tracker(self, mock_db_connection: sqlite3.Connection) -> str:
         """Insert a tracker with only IPv6 address."""
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "ipv6only.tracker.com",
                 "udp://ipv6only.tracker.com:6969/announce",
@@ -489,6 +497,7 @@ class TestIpv4Ipv6Filtering:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -498,7 +507,7 @@ class TestIpv4Ipv6Filtering:
     def insert_dual_stack_tracker(self, mock_db_connection: sqlite3.Connection) -> str:
         """Insert a tracker with both IPv4 and IPv6 addresses."""
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "dualstack.tracker.com",
                 "udp://dualstack.tracker.com:6969/announce",
@@ -515,6 +524,7 @@ class TestIpv4Ipv6Filtering:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()
@@ -741,7 +751,7 @@ class TestEdgeCases:
         # Insert multiple trackers
         for i in range(3):
             mock_db_connection.execute(
-                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     f"tracker{i}.example.com",
                     f"udp://tracker{i}.example.com:6969/announce",
@@ -758,6 +768,7 @@ class TestEdgeCases:
                     json.dumps([1] * 100),
                     1699990000,
                     1700000000,
+                    json.dumps({}),
                 ),
             )
         mock_db_connection.commit()
@@ -773,7 +784,7 @@ class TestEdgeCases:
     def test_special_characters_in_tracker_url(self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection) -> None:
         """API should handle tracker URLs with special characters."""
         mock_db_connection.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "special.tracker.com",
                 "http://special.tracker.com:8080/path/announce?key=value",
@@ -790,6 +801,7 @@ class TestEdgeCases:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         mock_db_connection.commit()

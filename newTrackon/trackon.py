@@ -110,7 +110,7 @@ def process_new_tracker(tracker_candidate: Tracker) -> None:
                 tracker_candidate.url,
                 tracker_candidate.latency,
             ) = attempt_results
-    except (RuntimeError, ValueError):
+    except RuntimeError, ValueError:
         return
     if not tracker_candidate.interval:
         log_wrong_interval_denial("missing interval field")
@@ -144,6 +144,7 @@ def update_outdated_trackers() -> NoReturn:
                 db.update_tracker(tracker)
             save_deque_to_disk(raw_data, raw_history_file)
         warn_of_duplicate_ips()
+        warn_of_recent_ip_overlaps()
         sleep(5)
 
 
@@ -177,11 +178,44 @@ def warn_of_duplicate_ips() -> None:
             logger.warning("IP %s is duplicated, manual action required", duplicate_ip)
 
 
+def warn_of_recent_ip_overlaps() -> None:
+    trackers = db.get_all_data()
+    if not trackers:
+        return
+    recent_index: dict[str, set[str]] = {}
+    for tracker in trackers:
+        if tracker.recent_ips:
+            for ip in tracker.recent_ips:
+                recent_index.setdefault(ip, set()).add(tracker.host)
+    if not recent_index:
+        return
+    warned: set[tuple[str, str, str]] = set()
+    for tracker in trackers:
+        if not tracker.ips:
+            continue
+        for ip in tracker.ips:
+            other_hosts = recent_index.get(ip, set()) - {tracker.host}
+            if not other_hosts:
+                continue
+            other_hosts_str = ", ".join(sorted(other_hosts))
+            key = (tracker.host, ip, other_hosts_str)
+            if key in warned:
+                continue
+            warned.add(key)
+            logger.warning(
+                "Tracker %s resolved to IP %s recently seen on %s",
+                tracker.host,
+                ip,
+                other_hosts_str,
+            )
+
+
 def get_all_ips_tracked() -> list[str]:
     all_ips_of_all_trackers: list[str] = []
     all_data = db.get_all_data()
     for tracker_in_list in all_data:
-        if tracker_in_list.ips:
-            for ip in tracker_in_list.ips:
-                all_ips_of_all_trackers.append(ip)
+        if tracker_in_list.recent_ips:
+            all_ips_of_all_trackers.extend(tracker_in_list.recent_ips.keys())
+        elif tracker_in_list.ips:
+            all_ips_of_all_trackers.extend(tracker_in_list.ips)
     return all_ips_of_all_trackers

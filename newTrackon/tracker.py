@@ -13,6 +13,7 @@ from newTrackon.persistence import HistoryData
 logger = getLogger("newtrackon")
 
 max_downtime: int = 47304000  # 1.5 years
+IP_HISTORY_WINDOW: int = 48 * 3600  # 48 hours in seconds
 
 
 class Tracker:
@@ -28,6 +29,7 @@ class Tracker:
     country_codes: list[str] | None
     networks: list[str] | None
     historic: deque[int]
+    recent_ips: dict[str, int]
     added: int
     last_downtime: int
     last_uptime: int
@@ -52,6 +54,7 @@ class Tracker:
         added: int,
         last_downtime: int,
         last_uptime: int,
+        recent_ips: dict[str, int] | None = None,
     ) -> None:
         self.url = url
         self.host = host
@@ -65,6 +68,7 @@ class Tracker:
         self.country_codes = country_codes
         self.networks = networks
         self.historic = historic
+        self.recent_ips = recent_ips if recent_ips is not None else {}
         self.added = added
         self.last_downtime = last_downtime
         self.last_uptime = last_uptime
@@ -102,6 +106,7 @@ class Tracker:
         # Update host from the validated/normalized URL
         tracker.host = parse.urlparse(tracker.url).hostname or hostname
         tracker.update_ips()
+        tracker.refresh_recent_ips()
         return tracker
 
     def update_status(self) -> None:
@@ -113,6 +118,7 @@ class Tracker:
 
             self.update_scheme_from_bep_34()
             self.update_ips()
+            self.refresh_recent_ips()
         except RuntimeError as reason:
             self.clear_tracker(reason=str(reason))
             return
@@ -264,6 +270,13 @@ class Tracker:
         elif not self.ips:
             self.ips = None
             raise RuntimeError("Can't resolve IP")
+
+    def refresh_recent_ips(self) -> None:
+        now = int(time())
+        if self.ips:
+            for ip in self.ips:
+                self.recent_ips[ip] = now
+        self.recent_ips = {ip: ts for ip, ts in self.recent_ips.items() if now - ts <= IP_HISTORY_WINDOW}
 
     def update_ipapi_data(self) -> None:
         self.countries, self.networks, self.country_codes = [], [], []

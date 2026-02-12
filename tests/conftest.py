@@ -62,7 +62,8 @@ def in_memory_db() -> Generator[Connection]:
             added INTEGER,
             historic TEXT,
             last_downtime INTEGER,
-            last_uptime INTEGER
+            last_uptime INTEGER,
+            recent_ip TEXT
         )
     """)
     conn.commit()
@@ -135,7 +136,7 @@ def sample_tracker(sample_tracker_data: TrackerDataDict) -> Tracker:
 def insert_sample_tracker(mock_db_connection: Connection, sample_tracker_data: TrackerDataDict) -> TrackerDataDict:
     """Insert sample tracker into the test database."""
     mock_db_connection.execute(
-        "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             sample_tracker_data["host"],
             sample_tracker_data["url"],
@@ -152,6 +153,7 @@ def insert_sample_tracker(mock_db_connection: Connection, sample_tracker_data: T
             json.dumps(sample_tracker_data["historic"]),
             sample_tracker_data["last_downtime"],
             sample_tracker_data["last_uptime"],
+            json.dumps({}),
         ),
     )
     mock_db_connection.commit()

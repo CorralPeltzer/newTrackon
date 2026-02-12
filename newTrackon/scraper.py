@@ -253,7 +253,7 @@ def announce_http(url: str, thash: bytes = urandom(20)) -> BDecodeResponse:
         raise RuntimeError("HTTP timeout")
     except requests.ConnectionError:
         raise RuntimeError("HTTP connection failed")
-    except (HTTPError, requests.RequestException):
+    except HTTPError, requests.RequestException:
         raise RuntimeError("Unhandled HTTP error")
     if response.status_code != 200:
         raise RuntimeError(f"HTTP {response.status_code} status code returned")

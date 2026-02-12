@@ -64,7 +64,8 @@ def test_db() -> Generator[sqlite3.Connection]:
             added INTEGER,
             historic TEXT,
             last_downtime INTEGER,
-            last_uptime INTEGER
+            last_uptime INTEGER,
+            recent_ip TEXT
         )
     """)
     conn.commit()
@@ -134,7 +135,7 @@ def sample_tracker_obj(sample_tracker_dict: dict[str, Any]) -> Tracker:
 def inserted_sample_tracker(patched_db: sqlite3.Connection, sample_tracker_dict: dict[str, Any]) -> dict[str, Any]:
     """Insert sample tracker into the test database."""
     patched_db.execute(
-        "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             sample_tracker_dict["host"],
             sample_tracker_dict["url"],
@@ -151,6 +152,7 @@ def inserted_sample_tracker(patched_db: sqlite3.Connection, sample_tracker_dict:
             json.dumps(sample_tracker_dict["historic"]),
             sample_tracker_dict["last_downtime"],
             sample_tracker_dict["last_uptime"],
+            json.dumps({}),
         ),
     )
     patched_db.commit()
@@ -370,7 +372,7 @@ class TestGetAllData:
         # Insert trackers with different uptimes
         for i, uptime in enumerate([50, 99, 75]):
             patched_db.execute(
-                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     f"tracker{i}.example.com",
                     f"udp://tracker{i}.example.com:6969/announce",
@@ -387,6 +389,7 @@ class TestGetAllData:
                     json.dumps([1] * 10),
                     1699990000,
                     1700000000,
+                    json.dumps({}),
                 ),
             )
         patched_db.commit()
@@ -597,7 +600,7 @@ class TestDeleteTracker:
         # Insert two trackers
         for i in range(2):
             patched_db.execute(
-                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     f"tracker{i}.example.com",
                     f"udp://tracker{i}.example.com:6969/announce",
@@ -614,6 +617,7 @@ class TestDeleteTracker:
                     json.dumps([1] * 10),
                     1699990000,
                     1700000000,
+                    json.dumps({}),
                 ),
             )
         patched_db.commit()
@@ -677,6 +681,7 @@ class TestGetApiData:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
             # HTTPS tracker with high uptime
             (
@@ -695,6 +700,7 @@ class TestGetApiData:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
             # UDP tracker with high uptime
             (
@@ -713,6 +719,7 @@ class TestGetApiData:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
             # UDP tracker with low uptime
             (
@@ -731,6 +738,7 @@ class TestGetApiData:
                 json.dumps([1] * 70 + [0] * 30),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
             # HTTP tracker that is down
             (
@@ -749,11 +757,12 @@ class TestGetApiData:
                 json.dumps([0] * 50 + [1] * 50),
                 1700000000,
                 1699990000,
+                json.dumps({}),
             ),
         ]
         for tracker in trackers:
             patched_db.execute(
-                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 tracker,
             )
         patched_db.commit()
@@ -834,7 +843,7 @@ class TestGetApiData:
         """Verify include_ipv4_only=False filters out IPv4-only trackers."""
         # Insert tracker with only IPv4
         patched_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "ipv4only.example.com",
                 "udp://ipv4only.example.com:6969/announce",
@@ -851,11 +860,12 @@ class TestGetApiData:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         # Insert tracker with both IPv4 and IPv6
         patched_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "dualstack.example.com",
                 "udp://dualstack.example.com:6969/announce",
@@ -872,6 +882,7 @@ class TestGetApiData:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         patched_db.commit()
@@ -885,7 +896,7 @@ class TestGetApiData:
         """Verify include_ipv6_only=False filters out IPv6-only trackers."""
         # Insert tracker with only IPv6
         patched_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "ipv6only.example.com",
                 "udp://ipv6only.example.com:6969/announce",
@@ -902,11 +913,12 @@ class TestGetApiData:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         # Insert tracker with both IPv4 and IPv6
         patched_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "dualstack.example.com",
                 "udp://dualstack.example.com:6969/announce",
@@ -923,6 +935,7 @@ class TestGetApiData:
                 json.dumps([1] * 100),
                 1699990000,
                 1700000000,
+                json.dumps({}),
             ),
         )
         patched_db.commit()
@@ -956,7 +969,7 @@ class TestJsonSerializationDeserialization:
             countries=[],
             country_codes=[],
             networks=[],
-            historic=deque([], maxlen=1000),
+            historic=deque(maxlen=1000),
             added=1704067200,
             last_downtime=1699990000,
             last_uptime=1700000000,
@@ -1154,6 +1167,7 @@ class TestDatabaseCreation:
             "historic": "TEXT",
             "last_downtime": "INTEGER",
             "last_uptime": "INTEGER",
+            "recent_ip": "TEXT",
         }
         assert columns == expected_columns
 

@@ -40,7 +40,8 @@ def shared_memory_db(monkeypatch: MonkeyPatch) -> Generator[Connection]:
             added INTEGER,
             historic TEXT,
             last_downtime INTEGER,
-            last_uptime INTEGER
+            last_uptime INTEGER,
+            recent_ip TEXT
         )
     """)
     conn.commit()
@@ -82,7 +83,7 @@ class TestTrackerUpdateCycle:
 
         # Insert tracker into DB
         shared_memory_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
                 sample_tracker.url,
@@ -99,6 +100,7 @@ class TestTrackerUpdateCycle:
                 json.dumps(list(sample_tracker.historic)),
                 sample_tracker.last_downtime,
                 sample_tracker.last_uptime,
+                json.dumps({}),
             ),
         )
         shared_memory_db.commit()
@@ -157,7 +159,7 @@ class TestTrackerUpdateCycle:
 
         # Insert tracker into DB
         shared_memory_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
                 sample_tracker.url,
@@ -174,6 +176,7 @@ class TestTrackerUpdateCycle:
                 json.dumps(list(sample_tracker.historic)),
                 sample_tracker.last_downtime,
                 sample_tracker.last_uptime,
+                json.dumps({}),
             ),
         )
         shared_memory_db.commit()
@@ -210,7 +213,7 @@ class TestTrackerGoesDown:
 
         # Insert tracker into DB
         shared_memory_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
                 sample_tracker.url,
@@ -227,6 +230,7 @@ class TestTrackerGoesDown:
                 json.dumps(list(sample_tracker.historic)),
                 sample_tracker.last_downtime,
                 sample_tracker.last_uptime,
+                json.dumps({}),
             ),
         )
         shared_memory_db.commit()
@@ -261,7 +265,7 @@ class TestTrackerGoesDown:
 
         # Insert tracker into DB
         shared_memory_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
                 sample_tracker.url,
@@ -278,6 +282,7 @@ class TestTrackerGoesDown:
                 json.dumps(list(sample_tracker.historic)),
                 sample_tracker.last_downtime,
                 sample_tracker.last_uptime,
+                json.dumps({}),
             ),
         )
         shared_memory_db.commit()
@@ -481,7 +486,7 @@ class TestDuplicateIPRejection:
 
         # Insert an existing tracker with known IP
         shared_memory_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker_data["host"],
                 sample_tracker_data["url"],
@@ -498,6 +503,7 @@ class TestDuplicateIPRejection:
                 json.dumps(sample_tracker_data["historic"]),
                 sample_tracker_data["last_downtime"],
                 sample_tracker_data["last_uptime"],
+                json.dumps({}),
             ),
         )
         shared_memory_db.commit()
@@ -524,7 +530,7 @@ class TestDuplicateIPRejection:
 
         # Insert existing tracker with multiple IPs
         shared_memory_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker_data["host"],
                 sample_tracker_data["url"],
@@ -541,6 +547,7 @@ class TestDuplicateIPRejection:
                 json.dumps(sample_tracker_data["historic"]),
                 sample_tracker_data["last_downtime"],
                 sample_tracker_data["last_uptime"],
+                json.dumps({}),
             ),
         )
         shared_memory_db.commit()
@@ -567,7 +574,7 @@ class TestDuplicateIPRejection:
 
         # Insert existing tracker with known IP
         shared_memory_db.execute(
-            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker_data["host"],
                 sample_tracker_data["url"],
@@ -584,6 +591,7 @@ class TestDuplicateIPRejection:
                 json.dumps(sample_tracker_data["historic"]),
                 sample_tracker_data["last_downtime"],
                 sample_tracker_data["last_uptime"],
+                json.dumps({}),
             ),
         )
         shared_memory_db.commit()

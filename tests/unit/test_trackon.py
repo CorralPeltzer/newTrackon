@@ -457,6 +457,7 @@ class TestProcessNewTracker:
         existing_tracker = MagicMock()
         existing_tracker.host = "existing.example.com"
         existing_tracker.ips = ["93.184.216.34"]
+        existing_tracker.recent_ips = {"93.184.216.34": 1700000000}
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://new.example.com:6969/announce"
@@ -479,6 +480,7 @@ class TestProcessNewTracker:
         existing_tracker = MagicMock()
         existing_tracker.host = "tracker.example.com"
         existing_tracker.ips = ["10.0.0.1"]
+        existing_tracker.recent_ips = {"10.0.0.1": 1700000000}
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
@@ -678,13 +680,15 @@ class TestGetAllIpsTracked:
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4", "5.6.7.8"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000, "5.6.7.8": 1700000000}
         tracker2 = MagicMock()
         tracker2.ips = ["9.10.11.12"]
+        tracker2.recent_ips = {"9.10.11.12": 1700000000}
 
         with patch("newTrackon.trackon.db.get_all_data", return_value=[tracker1, tracker2]):
             result = trackon.get_all_ips_tracked()
 
-        assert result == ["1.2.3.4", "5.6.7.8", "9.10.11.12"]
+        assert set(result) == {"1.2.3.4", "5.6.7.8", "9.10.11.12"}
 
     def test_returns_empty_list_when_no_trackers(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that empty list is returned when no trackers exist."""
@@ -701,10 +705,13 @@ class TestGetAllIpsTracked:
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000}
         tracker2 = MagicMock()
         tracker2.ips = None
+        tracker2.recent_ips = {}
         tracker3 = MagicMock()
         tracker3.ips = ["5.6.7.8"]
+        tracker3.recent_ips = {"5.6.7.8": 1700000000}
 
         with patch(
             "newTrackon.trackon.db.get_all_data",
@@ -712,7 +719,7 @@ class TestGetAllIpsTracked:
         ):
             result = trackon.get_all_ips_tracked()
 
-        assert result == ["1.2.3.4", "5.6.7.8"]
+        assert set(result) == {"1.2.3.4", "5.6.7.8"}
 
     def test_handles_empty_ip_list(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with empty IP lists are handled correctly."""
@@ -720,8 +727,10 @@ class TestGetAllIpsTracked:
 
         tracker1 = MagicMock()
         tracker1.ips = []
+        tracker1.recent_ips = {}
         tracker2 = MagicMock()
         tracker2.ips = ["1.2.3.4"]
+        tracker2.recent_ips = {"1.2.3.4": 1700000000}
 
         with patch("newTrackon.trackon.db.get_all_data", return_value=[tracker1, tracker2]):
             result = trackon.get_all_ips_tracked()
@@ -734,11 +743,12 @@ class TestGetAllIpsTracked:
 
         tracker = MagicMock()
         tracker.ips = ["2001:db8::1", "1.2.3.4"]
+        tracker.recent_ips = {"2001:db8::1": 1700000000, "1.2.3.4": 1700000000}
 
         with patch("newTrackon.trackon.db.get_all_data", return_value=[tracker]):
             result = trackon.get_all_ips_tracked()
 
-        assert result == ["2001:db8::1", "1.2.3.4"]
+        assert set(result) == {"2001:db8::1", "1.2.3.4"}
 
 
 class TestWarnOfDuplicateIps:
@@ -750,8 +760,10 @@ class TestWarnOfDuplicateIps:
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000}
         tracker2 = MagicMock()
         tracker2.ips = ["1.2.3.4"]  # Duplicate
+        tracker2.recent_ips = {"1.2.3.4": 1700000000}
 
         with (
             patch("newTrackon.trackon.db.get_all_data", return_value=[tracker1, tracker2]),
@@ -769,10 +781,13 @@ class TestWarnOfDuplicateIps:
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4", "5.6.7.8"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000, "5.6.7.8": 1700000000}
         tracker2 = MagicMock()
         tracker2.ips = ["1.2.3.4"]  # Duplicate
+        tracker2.recent_ips = {"1.2.3.4": 1700000000}
         tracker3 = MagicMock()
         tracker3.ips = ["5.6.7.8"]  # Another duplicate
+        tracker3.recent_ips = {"5.6.7.8": 1700000000}
 
         with (
             patch(
@@ -792,8 +807,10 @@ class TestWarnOfDuplicateIps:
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000}
         tracker2 = MagicMock()
         tracker2.ips = ["5.6.7.8"]
+        tracker2.recent_ips = {"5.6.7.8": 1700000000}
 
         with (
             patch("newTrackon.trackon.db.get_all_data", return_value=[tracker1, tracker2]),
@@ -821,10 +838,13 @@ class TestWarnOfDuplicateIps:
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000}
         tracker2 = MagicMock()
         tracker2.ips = None
+        tracker2.recent_ips = {}
         tracker3 = MagicMock()
         tracker3.ips = ["1.2.3.4"]  # Duplicate
+        tracker3.recent_ips = {"1.2.3.4": 1700000000}
 
         with (
             patch(
@@ -836,6 +856,54 @@ class TestWarnOfDuplicateIps:
             trackon.warn_of_duplicate_ips()
 
         assert "1.2.3.4 is duplicated" in caplog.text
+
+
+class TestWarnOfRecentIpOverlaps:
+    """Tests for warn_of_recent_ip_overlaps function."""
+
+    def test_detects_recent_ip_overlap(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that recent IP overlaps are detected and logged."""
+        from newTrackon import trackon
+
+        tracker1 = MagicMock()
+        tracker1.host = "tracker1.example.com"
+        tracker1.ips = ["9.9.9.9"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000}
+
+        tracker2 = MagicMock()
+        tracker2.host = "tracker2.example.com"
+        tracker2.ips = ["1.2.3.4"]
+        tracker2.recent_ips = {}
+
+        with (
+            patch("newTrackon.trackon.db.get_all_data", return_value=[tracker1, tracker2]),
+            caplog.at_level(logging.WARNING),
+        ):
+            trackon.warn_of_recent_ip_overlaps()
+
+        assert "Tracker tracker2.example.com resolved to IP 1.2.3.4 recently seen on tracker1.example.com" in caplog.text
+
+    def test_no_warning_for_no_overlap(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that no warning is logged when there is no recent IP overlap."""
+        from newTrackon import trackon
+
+        tracker1 = MagicMock()
+        tracker1.host = "tracker1.example.com"
+        tracker1.ips = ["1.2.3.4"]
+        tracker1.recent_ips = {"1.2.3.4": 1700000000}
+
+        tracker2 = MagicMock()
+        tracker2.host = "tracker2.example.com"
+        tracker2.ips = ["5.6.7.8"]
+        tracker2.recent_ips = {}
+
+        with (
+            patch("newTrackon.trackon.db.get_all_data", return_value=[tracker1, tracker2]),
+            caplog.at_level(logging.WARNING),
+        ):
+            trackon.warn_of_recent_ip_overlaps()
+
+        assert "recently seen on" not in caplog.text
 
 
 class TestLogWrongIntervalDenial:
