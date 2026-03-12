@@ -57,6 +57,7 @@ You can now access to the main page opening in your browser `http://localhost:80
 
 * [electromagnet](https://github.com/sdmtr/electromagnet), a Chrome extension to automatically add stable trackers to
   magnet links as you browse
+* [transmission-trackers](https://github.com/telnetdoogie/transmission-trackers), a very simple python app (and docker image) that runs alongside transmission to update trackers on your public torrents
 
 ## Contributors
 
