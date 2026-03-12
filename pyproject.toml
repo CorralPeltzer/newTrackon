@@ -4,7 +4,7 @@ version = "1.0.0"
 requires-python = "==3.14.*"
 dependencies = [
     "requests==2.32.5",
-    "tornado==6.5.4",
+    "tornado==6.5.5",
     "Flask==3.1.2",
     "dnspython==2.8.0",
 ]
