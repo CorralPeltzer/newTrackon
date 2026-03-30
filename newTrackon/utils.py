@@ -1,6 +1,6 @@
 import sqlite3
 import sys
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from time import time
 from typing import TYPE_CHECKING
@@ -16,6 +16,7 @@ ProtocolPref = tuple[str, int]
 
 # Type alias for tracker URL with its IP addresses
 TrackerEndpoint = tuple[str, list[str]]
+TrackerEndpointInput = tuple[str, list[str] | None]
 
 
 def add_api_headers(resp: Response) -> Response:
@@ -90,7 +91,7 @@ def format_time(last_time: int | float) -> str:
         return str(years) + " years"
 
 
-def remove_ipvx_only_trackers(raw_list: list[TrackerEndpoint], version: int) -> list[TrackerEndpoint]:
+def remove_ipvx_only_trackers(raw_list: Sequence[TrackerEndpointInput], version: int) -> list[TrackerEndpoint]:
     ip_type_to_keep: type[IPv4Address | IPv6Address]
     if version == 6:
         ip_type_to_keep = IPv4Address
