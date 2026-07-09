@@ -47,116 +47,114 @@
             torrents, or submit any other open/public trackers you might know of.
         </p>
         <p>
-        <b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a>
-    section.</b>
-</p>
-<hr>
-<form method="POST" action="/">
-    <div class="form-group">
-        <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
-        <p>
-            {% if form_feedback == "EMPTY" %}
-                <div class="alert alert-warning" role="alert">
-                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                    <span class="visually-hidden">Error:</span>
-                    No trackers were submitted
-                </div>
-            {% elif form_feedback == "SUCCESS" %}
-                <div class="alert alert-info" role="alert">
-                    Received, see the progress in the <strong><a style="color:white" href="/submitted">Submitted</a></strong> section
-                </div>
-            {% endif %}
+            <b>To get a client-ready list of all trackers with more than 95% of uptime, go to the <a href="/list">List</a>
+            section.</b>
         </p>
-        <small class="form-text text-muted">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
-        or check the <a href="/submitted">Submitted</a> section.</small>
-    </div>
-    <div class="form-group">
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </div>
-</form>
-</div>
-<div class="container-fluid table-responsive">
-    <table id="trackon_table"
-           class="table display responsive table-striped table-bordered table-hover initially-hidden">
-        <thead>
-            <tr>
-                <th>Tracker URL</th>
-                <th class="sorttable_numeric">Uptime *</th>
-                <th class="status-col">Status</th>
-                <th class="sorttable_numeric">Checked</th>
-                <th class="sorttable_numeric">Update interval</th>
-                <th>IP address</th>
-                <th class="sortable">Country</th>
-                <th class="sortable">Network</th>
-                <th class="sorttable_numeric">
-                    <span title="Announce latency">Latency</span>
-                </th>
-                <th>Added</th>
-            </tr>
-        </thead>
-        {% set lt, dt = namespace(value=0), namespace(value=0) %}
-        {% if trackers %}
-            {% for t in trackers %}
-                <tr>
-                    <td>{{ t.url }}</td>
-                    <td>{{ "%.2f" % t.uptime }}%</td>
-                    {% if t.status == 1 %}
-                        <td data-sort="{{ t.status_epoch }}" class="up">
-                            <b>{{ t.status_readable }}</b>
-                        </td>
-                        {% set lt.value = lt.value + 1 %}
-                    {% else %}
-                        <td data-sort="{{ t.status_epoch }}" class="down">
-                            <b>{{ t.status_readable }}</b>
-                        </td>
-                        {% set dt.value = dt.value + 1 %}
+        <hr>
+        <form method="POST" action="/">
+            <div class="form-group">
+                <textarea class="form-control" rows="2" id="textArea" name="new_trackers"></textarea>
+                <p>
+                    {% if form_feedback == "EMPTY" %}
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            <span class="visually-hidden">Error:</span>
+                            No trackers were submitted
+                        </div>
+                    {% elif form_feedback == "SUCCESS" %}
+                        <div class="alert alert-info" role="alert">
+                            Received, see the progress in the <strong><a style="color:white" href="/submitted">Submitted</a></strong> section
+                        </div>
                     {% endif %}
-                    <td>
-                        <span data-livestamp="{{ t.last_checked }}"></span>
-                    </td>
-                    <td>~{{ t.interval//60 }} min ({{ t.interval }} sec)</td>
-                    <td>
-                        {% if t.ips %}
-                            {% for ip in t.ips %}
-                                {{ ip }}
-                                <br>
-                            {% endfor %}
-                        {% else %}
-                            Can't resolve IP
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if t.countries %}
-                            {% set index = namespace(value=0) %}
-                            {% for country in t.countries %}
-                                <span class="fi fi-{{ t.country_codes[index.value] }}"></span> {{ country }}
-                                <br>
-                                {% set index.value = index.value + 1 %}
-                            {% endfor %}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if t.networks %}
-                            {% for network in t.networks %}
-                                {{ network }}
-                                <br>
-                            {% endfor %}
-                        {% endif %}
-                    </td>
-                    <td class="right">
-                        {% if t.latency %}{{ t.latency }} ms{% endif %}
-                    </td>
-                    <td class="right" data-sort="{{ t.added }}">{{ t.added|format_date }}</td>
+                </p>
+                <small class="form-text text-muted">You can submit multiple trackers separated by newline, up to ~1MB of text. If you post new trackers, please wait a few minutes while we gather data before it is added to the list,
+                or check the <a href="/submitted">Submitted</a> section.</small>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+    <div class="container-fluid table-responsive">
+        <table id="trackon_table"
+               class="table display responsive table-striped table-bordered table-hover initially-hidden">
+            <thead>
+                <tr>
+                    <th>Tracker URL</th>
+                    <th class="sorttable_numeric">Uptime *</th>
+                    <th class="status-col">Status</th>
+                    <th class="sorttable_numeric">Checked</th>
+                    <th class="sorttable_numeric">Update interval</th>
+                    <th>IP address</th>
+                    <th class="sortable">Country</th>
+                    <th class="sortable">Network</th>
+                    <th class="sorttable_numeric">
+                        <span title="Announce latency">Latency</span>
+                    </th>
+                    <th>Added</th>
                 </tr>
-            {% endfor %}
-        {% endif %}
-        <caption style="text-align: right;"><b>Live trackers</b>: {{ lt.value }} / <b>Trackers down</b>: {{ dt.value }} / <b>Total
-        trackers</b>: {{ trackers | count }}</caption>
-    </table>
-    <p style="text-align: right;">
-        * Based on the last 1000 checks. The time depends on the update interval set by the
-        tracker, and can vary from 6 to 40 days.
-    </p>
-</div>
+            </thead>
+            {% set lt, dt = namespace(value=0), namespace(value=0) %}
+            {% if trackers %}
+                {% for t in trackers %}
+                    <tr>
+                        <td>{{ t.url }}</td>
+                        <td>{{ "%.2f" % t.uptime }}%</td>
+                        {% if t.status == 1 %}
+                            <td data-sort="{{ t.status_epoch }}" class="up">
+                                <b>{{ t.status_readable }}</b>
+                            </td>
+                            {% set lt.value = lt.value + 1 %}
+                        {% else %}
+                            <td data-sort="{{ t.status_epoch }}" class="down">
+                                <b>{{ t.status_readable }}</b>
+                            </td>
+                            {% set dt.value = dt.value + 1 %}
+                        {% endif %}
+                        <td>
+                            <span data-livestamp="{{ t.last_checked }}"></span>
+                        </td>
+                        <td>~{{ t.interval//60 }} min ({{ t.interval }} sec)</td>
+                        <td>
+                            {% if t.ips %}
+                                {% for ip in t.ips %}
+                                    {{ ip }}
+                                    <br>
+                                {% endfor %}
+                            {% else %}
+                                Can't resolve IP
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if t.countries %}
+                                {% set index = namespace(value=0) %}
+                                {% for country in t.countries %}
+                                    <span class="fi fi-{{ t.country_codes[index.value] }}"></span> {{ country }}
+                                    <br>
+                                    {% set index.value = index.value + 1 %}
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if t.networks %}
+                                {% for network in t.networks %}
+                                    {{ network }}
+                                    <br>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                        <td class="right">{% if t.latency %}{{ t.latency }} ms{% endif %}</td>
+                        <td class="right" data-sort="{{ t.added }}">{{ t.added|format_date }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+            <caption style="text-align: right;"><b>Live trackers</b>: {{ lt.value }} / <b>Trackers down</b>: {{ dt.value }} / <b>Total
+            trackers</b>: {{ trackers | count }}</caption>
+        </table>
+        <p style="text-align: right;">
+            * Based on the last 1000 checks. The time depends on the update interval set by the
+            tracker, and can vary from 6 to 40 days.
+        </p>
+    </div>
 {% endblock %}
 {% set title = "newtrackon, Tracking the Trackers" %}

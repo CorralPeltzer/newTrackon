@@ -26,9 +26,7 @@
                         <tr>
                             <td>{{ response.get("time") | format_timestamp }}</td>
                             <td>{{ response.get("url") }}</td>
-                            <td>
-                                {% if response.get('ip') %}{{ response.get("ip") }}{% endif %}
-                            </td>
+                            <td>{% if response.get('ip') %}{{ response.get("ip") }}{% endif %}</td>
                             {% if response.get('status') == 1 %}
                                 <td class="up">
                                     <b>Working</b>
