@@ -64,14 +64,14 @@
                             </td>
                         </tr>
                     {% endfor %}
-                {% endif %}
-            </table>
+                </table>
+            </div>
         </div>
-    </div>
+    {% endif %}
     <script>
-    $(document).ready(function () {
-        $(".initially-hidden").css("visibility", "visible");
-    });
+        $(document).ready(function () {
+            $(".initially-hidden").css("visibility", "visible");
+        });
     </script>
 {% endblock %}
 {% set title = "Submitted Trackers - newTrackon" %}

@@ -11,7 +11,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "ruff",
+    "ruff==0.15.20",
     "basedpyright",
     "ty",
     "pytest",
