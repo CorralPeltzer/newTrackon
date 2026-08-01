@@ -322,16 +322,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newtrackon.persistence as persistence
+        from newtrackon import persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newtrackon.trackon as trackon
+        from newtrackon import trackon
 
         importlib.reload(trackon)
 
-        import newtrackon.ingest as ingest
+        from newtrackon import ingest
 
         importlib.reload(ingest)
 
@@ -379,16 +379,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newtrackon.persistence as persistence
+        from newtrackon import persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newtrackon.trackon as trackon
+        from newtrackon import trackon
 
         importlib.reload(trackon)
 
-        import newtrackon.ingest as ingest
+        from newtrackon import ingest
 
         importlib.reload(ingest)
 
@@ -407,16 +407,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newtrackon.persistence as persistence
+        from newtrackon import persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newtrackon.trackon as trackon
+        from newtrackon import trackon
 
         importlib.reload(trackon)
 
-        import newtrackon.ingest as ingest
+        from newtrackon import ingest
 
         importlib.reload(ingest)
 
@@ -466,16 +466,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newtrackon.persistence as persistence
+        from newtrackon import persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newtrackon.trackon as trackon
+        from newtrackon import trackon
 
         importlib.reload(trackon)
 
-        import newtrackon.ingest as ingest
+        from newtrackon import ingest
 
         importlib.reload(ingest)
 

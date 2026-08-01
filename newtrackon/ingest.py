@@ -108,9 +108,8 @@ def add_one_tracker_to_submitted_queue(url: str) -> None:
     except (RuntimeError, ValueError) as e:
         logger.info("Tracker %s preprocessing failed, reason: %s", url, e)
         return
-    if tracker_candidate.ips and trackers_in_db:
-        if log_ip_conflicts(tracker_candidate, trackers_in_db):
-            return
+    if tracker_candidate.ips and trackers_in_db and log_ip_conflicts(tracker_candidate, trackers_in_db):
+        return
     try:
         submitted_queue.put_nowait(tracker_candidate)
     except Full:
@@ -154,9 +153,8 @@ def process_new_tracker(tracker_candidate: Tracker) -> None:
                 tracker.url,
             )
             return
-    if tracker_candidate.ips and trackers_in_db:
-        if log_ip_conflicts(tracker_candidate, trackers_in_db):
-            return
+    if tracker_candidate.ips and trackers_in_db and log_ip_conflicts(tracker_candidate, trackers_in_db):
+        return
 
     tracker_candidate.last_downtime = int(time())
     tracker_candidate.last_checked = int(time())

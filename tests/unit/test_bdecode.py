@@ -415,20 +415,20 @@ class TestBdecodeFunction:
         result = bdecode(data)
         assert result["name"] == "test"
 
-    def test_bdecode_non_dict_raises_runtime_error(self):
-        """bdecode() should raise RuntimeError if root is not a dict."""
+    def test_bdecode_non_dict_raises_type_error(self):
+        """bdecode() should raise TypeError if root is not a dict."""
         # A bencoded list at the root level
-        with pytest.raises(RuntimeError, match="Could not extract the bencoded dict"):
+        with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
             bdecode(b"li1ei2ee")
 
-    def test_bdecode_integer_raises_runtime_error(self):
-        """bdecode() should raise RuntimeError if root is an integer."""
-        with pytest.raises(RuntimeError, match="Could not extract the bencoded dict"):
+    def test_bdecode_integer_raises_type_error(self):
+        """bdecode() should raise TypeError if root is an integer."""
+        with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
             bdecode(b"i42e")
 
-    def test_bdecode_string_raises_runtime_error(self):
-        """bdecode() should raise RuntimeError if root is a string."""
-        with pytest.raises(RuntimeError, match="Could not extract the bencoded dict"):
+    def test_bdecode_string_raises_type_error(self):
+        """bdecode() should raise TypeError if root is a string."""
+        with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
             bdecode(b"5:hello")
 
     def test_bdecode_processes_ipv4_peers(self):

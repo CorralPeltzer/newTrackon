@@ -26,7 +26,7 @@ def bdecode(data: bytes) -> BDecodeResponse:
     bdecoded_response = Decoder(data).decode()
     response: BDecodeResponse = {}
     if not isinstance(bdecoded_response, OrderedDict):
-        raise RuntimeError("Could not extract the bencoded dict, probably invalid format")
+        raise TypeError("Could not extract the bencoded dict, probably invalid format")
     for key, value in bdecoded_response.items():
         response[key.decode()] = value
 
@@ -131,7 +131,7 @@ class Decoder:
         while self.data[self.index : self.index + 1] != TOK_END:
             key = self.decode()  # decode the key
             if not isinstance(key, bytes):
-                raise RuntimeError("Dict key must be bytes in bencoded data")
+                raise TypeError("Dict key must be bytes in bencoded data")
             item = self.decode()  # decode the item
             result[key] = item  # add the key item pair to the dict
         self.read(1)  # read the end token

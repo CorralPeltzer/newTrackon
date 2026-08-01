@@ -4,6 +4,7 @@ import json
 import sqlite3
 from collections import deque
 from collections.abc import Generator
+from contextlib import suppress
 from sqlite3 import Connection
 from time import time
 from typing import Any
@@ -12,7 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest import MonkeyPatch
 
-import newtrackon.persistence as persistence
+from newtrackon import persistence
 from newtrackon.tracker import Tracker
 
 
@@ -60,12 +61,10 @@ def shared_memory_db(monkeypatch: MonkeyPatch) -> Generator[Connection]:
     yield conn
 
     # Cleanup: drop table and close
-    try:
+    with suppress(sqlite3.Error):
         conn.execute("DROP TABLE IF EXISTS status")
         conn.commit()
-        conn.close()
-    except Exception:
-        pass
+    conn.close()
 
 
 class TestTrackerUpdateCycle:

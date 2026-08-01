@@ -34,7 +34,7 @@ def drain_submitted_queue(persistence: ModuleType) -> None:
 @pytest.fixture(autouse=True)
 def clean_global_state() -> Generator[None]:
     """Automatically clean global state before and after each test."""
-    import newtrackon.persistence as persistence
+    from newtrackon import persistence
 
     # Clear before test
     drain_submitted_queue(persistence)
@@ -189,8 +189,7 @@ def mock_network() -> Generator[dict[str, MagicMock]]:
 @pytest.fixture
 def reset_globals() -> Generator[None]:
     """Reset global state between tests."""
-    import newtrackon.persistence as persistence
-    import newtrackon.scraper as scraper
+    from newtrackon import persistence, scraper
 
     # Save original scalar values
     old_ipv4 = scraper.my_ipv4
@@ -216,7 +215,7 @@ def reset_globals() -> Generator[None]:
 @pytest.fixture
 def empty_queues(reset_globals: None) -> Generator[ModuleType]:
     """Provide empty buffers for testing."""
-    import newtrackon.persistence as persistence
+    from newtrackon import persistence
 
     drain_submitted_queue(persistence)
     persistence.raw_data.clear()

@@ -21,7 +21,7 @@ import pytest
 import requests
 from dns.exception import DNSException
 
-import newtrackon.scraper as scraper
+from newtrackon import scraper
 from newtrackon.scraper import (
     HTTP_PORT,
     UDP_PORT,
@@ -327,6 +327,19 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, b"invalid bencoded data")
 
         with pytest.raises(RuntimeError, match="Failed bdecoding HTTP response"):
+            announce_http("http://tracker.example.com/announce")
+
+    @patch("newtrackon.scraper.memory_limited_get")
+    def test_announce_http_wraps_bdecode_type_error(self, mock_get: MagicMock) -> None:
+        """TypeError from bdecode should be exposed as an announce failure."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_get.return_value = (mock_response, b"li1ei2ee")
+
+        with (
+            patch("newtrackon.scraper.bdecode", side_effect=TypeError("invalid root type")),
+            pytest.raises(RuntimeError, match="Failed bdecoding HTTP response: invalid root type"),
+        ):
             announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")

@@ -52,7 +52,7 @@ def format_uptime_and_downtime_time(trackers_unprocessed: list[Tracker]) -> list
     return trackers_unprocessed
 
 
-def format_time(last_time: int | float) -> str:
+def format_time(last_time: float) -> str:
     now = int(time())
     relative = now - int(last_time)
     if relative < 60:

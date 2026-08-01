@@ -1007,12 +1007,14 @@ class TestSubmittedEndpoint:
         self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
     ) -> None:
         """GET /submitted should not render orphan table markup without data."""
-        with patch("newtrackon.views.persistence.submitted_data", []):
-            with patch("newtrackon.views.persistence.submitted_queue.qsize", return_value=0):
-                response = flask_client.get("/submitted")
-                assert response.status_code == 200
-                assert b"<table" not in response.data
-                assert b"</table>" not in response.data
+        with (
+            patch("newtrackon.views.persistence.submitted_data", []),
+            patch("newtrackon.views.persistence.submitted_queue.qsize", return_value=0),
+        ):
+            response = flask_client.get("/submitted")
+            assert response.status_code == 200
+            assert b"<table" not in response.data
+            assert b"</table>" not in response.data
 
 
 class TestRawEndpoint:

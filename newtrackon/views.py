@@ -33,7 +33,7 @@ app.url_map.converters["regex"] = RegexConverter
 
 
 @app.template_filter("format_timestamp")
-def format_timestamp(timestamp: int | float | None) -> str:
+def format_timestamp(timestamp: float | None) -> str:
     """Convert Unix timestamp to HH:MM:SS UTC format."""
     if timestamp is None:
         return ""
@@ -41,7 +41,7 @@ def format_timestamp(timestamp: int | float | None) -> str:
 
 
 @app.template_filter("format_date")
-def format_date(timestamp: int | float | None) -> str:
+def format_date(timestamp: float | None) -> str:
     """Convert Unix timestamp to D-M-YYYY date format."""
     if timestamp is None:
         return ""
@@ -132,12 +132,8 @@ def raw():
 def api_percentage(percentage: int, added_before: int | None = None) -> Response:
     if added_before is None:
         added_before = get_added_before_or_abort()
-    include_upv4_only = (
-        False if request.args.get("include_ipv4_only_trackers", default="true").lower() in ("false", "0") else True
-    )
-    include_upv6_only = (
-        False if request.args.get("include_ipv6_only_trackers", default="true").lower() in ("false", "0") else True
-    )
+    include_upv4_only = request.args.get("include_ipv4_only_trackers", default="true").lower() not in ("false", "0")
+    include_upv6_only = request.args.get("include_ipv6_only_trackers", default="true").lower() not in ("false", "0")
     if 0 <= percentage <= 100:
         formatted_list = db.get_api_data("percentage", percentage, include_upv4_only, include_upv6_only, added_before)
         resp = make_response(formatted_list)

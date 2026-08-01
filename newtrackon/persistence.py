@@ -4,7 +4,7 @@ import json
 from collections import deque
 from os import path
 from queue import Queue
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict, cast
 
 if TYPE_CHECKING:
     from newtrackon.tracker import Tracker
@@ -22,15 +22,18 @@ submitted_queue: Queue[Tracker] = Queue(maxsize=10000)
 raw_history_file = "data/raw_data.json"
 submitted_history_file = "data/submitted_data.json"
 
-raw_data: deque[HistoryData] = deque(
-    json.load(open(raw_history_file)) if path.exists(raw_history_file) else [],
-    maxlen=600,
-)
-submitted_data: deque[HistoryData] = deque(
-    json.load(open(submitted_history_file)) if path.exists(submitted_history_file) else [],
-    maxlen=600,
-)
+
+def load_history(filename: str) -> list[HistoryData]:
+    if not path.exists(filename):
+        return []
+    with open(filename) as history_file:
+        return cast("list[HistoryData]", json.load(history_file))
+
+
+raw_data: deque[HistoryData] = deque(load_history(raw_history_file), maxlen=600)
+submitted_data: deque[HistoryData] = deque(load_history(submitted_history_file), maxlen=600)
 
 
 def save_deque_to_disk(obj: deque[HistoryData], filename: str) -> None:
-    json.dump(list(obj), open(filename, "w"))
+    with open(filename, "w") as history_file:
+        json.dump(list(obj), history_file)

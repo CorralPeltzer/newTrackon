@@ -4,6 +4,7 @@ import socket
 import string
 import struct
 import subprocess
+from collections.abc import Sequence
 from logging import getLogger
 from os import urandom
 from time import time
@@ -247,8 +248,8 @@ def announce_http(url: str, thash: bytes = urandom(20)) -> BDecodeResponse:
     url = url + "?" + arguments
     try:
         response, content = memory_limited_get(url)
-    except RuntimeError as too_big:
-        raise too_big
+    except RuntimeError:
+        raise
     except requests.Timeout:
         raise RuntimeError("HTTP timeout")
     except requests.ConnectionError:
@@ -264,7 +265,7 @@ def announce_http(url: str, thash: bytes = urandom(20)) -> BDecodeResponse:
     else:
         try:
             tracker_response = bdecode(content)
-        except Exception as e:
+        except (EOFError, OSError, RuntimeError, TypeError, ValueError) as e:
             raise RuntimeError(f"Failed bdecoding HTTP response: {e}")
 
     if "failure reason" in tracker_response:
@@ -279,10 +280,10 @@ def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[UDPAnnounceR
     parsed_tracker = urlparse(udp_url)
     logger.info("%s Scraping UDP", udp_url)
     ip: str | None = None
-    getaddr_responses: list[AddrInfo] = []
     try:
-        for res in socket.getaddrinfo(parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM):
-            getaddr_responses.append(res)
+        getaddr_responses: Sequence[AddrInfo] = socket.getaddrinfo(
+            parsed_tracker.hostname, parsed_tracker.port, 0, socket.SOCK_DGRAM
+        )
     except OSError as err:
         raise RuntimeError(f"UDP error: {err}")
 
