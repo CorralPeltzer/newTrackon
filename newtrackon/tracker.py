@@ -7,8 +7,8 @@ from logging import getLogger
 from time import sleep, time
 from urllib import parse, request
 
-from newTrackon import persistence, scraper
-from newTrackon.persistence import HistoryData
+from newtrackon import persistence, scraper
+from newtrackon.persistence import HistoryData
 
 logger = getLogger("newtrackon")
 

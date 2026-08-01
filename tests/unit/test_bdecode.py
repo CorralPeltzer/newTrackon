@@ -15,7 +15,7 @@ from socket import AF_INET, AF_INET6
 
 import pytest
 
-from newTrackon.bdecode import Decoder, bdecode, decode_binary_peers_list
+from newtrackon.bdecode import Decoder, bdecode, decode_binary_peers_list
 
 
 class TestDecoderStrings:

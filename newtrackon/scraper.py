@@ -15,12 +15,12 @@ from dns import resolver
 from dns.exception import DNSException
 from urllib3.exceptions import HTTPError
 
-from newTrackon.bdecode import BDecodeResponse, PeerInfo, bdecode, decode_binary_peers_list
-from newTrackon.persistence import HistoryData, submitted_data
-from newTrackon.utils import ProtocolPref, build_httpx_url, process_txt_prefs
+from newtrackon.bdecode import BDecodeResponse, PeerInfo, bdecode, decode_binary_peers_list
+from newtrackon.persistence import HistoryData, submitted_data
+from newtrackon.utils import ProtocolPref, build_httpx_url, process_txt_prefs
 
 if TYPE_CHECKING:
-    from newTrackon.tracker import Tracker
+    from newtrackon.tracker import Tracker
 
 # Socket address types for getaddrinfo results
 SockAddr = tuple[str, int] | tuple[str, int, int, int] | tuple[int, bytes]

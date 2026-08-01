@@ -3,7 +3,7 @@ from typing import NoReturn
 
 import requests
 
-from newTrackon import ingest
+from newtrackon import ingest
 
 
 def main() -> NoReturn:

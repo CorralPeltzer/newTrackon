@@ -15,7 +15,7 @@ from flask import (
 )
 from werkzeug.routing import BaseConverter, Map
 
-from newTrackon import db, ingest, persistence, utils
+from newtrackon import db, ingest, persistence, utils
 
 max_input_length: int = 1000000
 

@@ -1,4 +1,4 @@
-"""Comprehensive tests for newTrackon.utils module."""
+"""Comprehensive tests for newtrackon.utils module."""
 
 from typing import Any
 from unittest.mock import MagicMock
@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 from freezegun import freeze_time
 
-from newTrackon.utils import (
+from newtrackon.utils import (
     add_api_headers,
     build_httpx_url,
     dict_factory,

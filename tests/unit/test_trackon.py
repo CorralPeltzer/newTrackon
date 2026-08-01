@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from newTrackon.persistence import HistoryData
-from newTrackon.tracker import Tracker
+from newtrackon.persistence import HistoryData
+from newtrackon.tracker import Tracker
 
 
 def create_test_tracker(
@@ -49,7 +49,7 @@ class TestEnqueueNewTrackers:
 
     def test_enqueue_space_separated_urls(self, empty_queues: ModuleType) -> None:
         """Test parsing space-separated tracker URLs."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         mock_tracker1 = MagicMock()
         mock_tracker1.url = "udp://tracker1.example.com:6969/announce"
@@ -59,7 +59,7 @@ class TestEnqueueNewTrackers:
         mock_tracker2.ips = ["5.6.7.8"]
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "add_one_tracker_to_submitted_queue") as mock_add,
         ):
             ingest.enqueue_new_trackers("udp://tracker1.example.com:6969 udp://tracker2.example.com:6969")
@@ -70,10 +70,10 @@ class TestEnqueueNewTrackers:
 
     def test_enqueue_newline_separated_urls(self, empty_queues: ModuleType) -> None:
         """Test parsing newline-separated tracker URLs."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "add_one_tracker_to_submitted_queue") as mock_add,
         ):
             ingest.enqueue_new_trackers("udp://tracker1.example.com:6969\nudp://tracker2.example.com:6969")
@@ -84,10 +84,10 @@ class TestEnqueueNewTrackers:
 
     def test_enqueue_tab_separated_urls(self, empty_queues: ModuleType) -> None:
         """Test parsing tab-separated tracker URLs."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "add_one_tracker_to_submitted_queue") as mock_add,
         ):
             ingest.enqueue_new_trackers("udp://tracker1.example.com:6969\tudp://tracker2.example.com:6969")
@@ -96,10 +96,10 @@ class TestEnqueueNewTrackers:
 
     def test_enqueue_mixed_whitespace_urls(self, empty_queues: ModuleType) -> None:
         """Test parsing URLs with mixed whitespace separators."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "add_one_tracker_to_submitted_queue") as mock_add,
         ):
             ingest.enqueue_new_trackers(
@@ -110,10 +110,10 @@ class TestEnqueueNewTrackers:
 
     def test_enqueue_lowercases_urls(self, empty_queues: ModuleType) -> None:
         """Test that URLs are lowercased before processing."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "add_one_tracker_to_submitted_queue") as mock_add,
         ):
             ingest.enqueue_new_trackers("UDP://TRACKER.EXAMPLE.COM:6969")
@@ -122,10 +122,10 @@ class TestEnqueueNewTrackers:
 
     def test_enqueue_empty_string(self, empty_queues: ModuleType) -> None:
         """Test that empty string does not add any trackers."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "add_one_tracker_to_submitted_queue") as mock_add,
         ):
             ingest.enqueue_new_trackers("")
@@ -134,10 +134,10 @@ class TestEnqueueNewTrackers:
 
     def test_enqueue_single_url(self, empty_queues: ModuleType) -> None:
         """Test enqueueing a single URL."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "add_one_tracker_to_submitted_queue") as mock_add,
         ):
             ingest.enqueue_new_trackers("udp://tracker.example.com:6969")
@@ -150,34 +150,34 @@ class TestAddOneTrackerToSubmittedQueue:
 
     def test_rejects_ip_hostname_ipv4(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that URLs with IPv4 addresses as hostnames are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
-        with patch("newTrackon.ingest.db.get_all_data", return_value=[]):
+        with patch("newtrackon.ingest.db.get_all_data", return_value=[]):
             ingest.add_one_tracker_to_submitted_queue("udp://192.168.1.1:6969/announce")
 
         assert submitted_queue.qsize() == 0
 
     def test_rejects_ip_hostname_ipv6(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that URLs with IPv6 addresses as hostnames are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
-        with patch("newTrackon.ingest.db.get_all_data", return_value=[]):
+        with patch("newtrackon.ingest.db.get_all_data", return_value=[]):
             ingest.add_one_tracker_to_submitted_queue("udp://[2001:db8::1]:6969/announce")
 
         assert submitted_queue.qsize() == 0
 
     def test_rejects_already_queued_tracker(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that URLs already in the queue are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         # Add a tracker to the queue first
         existing_tracker = create_test_tracker(url="udp://tracker.example.com:6969/announce")
         submitted_queue.put_nowait(existing_tracker)
 
-        with patch("newTrackon.ingest.Tracker.from_url") as mock_from_url:
+        with patch("newtrackon.ingest.Tracker.from_url") as mock_from_url:
             ingest.add_one_tracker_to_submitted_queue("udp://tracker.example.com:6969/announce")
 
             # Tracker.from_url should not be called since it's already queued
@@ -190,13 +190,13 @@ class TestAddOneTrackerToSubmittedQueue:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection, sample_tracker: Tracker
     ) -> None:
         """Test that URLs already being tracked are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         # sample_tracker has host="tracker.example.com"
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[sample_tracker]),
-            patch("newTrackon.ingest.Tracker.from_url") as mock_from_url,
+            patch("newtrackon.ingest.db.get_all_data", return_value=[sample_tracker]),
+            patch("newtrackon.ingest.Tracker.from_url") as mock_from_url,
         ):
             ingest.add_one_tracker_to_submitted_queue("udp://tracker.example.com:6969/announce")
 
@@ -207,8 +207,8 @@ class TestAddOneTrackerToSubmittedQueue:
 
     def test_rejects_tracker_with_duplicate_ip(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with IPs already in the list are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         # Create a tracked tracker with a specific IP
         existing_tracker = create_test_tracker(
@@ -224,8 +224,8 @@ class TestAddOneTrackerToSubmittedQueue:
         )
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
-            patch("newTrackon.ingest.Tracker.from_url", return_value=new_tracker),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
+            patch("newtrackon.ingest.Tracker.from_url", return_value=new_tracker),
         ):
             ingest.add_one_tracker_to_submitted_queue("udp://new.example.com:6969/announce")
 
@@ -233,14 +233,14 @@ class TestAddOneTrackerToSubmittedQueue:
 
     def test_accepts_valid_new_tracker(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that valid new trackers are added to the queue."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         new_tracker = create_test_tracker(url="udp://new.example.com:6969/announce", ips=["10.0.0.1"])
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
-            patch("newTrackon.ingest.Tracker.from_url", return_value=new_tracker),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.Tracker.from_url", return_value=new_tracker),
         ):
             ingest.add_one_tracker_to_submitted_queue("udp://new.example.com:6969/announce")
 
@@ -253,13 +253,13 @@ class TestAddOneTrackerToSubmittedQueue:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection
     ) -> None:
         """Test that RuntimeError from Tracker.from_url is handled."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.Tracker.from_url",
+                "newtrackon.ingest.Tracker.from_url",
                 side_effect=RuntimeError("Invalid URL"),
             ),
         ):
@@ -269,13 +269,13 @@ class TestAddOneTrackerToSubmittedQueue:
 
     def test_handles_tracker_from_url_value_error(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that ValueError from Tracker.from_url is handled."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.Tracker.from_url",
+                "newtrackon.ingest.Tracker.from_url",
                 side_effect=ValueError("Bad value"),
             ),
         ):
@@ -285,14 +285,14 @@ class TestAddOneTrackerToSubmittedQueue:
 
     def test_accepts_tracker_without_ips(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers without IPs can still be added."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         new_tracker = create_test_tracker(url="udp://new.example.com:6969/announce", ips=None)
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
-            patch("newTrackon.ingest.Tracker.from_url", return_value=new_tracker),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.Tracker.from_url", return_value=new_tracker),
         ):
             ingest.add_one_tracker_to_submitted_queue("udp://new.example.com:6969/announce")
 
@@ -300,15 +300,15 @@ class TestAddOneTrackerToSubmittedQueue:
 
     def test_accepts_when_no_ips_tracked(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers are accepted when no IPs are being tracked yet."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         new_tracker = create_test_tracker(url="udp://new.example.com:6969/announce", ips=["10.0.0.1"])
 
         # Return empty list - no trackers being tracked
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
-            patch("newTrackon.ingest.Tracker.from_url", return_value=new_tracker),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.Tracker.from_url", return_value=new_tracker),
         ):
             ingest.add_one_tracker_to_submitted_queue("udp://new.example.com:6969/announce")
 
@@ -320,8 +320,8 @@ class TestProcessNewTracker:
 
     def test_rejects_interval_too_short(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval < 300 seconds are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_data
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_data
 
         # Add debug data for log_wrong_interval_denial
         submitted_data.appendleft(
@@ -334,12 +334,12 @@ class TestProcessNewTracker:
         tracker_candidate.interval = 299  # Less than 300
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(299, tracker_candidate.url, 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -347,8 +347,8 @@ class TestProcessNewTracker:
 
     def test_rejects_interval_too_long(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval > 10800 seconds are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_data
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_data
 
         # Add debug data for log_wrong_interval_denial
         submitted_data.appendleft(
@@ -361,12 +361,12 @@ class TestProcessNewTracker:
         tracker_candidate.interval = 10801  # More than 10800
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(10801, tracker_candidate.url, 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -374,7 +374,7 @@ class TestProcessNewTracker:
 
     def test_accepts_valid_interval_minimum(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval = 300 seconds are accepted."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
@@ -382,12 +382,12 @@ class TestProcessNewTracker:
         tracker_candidate.interval = 300
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(300, tracker_candidate.url, 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -395,7 +395,7 @@ class TestProcessNewTracker:
 
     def test_accepts_valid_interval_maximum(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with interval = 10800 seconds are accepted."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
@@ -403,12 +403,12 @@ class TestProcessNewTracker:
         tracker_candidate.interval = 10800
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(10800, tracker_candidate.url, 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -418,7 +418,7 @@ class TestProcessNewTracker:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection
     ) -> None:
         """Test that trackers with duplicate IPs are rejected during processing."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         existing_tracker = MagicMock()
         existing_tracker.host = "existing.example.com"
@@ -430,8 +430,8 @@ class TestProcessNewTracker:
         tracker_candidate.ips = ["93.184.216.34"]  # Duplicate IP
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -441,7 +441,7 @@ class TestProcessNewTracker:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Test that duplicate IPs log current IP conflicts during processing."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         existing_tracker = MagicMock()
         existing_tracker.host = "existing.example.com"
@@ -453,7 +453,7 @@ class TestProcessNewTracker:
         tracker_candidate.ips = ["93.184.216.34"]
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
             caplog.at_level(logging.INFO),
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
@@ -465,7 +465,7 @@ class TestProcessNewTracker:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Test that duplicate IPs log recent IP conflicts during processing."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         existing_tracker = MagicMock()
         existing_tracker.host = "existing.example.com"
@@ -477,7 +477,7 @@ class TestProcessNewTracker:
         tracker_candidate.ips = ["10.0.0.1"]
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
             caplog.at_level(logging.INFO),
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
@@ -489,7 +489,7 @@ class TestProcessNewTracker:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Test that multiple IPs for the same tracker are logged on one line."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         existing_tracker = MagicMock()
         existing_tracker.host = "existing.example.com"
@@ -501,7 +501,7 @@ class TestProcessNewTracker:
         tracker_candidate.ips = ["1.2.3.4", "5.6.7.8"]
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
             caplog.at_level(logging.INFO),
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
@@ -513,7 +513,7 @@ class TestProcessNewTracker:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection
     ) -> None:
         """Test that trackers with already tracked hosts are rejected during processing."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         existing_tracker = MagicMock()
         existing_tracker.host = "tracker.example.com"
@@ -525,8 +525,8 @@ class TestProcessNewTracker:
         tracker_candidate.ips = ["10.0.0.2"]  # Different IP but same host
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.get_all_data", return_value=[existing_tracker]),
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -534,8 +534,8 @@ class TestProcessNewTracker:
 
     def test_rejects_missing_interval(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that trackers with missing interval are rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_data
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_data
 
         # Add debug data for log_wrong_interval_denial
         submitted_data.appendleft(
@@ -548,12 +548,12 @@ class TestProcessNewTracker:
         tracker_candidate.interval = None
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(None, tracker_candidate.url, 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -563,16 +563,16 @@ class TestProcessNewTracker:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection
     ) -> None:
         """Test that RuntimeError from attempt_submitted is handled."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
         tracker_candidate.ips = ["10.0.0.1"]
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
-            patch("newTrackon.ingest.attempt_submitted", side_effect=RuntimeError("Fail")),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.attempt_submitted", side_effect=RuntimeError("Fail")),
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -582,16 +582,16 @@ class TestProcessNewTracker:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection
     ) -> None:
         """Test that ValueError from attempt_submitted is handled."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
         tracker_candidate.ips = ["10.0.0.1"]
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
-            patch("newTrackon.ingest.attempt_submitted", side_effect=ValueError("Fail")),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.attempt_submitted", side_effect=ValueError("Fail")),
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -599,7 +599,7 @@ class TestProcessNewTracker:
 
     def test_successful_tracker_insertion(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test successful insertion of a new tracker."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         tracker_candidate = MagicMock()
         tracker_candidate.url = "udp://tracker.example.com:6969/announce"
@@ -607,12 +607,12 @@ class TestProcessNewTracker:
         tracker_candidate.interval = 1800
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(1800, tracker_candidate.url, 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
         ):
             ingest.process_new_tracker(tracker_candidate)  # pyright: ignore[reportUnknownArgumentType]
 
@@ -627,8 +627,8 @@ class TestProcessSubmittedQueue:
 
     def test_processes_all_queued_trackers(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that all queued trackers are processed."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         tracker1 = create_test_tracker(url="udp://tracker1.example.com:6969/announce")
         tracker2 = create_test_tracker(url="udp://tracker2.example.com:6969/announce")
@@ -637,9 +637,9 @@ class TestProcessSubmittedQueue:
         submitted_queue.put_nowait(tracker2)
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "process_new_tracker") as mock_process,
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.save_deque_to_disk"),
         ):
             ingest.process_submitted_queue()
 
@@ -649,8 +649,8 @@ class TestProcessSubmittedQueue:
 
     def test_empties_queue(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test that the queue is emptied after processing."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         tracker1 = create_test_tracker(url="udp://tracker1.example.com:6969/announce")
         tracker2 = create_test_tracker(url="udp://tracker2.example.com:6969/announce")
@@ -658,9 +658,9 @@ class TestProcessSubmittedQueue:
         submitted_queue.put_nowait(tracker2)
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "process_new_tracker"),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.save_deque_to_disk"),
         ):
             ingest.process_submitted_queue()
 
@@ -670,8 +670,8 @@ class TestProcessSubmittedQueue:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection
     ) -> None:
         """Test that history is saved to disk after processing each tracker."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         tracker1 = create_test_tracker(url="udp://tracker1.example.com:6969/announce")
         tracker2 = create_test_tracker(url="udp://tracker2.example.com:6969/announce")
@@ -679,9 +679,9 @@ class TestProcessSubmittedQueue:
         submitted_queue.put_nowait(tracker2)
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
             patch.object(ingest, "process_new_tracker"),
-            patch("newTrackon.ingest.save_deque_to_disk") as mock_save,
+            patch("newtrackon.ingest.save_deque_to_disk") as mock_save,
         ):
             ingest.process_submitted_queue()
 
@@ -693,7 +693,7 @@ class TestWarnOfDuplicateIps:
 
     def test_detects_duplicate_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that duplicate IPs are detected and logged."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         all_ips = ["1.2.3.4", "1.2.3.4"]
 
@@ -706,7 +706,7 @@ class TestWarnOfDuplicateIps:
         self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Test that multiple duplicate IPs are detected."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4", "5.6.7.8"]
@@ -727,7 +727,7 @@ class TestWarnOfDuplicateIps:
 
     def test_no_warning_for_unique_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that no warning is logged when all IPs are unique."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4"]
@@ -744,7 +744,7 @@ class TestWarnOfDuplicateIps:
 
     def test_no_warning_when_no_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that no warning is logged when there are no IPs."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         with caplog.at_level(logging.WARNING):
             trackon.warn_of_duplicate_ips([])
@@ -753,7 +753,7 @@ class TestWarnOfDuplicateIps:
 
     def test_handles_trackers_with_no_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test duplicate detection when some trackers have no IPs."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         tracker1 = MagicMock()
         tracker1.ips = ["1.2.3.4"]
@@ -777,7 +777,7 @@ class TestWarnOfRecentIpOverlaps:
 
     def test_detects_recent_ip_overlap(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that recent IP overlaps are detected and logged."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         tracker1 = create_test_tracker("udp://tracker1.example.com:6969/announce", ips=["9.9.9.9"])
         tracker1.recent_ips = {"1.2.3.4": 1700000000}
@@ -794,7 +794,7 @@ class TestWarnOfRecentIpOverlaps:
 
     def test_no_warning_for_no_overlap(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
         """Test that no warning is logged when there is no recent IP overlap."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         tracker1 = create_test_tracker("udp://tracker1.example.com:6969/announce", ips=["1.2.3.4"])
         tracker1.recent_ips = {"1.2.3.4": 1700000000}
@@ -815,8 +815,8 @@ class TestLogWrongIntervalDenial:
 
     def test_updates_submitted_data_with_rejection(self, empty_queues: ModuleType) -> None:
         """Test that log_wrong_interval_denial updates submitted_data correctly."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_data
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_data
 
         debug_entry: HistoryData = {
             "url": "udp://tracker.example.com:6969/announce",
@@ -836,8 +836,8 @@ class TestLogWrongIntervalDenial:
 
     def test_preserves_original_info(self, empty_queues: ModuleType) -> None:
         """Test that original info is preserved in the updated entry."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_data
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_data
 
         original_info = "{'interval': 100, 'peers': []}"
         debug_entry: HistoryData = {
@@ -862,7 +862,7 @@ class TestGlobalState:
         """Test that threading locks are properly initialized."""
         from threading import Lock
 
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         assert isinstance(ingest.list_lock, type(Lock()))
 
@@ -872,8 +872,8 @@ class TestIntegration:
 
     def test_full_enqueue_and_process_flow(self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection) -> None:
         """Test the full flow from enqueueing to processing."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_queue
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_queue
 
         mock_tracker = MagicMock()
         mock_tracker.url = "udp://tracker.example.com:6969/announce"
@@ -881,14 +881,14 @@ class TestIntegration:
         mock_tracker.interval = 1800
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
-            patch("newTrackon.ingest.Tracker.from_url", return_value=mock_tracker),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.Tracker.from_url", return_value=mock_tracker),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(1800, mock_tracker.url, 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.save_deque_to_disk"),
         ):
             ingest.enqueue_new_trackers("udp://tracker.example.com:6969")
             ingest.process_submitted_queue()
@@ -901,7 +901,7 @@ class TestIntegration:
         self, empty_queues: ModuleType, mock_db_connection: sqlite3.Connection
     ) -> None:
         """Test enqueueing and processing multiple trackers."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         trackers: list[MagicMock] = []
         for i in range(3):
@@ -919,14 +919,14 @@ class TestIntegration:
             return trackers[idx]
 
         with (
-            patch("newTrackon.ingest.db.get_all_data", return_value=[]),
-            patch("newTrackon.ingest.Tracker.from_url", side_effect=create_tracker),
+            patch("newtrackon.ingest.db.get_all_data", return_value=[]),
+            patch("newtrackon.ingest.Tracker.from_url", side_effect=create_tracker),
             patch(
-                "newTrackon.ingest.attempt_submitted",
+                "newtrackon.ingest.attempt_submitted",
                 return_value=(1800, "", 50),
             ),
-            patch("newTrackon.ingest.db.insert_new_tracker") as mock_insert,
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.db.insert_new_tracker") as mock_insert,
+            patch("newtrackon.ingest.save_deque_to_disk"),
         ):
             ingest.enqueue_new_trackers(
                 "udp://tracker0.example.com:6969 udp://tracker1.example.com:6969 udp://tracker2.example.com:6969"
@@ -941,7 +941,7 @@ class TestUpdateOutdatedTrackers:
 
     def test_no_outdated_trackers(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that no trackers are updated when all are recent."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         # Create a tracker that was checked recently (now - last_checked < interval)
         recent_tracker = MagicMock()
@@ -951,12 +951,12 @@ class TestUpdateOutdatedTrackers:
         recent_tracker.to_be_deleted = False
 
         with (
-            patch("newTrackon.trackon.time", return_value=1100),  # Now is 1100, so 100 seconds passed < 300 interval
-            patch("newTrackon.trackon.db.get_all_data", return_value=[recent_tracker]),
-            patch("newTrackon.trackon.db.update_tracker") as mock_update,
-            patch("newTrackon.trackon.db.delete_tracker") as mock_delete,
-            patch("newTrackon.trackon.save_deque_to_disk") as mock_save,
-            patch("newTrackon.trackon.sleep", side_effect=StopIteration),  # Break the infinite loop
+            patch("newtrackon.trackon.time", return_value=1100),  # Now is 1100, so 100 seconds passed < 300 interval
+            patch("newtrackon.trackon.db.get_all_data", return_value=[recent_tracker]),
+            patch("newtrackon.trackon.db.update_tracker") as mock_update,
+            patch("newtrackon.trackon.db.delete_tracker") as mock_delete,
+            patch("newtrackon.trackon.save_deque_to_disk") as mock_save,
+            patch("newtrackon.trackon.sleep", side_effect=StopIteration),  # Break the infinite loop
         ):
             try:
                 trackon.update_outdated_trackers()
@@ -971,7 +971,7 @@ class TestUpdateOutdatedTrackers:
 
     def test_outdated_tracker_gets_updated(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that outdated tracker gets updated (not deleted)."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         # Create a tracker that is outdated (now - last_checked > interval)
         outdated_tracker = MagicMock()
@@ -981,12 +981,12 @@ class TestUpdateOutdatedTrackers:
         outdated_tracker.to_be_deleted = False  # Should NOT be deleted
 
         with (
-            patch("newTrackon.trackon.time", return_value=1500),  # Now is 1500, so 500 seconds passed > 300 interval
-            patch("newTrackon.trackon.db.get_all_data", return_value=[outdated_tracker]),
-            patch("newTrackon.trackon.db.update_tracker") as mock_update,
-            patch("newTrackon.trackon.db.delete_tracker") as mock_delete,
-            patch("newTrackon.trackon.save_deque_to_disk") as mock_save,
-            patch("newTrackon.trackon.sleep", side_effect=StopIteration),  # Break the infinite loop
+            patch("newtrackon.trackon.time", return_value=1500),  # Now is 1500, so 500 seconds passed > 300 interval
+            patch("newtrackon.trackon.db.get_all_data", return_value=[outdated_tracker]),
+            patch("newtrackon.trackon.db.update_tracker") as mock_update,
+            patch("newtrackon.trackon.db.delete_tracker") as mock_delete,
+            patch("newtrackon.trackon.save_deque_to_disk") as mock_save,
+            patch("newtrackon.trackon.sleep", side_effect=StopIteration),  # Break the infinite loop
         ):
             try:
                 trackon.update_outdated_trackers()
@@ -1001,7 +1001,7 @@ class TestUpdateOutdatedTrackers:
 
     def test_outdated_tracker_gets_deleted(self, mock_db_connection: sqlite3.Connection) -> None:
         """Test that outdated tracker marked for deletion gets deleted."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         # Create a tracker that is outdated and marked for deletion
         outdated_tracker = MagicMock()
@@ -1011,12 +1011,12 @@ class TestUpdateOutdatedTrackers:
         outdated_tracker.to_be_deleted = True  # Should be deleted
 
         with (
-            patch("newTrackon.trackon.time", return_value=1500),  # Now is 1500, so 500 seconds passed > 300 interval
-            patch("newTrackon.trackon.db.get_all_data", return_value=[outdated_tracker]),
-            patch("newTrackon.trackon.db.update_tracker") as mock_update,
-            patch("newTrackon.trackon.db.delete_tracker") as mock_delete,
-            patch("newTrackon.trackon.save_deque_to_disk") as mock_save,
-            patch("newTrackon.trackon.sleep", side_effect=StopIteration),  # Break the infinite loop
+            patch("newtrackon.trackon.time", return_value=1500),  # Now is 1500, so 500 seconds passed > 300 interval
+            patch("newtrackon.trackon.db.get_all_data", return_value=[outdated_tracker]),
+            patch("newtrackon.trackon.db.update_tracker") as mock_update,
+            patch("newtrackon.trackon.db.delete_tracker") as mock_delete,
+            patch("newtrackon.trackon.save_deque_to_disk") as mock_save,
+            patch("newtrackon.trackon.sleep", side_effect=StopIteration),  # Break the infinite loop
         ):
             try:
                 trackon.update_outdated_trackers()
@@ -1035,14 +1035,14 @@ class TestWarnOfIpConflictsPeriodic:
 
     def test_warn_of_ip_conflicts_uses_single_db_snapshot(self, mock_db_connection: sqlite3.Connection) -> None:
         """warn_of_ip_conflicts should fetch data once and fan out to both warning paths."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         trackers = [MagicMock()]
 
         with (
-            patch("newTrackon.trackon.db.get_all_data", return_value=trackers) as mock_get,
-            patch("newTrackon.trackon.warn_of_duplicate_ips") as mock_duplicates,
-            patch("newTrackon.trackon.warn_of_recent_ip_overlaps") as mock_recent,
+            patch("newtrackon.trackon.db.get_all_data", return_value=trackers) as mock_get,
+            patch("newtrackon.trackon.warn_of_duplicate_ips") as mock_duplicates,
+            patch("newtrackon.trackon.warn_of_recent_ip_overlaps") as mock_recent,
         ):
             trackon.warn_of_ip_conflicts()
 
@@ -1052,11 +1052,11 @@ class TestWarnOfIpConflictsPeriodic:
 
     def test_warn_of_ip_conflicts_periodically_runs_every_120_seconds(self, mock_db_connection: sqlite3.Connection) -> None:
         """warn_of_ip_conflicts_periodically should run loop body every 120 seconds."""
-        from newTrackon import trackon
+        from newtrackon import trackon
 
         with (
-            patch("newTrackon.trackon.warn_of_ip_conflicts") as mock_warn,
-            patch("newTrackon.trackon.sleep", side_effect=StopIteration) as mock_sleep,
+            patch("newtrackon.trackon.warn_of_ip_conflicts") as mock_warn,
+            patch("newtrackon.trackon.sleep", side_effect=StopIteration) as mock_sleep,
         ):
             try:
                 trackon.warn_of_ip_conflicts_periodically()

@@ -9,7 +9,7 @@ from urllib.parse import ParseResult
 from flask import Response
 
 if TYPE_CHECKING:
-    from newTrackon.tracker import Tracker
+    from newtrackon.tracker import Tracker
 
 # Type alias for BEP34 protocol preferences: (protocol, port)
 ProtocolPref = tuple[str, int]

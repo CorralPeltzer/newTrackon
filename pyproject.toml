@@ -1,5 +1,5 @@
 [project]
-name = "newTrackon"
+name = "newtrackon"
 version = "1.0.0"
 requires-python = "==3.14.*"
 dependencies = [

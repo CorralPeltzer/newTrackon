@@ -5,9 +5,9 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.wsgi import WSGIContainer
 
-from newTrackon import db, ingest, scraper, trackerlist_project, trackon
-from newTrackon.scraper import get_server_ip
-from newTrackon.views import app
+from newtrackon import db, ingest, scraper, trackerlist_project, trackon
+from newtrackon.scraper import get_server_ip
+from newtrackon.views import app
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

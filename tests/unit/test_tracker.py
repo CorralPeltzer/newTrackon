@@ -1,4 +1,4 @@
-"""Comprehensive tests for the Tracker class in newTrackon.tracker module."""
+"""Comprehensive tests for the Tracker class in newtrackon.tracker module."""
 
 import socket
 from collections import deque
@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from newTrackon.scraper import ScraperResult
-from newTrackon.tracker import Tracker, max_downtime
+from newtrackon.scraper import ScraperResult
+from newtrackon.tracker import Tracker, max_downtime
 
 
 class TestTrackerInit:
@@ -566,11 +566,11 @@ class TestUpdateStatus:
         ]
 
         with (
-            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
-            patch("newTrackon.tracker.scraper.announce_udp") as mock_announce,
-            patch("newTrackon.tracker.scraper.redact_origin", return_value="mocked"),
-            patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
-            patch("newTrackon.tracker.socket.getaddrinfo", return_value=mock_getaddrinfo_return),
+            patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.tracker.scraper.announce_udp") as mock_announce,
+            patch("newtrackon.tracker.scraper.redact_origin", return_value="mocked"),
+            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.socket.getaddrinfo", return_value=mock_getaddrinfo_return),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
             mock_announce.return_value = ({"interval": 1800, "seeds": 100, "leechers": 50, "peers": []}, "93.184.216.34")
@@ -592,11 +592,11 @@ class TestUpdateStatus:
         ]
 
         with (
-            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
-            patch("newTrackon.tracker.scraper.announce_http") as mock_announce,
-            patch("newTrackon.tracker.scraper.redact_origin", return_value="mocked"),
-            patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
-            patch("newTrackon.tracker.socket.getaddrinfo", return_value=mock_getaddrinfo_return),
+            patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.tracker.scraper.announce_http") as mock_announce,
+            patch("newtrackon.tracker.scraper.redact_origin", return_value="mocked"),
+            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.socket.getaddrinfo", return_value=mock_getaddrinfo_return),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
             mock_announce.return_value = {"interval": 1800, "complete": 100, "incomplete": 50, "peers": []}
@@ -615,9 +615,9 @@ class TestUpdateStatus:
         ]
 
         with (
-            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
-            patch("newTrackon.tracker.scraper.announce_udp") as mock_announce,
-            patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.tracker.scraper.announce_udp") as mock_announce,
+            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
             mock_announce.side_effect = RuntimeError("UDP timeout")
@@ -632,7 +632,7 @@ class TestUpdateStatus:
         """Test that tracker unresponsive for too long is marked for deletion."""
         sample_tracker.last_uptime = int(time()) - max_downtime - 1
 
-        with patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
             sample_tracker.update_status()
 
             assert sample_tracker.to_be_deleted is True
@@ -643,8 +643,8 @@ class TestUpdateStatus:
         mock_network["getaddrinfo"].side_effect = OSError("DNS failure")  # pyright: ignore[reportUnknownMemberType]
 
         with (
-            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
-            patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
         ):
             sample_tracker.update_status()
 
@@ -659,9 +659,9 @@ class TestUpdateStatus:
         ]
 
         with (
-            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
-            patch("newTrackon.tracker.scraper.announce_udp") as mock_announce,
-            patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.tracker.scraper.announce_udp") as mock_announce,
+            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
             mock_announce.side_effect = RuntimeError("UDP timeout")
@@ -677,7 +677,7 @@ class TestUpdateSchemeFromBep34:
 
     def test_bep34_denies_connection(self, sample_tracker: Tracker) -> None:
         """Test that BEP34 denial marks tracker for deletion."""
-        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [])):
+        with patch("newtrackon.tracker.scraper.get_bep_34", return_value=(True, [])):
             with pytest.raises(RuntimeError, match="Host denied connection"):
                 sample_tracker.update_scheme_from_bep_34()
 
@@ -687,7 +687,7 @@ class TestUpdateSchemeFromBep34:
         """Test that BEP34 can update scheme to UDP."""
         sample_tracker.url = "http://tracker.example.com:80/announce"
 
-        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("udp", 6969)])):
+        with patch("newtrackon.tracker.scraper.get_bep_34", return_value=(True, [("udp", 6969)])):
             sample_tracker.update_scheme_from_bep_34()
 
             assert sample_tracker.url.startswith("udp://")
@@ -697,9 +697,9 @@ class TestUpdateSchemeFromBep34:
         """Test that BEP34 TCP probes HTTPS/HTTP when current scheme is UDP."""
         assert sample_tracker.url == "udp://tracker.example.com:6969/announce"
         with (
-            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 443)])),
+            patch("newtrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 443)])),
             patch(
-                "newTrackon.tracker.scraper.attempt_https_http",
+                "newtrackon.tracker.scraper.attempt_https_http",
                 return_value=ScraperResult(1800, "https://tracker.example.com:443/announce", 50),
             ),
         ):
@@ -711,8 +711,8 @@ class TestUpdateSchemeFromBep34:
         """Test that BEP34 TCP keeps existing URL when probe fails."""
         original_url = sample_tracker.url
         with (
-            patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 443)])),
-            patch("newTrackon.tracker.scraper.attempt_https_http", return_value=None),
+            patch("newtrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 443)])),
+            patch("newtrackon.tracker.scraper.attempt_https_http", return_value=None),
         ):
             sample_tracker.update_scheme_from_bep_34()
 
@@ -721,7 +721,7 @@ class TestUpdateSchemeFromBep34:
     def test_bep34_tcp_preserves_existing_http_scheme(self, sample_tracker: Tracker) -> None:
         """Test that BEP34 TCP preserves existing HTTP scheme and only updates port."""
         sample_tracker.url = "http://tracker.example.com:80/announce"
-        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 8080)])):
+        with patch("newtrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 8080)])):
             sample_tracker.update_scheme_from_bep_34()
 
             assert sample_tracker.url == "http://tracker.example.com:8080/announce"
@@ -729,7 +729,7 @@ class TestUpdateSchemeFromBep34:
     def test_bep34_tcp_preserves_existing_https_scheme(self, sample_tracker: Tracker) -> None:
         """Test that BEP34 TCP preserves existing HTTPS scheme and only updates port."""
         sample_tracker.url = "https://tracker.example.com:443/announce"
-        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 8080)])):
+        with patch("newtrackon.tracker.scraper.get_bep_34", return_value=(True, [("tcp", 8080)])):
             sample_tracker.update_scheme_from_bep_34()
 
             assert sample_tracker.url == "https://tracker.example.com:8080/announce"
@@ -738,7 +738,7 @@ class TestUpdateSchemeFromBep34:
         """Test that no BEP34 record doesn't modify URL."""
         original_url = sample_tracker.url
 
-        with patch("newTrackon.tracker.scraper.get_bep_34", return_value=(False, None)):
+        with patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)):
             sample_tracker.update_scheme_from_bep_34()
 
             assert sample_tracker.url == original_url
@@ -751,14 +751,14 @@ class TestClearTracker:
         """Test that clear_tracker marks tracker as down."""
         sample_tracker.status = 1
 
-        with patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
             sample_tracker.clear_tracker("Test reason")
 
             assert sample_tracker.status == 0
 
     def test_clear_tracker_clears_geo_data(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
         """Test that clear_tracker clears geolocation data."""
-        with patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
             sample_tracker.clear_tracker("Test reason")
 
             assert sample_tracker.countries is None
@@ -769,7 +769,7 @@ class TestClearTracker:
         """Test that clear_tracker clears latency."""
         sample_tracker.latency = 100
 
-        with patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
             sample_tracker.clear_tracker("Test reason")
 
             assert sample_tracker.latency is None
@@ -778,7 +778,7 @@ class TestClearTracker:
         """Test that clear_tracker updates last_checked."""
         before = int(time())
 
-        with patch("newTrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
             sample_tracker.clear_tracker("Test reason")
 
         after = int(time())
@@ -788,7 +788,7 @@ class TestClearTracker:
         """Test that clear_tracker appends debug info to raw_data."""
         raw_data: deque[dict[str, Any]] = deque()
 
-        with patch("newTrackon.tracker.persistence.raw_data", raw_data):
+        with patch("newtrackon.tracker.persistence.raw_data", raw_data):
             sample_tracker.clear_tracker("Test reason")
 
             assert len(raw_data) == 1

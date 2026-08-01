@@ -19,9 +19,9 @@ check: venv
 	$(UV) run ruff format && \
 	$(UV) run basedpyright && \
 	$(UV) run ty check && \
-	$(UV) run djlint newTrackon/tpl/ --reformat --quiet
+	$(UV) run djlint newtrackon/tpl/ --reformat --quiet
 
 # Run test suite with coverage
 test: venv
 	$(ACTIVATE)
-	$(UV) run pytest tests/ -q --cov=newTrackon --cov-report=term-missing
+	$(UV) run pytest tests/ -q --cov=newtrackon --cov-report=term-missing

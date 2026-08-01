@@ -12,8 +12,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest import MonkeyPatch
 
-import newTrackon.persistence as persistence
-from newTrackon.tracker import Tracker
+import newtrackon.persistence as persistence
+from newtrackon.tracker import Tracker
 
 
 @pytest.fixture
@@ -77,7 +77,7 @@ class TestTrackerUpdateCycle:
         """Insert tracker in DB, call update_status() with mocked scraper,
         verify status, uptime, historic updated, and db.update_tracker() persists changes.
         """
-        from newTrackon import db
+        from newtrackon import db
 
         # Ensure tracker has a recent last_uptime to avoid max_downtime deletion
         sample_tracker.last_uptime = int(time())
@@ -114,10 +114,10 @@ class TestTrackerUpdateCycle:
         mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
             patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 6969))]),
-            patch("newTrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
-            patch("newTrackon.scraper.announce_udp", return_value=(mock_response, "93.184.216.34")),
+            patch("newtrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
+            patch("newtrackon.scraper.announce_udp", return_value=(mock_response, "93.184.216.34")),
         ):
             sample_tracker.update_status()
 
@@ -185,10 +185,10 @@ class TestTrackerUpdateCycle:
         mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
             patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 6969))]),
-            patch("newTrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
-            patch("newTrackon.scraper.announce_udp", return_value=(mock_response, "93.184.216.34")),
+            patch("newtrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
+            patch("newtrackon.scraper.announce_udp", return_value=(mock_response, "93.184.216.34")),
         ):
             sample_tracker.update_status()
 
@@ -238,10 +238,10 @@ class TestTrackerGoesDown:
 
         # Mock scraper to raise RuntimeError (simulating connection failure)
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
             patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 6969))]),
-            patch("newTrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
-            patch("newTrackon.scraper.announce_udp", side_effect=RuntimeError("UDP timeout")),
+            patch("newtrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
+            patch("newtrackon.scraper.announce_udp", side_effect=RuntimeError("UDP timeout")),
         ):
             sample_tracker.update_status()
 
@@ -259,7 +259,7 @@ class TestTrackerGoesDown:
         self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
     ) -> None:
         """Verify that tracker going down is properly persisted to database."""
-        from newTrackon import db
+        from newtrackon import db
 
         sample_tracker.status = 1
         sample_tracker.last_uptime = int(time())
@@ -289,10 +289,10 @@ class TestTrackerGoesDown:
         shared_memory_db.commit()
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
             patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 6969))]),
-            patch("newTrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
-            patch("newTrackon.scraper.announce_udp", side_effect=RuntimeError("Connection refused")),
+            patch("newtrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
+            patch("newtrackon.scraper.announce_udp", side_effect=RuntimeError("Connection refused")),
         ):
             sample_tracker.update_status()
 
@@ -333,10 +333,10 @@ class TestTrackerGoesDown:
         )
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
             patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 80))]),
-            patch("newTrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
-            patch("newTrackon.scraper.announce_http", side_effect=RuntimeError("HTTP timeout")),
+            patch("newtrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
+            patch("newtrackon.scraper.announce_http", side_effect=RuntimeError("HTTP timeout")),
         ):
             tracker.update_status()
 
@@ -351,7 +351,7 @@ class TestNewTrackerSubmissionFlow:
         """Call add_one_tracker_to_submitted_queue with valid URL,
         verify tracker added to submitted queue.
         """
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
@@ -376,7 +376,7 @@ class TestNewTrackerSubmissionFlow:
         self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Verify tracker ends up in database after full submission processing."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
@@ -406,8 +406,8 @@ class TestNewTrackerSubmissionFlow:
         persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
         ):
             ingest.process_submitted_queue()
 
@@ -421,7 +421,7 @@ class TestNewTrackerSubmissionFlow:
 
     def test_full_submission_flow_integration(self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None) -> None:
         """Test complete flow from URL submission to database insertion."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         test_url = "udp://complete-flow.example.com:6969/announce"
 
@@ -448,8 +448,8 @@ class TestNewTrackerSubmissionFlow:
 
         with (
             patch.object(Tracker, "from_url", return_value=mock_tracker),
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
             # Step 1: Add to submission queue
@@ -478,7 +478,7 @@ class TestDuplicateIPRejection:
         """Insert tracker with IP 1.2.3.4, try to add new tracker that
         resolves to same IP, verify rejection.
         """
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         # Insert an existing tracker with known IP
         shared_memory_db.execute(
@@ -521,7 +521,7 @@ class TestDuplicateIPRejection:
         self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
     ) -> None:
         """Test rejection when new tracker has any IP overlapping with existing."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         # Insert existing tracker with multiple IPs
         shared_memory_db.execute(
@@ -564,7 +564,7 @@ class TestDuplicateIPRejection:
         self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
     ) -> None:
         """Test that tracker with unique IP is allowed."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         # Insert existing tracker with known IP
         shared_memory_db.execute(
@@ -614,8 +614,8 @@ class TestIntervalValidation:
         self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Mock scraper to return interval < 300, verify tracker rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_data
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_data
 
         test_url = "udp://low-interval.example.com:6969/announce"
 
@@ -646,8 +646,8 @@ class TestIntervalValidation:
         persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
             ingest.process_submitted_queue()
@@ -662,8 +662,8 @@ class TestIntervalValidation:
         self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Mock scraper to return interval > 10800, verify tracker rejected."""
-        from newTrackon import ingest
-        from newTrackon.persistence import submitted_data
+        from newtrackon import ingest
+        from newtrackon.persistence import submitted_data
 
         test_url = "udp://high-interval.example.com:6969/announce"
 
@@ -694,8 +694,8 @@ class TestIntervalValidation:
         persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
             ingest.process_submitted_queue()
@@ -710,7 +710,7 @@ class TestIntervalValidation:
         self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Verify tracker with interval between 300 and 10800 is accepted."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         test_url = "udp://valid-interval.example.com:6969/announce"
 
@@ -738,8 +738,8 @@ class TestIntervalValidation:
         persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
             ingest.process_submitted_queue()
@@ -759,7 +759,7 @@ class TestIntervalValidation:
 
         Per code logic: "300 > tracker_candidate.interval" means 300 is NOT rejected.
         """
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         test_url = "udp://boundary-low.example.com:6969/announce"
 
@@ -787,8 +787,8 @@ class TestIntervalValidation:
         persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
             ingest.process_submitted_queue()
@@ -803,7 +803,7 @@ class TestIntervalValidation:
         self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Interval of exactly 10800 should be accepted."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         test_url = "udp://boundary-high.example.com:6969/announce"
 
@@ -831,8 +831,8 @@ class TestIntervalValidation:
         persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
         ):
             ingest.process_submitted_queue()
@@ -848,7 +848,7 @@ class TestIntervalValidation:
         self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
     ) -> None:
         """Verify tracker with missing interval is rejected."""
-        from newTrackon import ingest
+        from newtrackon import ingest
 
         test_url = "udp://no-interval.example.com:6969/announce"
 
@@ -876,10 +876,10 @@ class TestIntervalValidation:
         persistence.submitted_queue.put_nowait(mock_tracker)
 
         with (
-            patch("newTrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
-            patch("newTrackon.ingest.save_deque_to_disk"),
+            patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
+            patch("newtrackon.ingest.save_deque_to_disk"),
             patch.object(mock_tracker, "update_ipapi_data"),
-            patch("newTrackon.ingest.log_wrong_interval_denial"),  # Mock to avoid buffer pop error
+            patch("newtrackon.ingest.log_wrong_interval_denial"),  # Mock to avoid buffer pop error
         ):
             ingest.process_submitted_queue()
 
@@ -897,7 +897,7 @@ class TestTrackerDeletionWorkflow:
         self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], reset_globals: None
     ) -> None:
         """Test that tracker is marked for deletion if last_uptime exceeds max_downtime."""
-        from newTrackon.tracker import max_downtime
+        from newtrackon.tracker import max_downtime
 
         # Create tracker with last_uptime far in the past
         old_uptime = int(time()) - max_downtime - 1000  # Beyond max_downtime
@@ -921,7 +921,7 @@ class TestTrackerDeletionWorkflow:
         )
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
             patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 6969))]),
         ):
             tracker.update_status()
@@ -941,7 +941,7 @@ class TestTrackerIPResolutionFailure:
         sample_tracker.last_uptime = int(time())
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
             patch("socket.getaddrinfo", side_effect=OSError("DNS resolution failed")),
         ):
             sample_tracker.update_status()
@@ -960,7 +960,7 @@ class TestBEP34Integration:
         sample_tracker.last_uptime = int(time())
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(True, None)),  # Valid BEP34 but denies
+            patch("newtrackon.scraper.get_bep_34", return_value=(True, None)),  # Valid BEP34 but denies
         ):
             sample_tracker.update_status()
 
@@ -980,10 +980,10 @@ class TestBEP34Integration:
         mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
-            patch("newTrackon.scraper.get_bep_34", return_value=(True, bep34_prefs)),
+            patch("newtrackon.scraper.get_bep_34", return_value=(True, bep34_prefs)),
             patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 1337))]),
-            patch("newTrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
-            patch("newTrackon.scraper.announce_udp", return_value=(mock_response, "93.184.216.34")),
+            patch("newtrackon.tracker.Tracker.ip_api", return_value="United States\nus\nExample ISP"),
+            patch("newtrackon.scraper.announce_udp", return_value=(mock_response, "93.184.216.34")),
         ):
             sample_tracker.update_status()
 

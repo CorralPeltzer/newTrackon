@@ -12,8 +12,8 @@ from typing import Any
 import pytest
 from pytest import MonkeyPatch
 
-from newTrackon import db
-from newTrackon.tracker import Tracker
+from newtrackon import db
+from newtrackon.tracker import Tracker
 
 
 class ConnectionWrapper:

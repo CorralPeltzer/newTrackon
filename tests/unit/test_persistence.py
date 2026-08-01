@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from newTrackon.persistence import HistoryData
+from newtrackon.persistence import HistoryData
 
 
 class TestBufferMaxsizeValues:
@@ -18,19 +18,19 @@ class TestBufferMaxsizeValues:
 
     def test_submitted_queue_maxsize(self) -> None:
         """Verify submitted_queue has maxsize of 10000."""
-        from newTrackon import persistence
+        from newtrackon import persistence
 
         assert persistence.submitted_queue.maxsize == 10000
 
     def test_raw_data_maxlen(self) -> None:
         """Verify raw_data has maxlen of 600."""
-        from newTrackon import persistence
+        from newtrackon import persistence
 
         assert persistence.raw_data.maxlen == 600
 
     def test_submitted_data_maxlen(self) -> None:
         """Verify submitted_data has maxlen of 600."""
-        from newTrackon import persistence
+        from newtrackon import persistence
 
         assert persistence.submitted_data.maxlen == 600
 
@@ -40,7 +40,7 @@ class TestSaveDequeToDisk:
 
     def test_save_empty_deque(self, tmp_path: Path) -> None:
         """Test saving an empty deque writes empty JSON array."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "empty.json"
         empty_deque: deque[HistoryData] = deque(maxlen=100)
@@ -54,7 +54,7 @@ class TestSaveDequeToDisk:
 
     def test_save_deque_with_history_data(self, tmp_path: Path) -> None:
         """Test saving a deque with HistoryData."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "history.json"
         test_data: list[HistoryData] = [
@@ -72,7 +72,7 @@ class TestSaveDequeToDisk:
 
     def test_save_deque_with_dicts(self, tmp_path: Path) -> None:
         """Test saving a deque with dictionary data."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "dicts.json"
         test_data: list[HistoryData] = [
@@ -89,7 +89,7 @@ class TestSaveDequeToDisk:
 
     def test_save_deque_with_nested_data(self, tmp_path: Path) -> None:
         """Test saving a deque with nested structures (info as list)."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "nested.json"
         test_data: list[HistoryData] = [
@@ -106,7 +106,7 @@ class TestSaveDequeToDisk:
 
     def test_save_deque_with_multiple_items(self, tmp_path: Path) -> None:
         """Test saving a deque with multiple HistoryData items."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "multiple.json"
         test_data: list[HistoryData] = [
@@ -126,7 +126,7 @@ class TestSaveDequeToDisk:
 
     def test_save_deque_overwrites_existing_file(self, tmp_path: Path) -> None:
         """Test that saving overwrites existing file content."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "overwrite.json"
         # Write initial content
@@ -147,7 +147,7 @@ class TestSaveDequeToDisk:
 
     def test_save_deque_creates_valid_json(self, tmp_path: Path) -> None:
         """Test that output is valid parseable JSON."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "valid.json"
         test_data: list[HistoryData] = [
@@ -263,7 +263,7 @@ class TestEmptyBufferHandling:
 
     def test_save_and_load_empty_history(self, tmp_path: Path) -> None:
         """Test saving and loading an empty history buffer."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "empty_test.json"
         empty_history: deque[HistoryData] = deque(maxlen=600)
@@ -322,16 +322,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newTrackon.persistence as persistence
+        import newtrackon.persistence as persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newTrackon.trackon as trackon
+        import newtrackon.trackon as trackon
 
         importlib.reload(trackon)
 
-        import newTrackon.ingest as ingest
+        import newtrackon.ingest as ingest
 
         importlib.reload(ingest)
 
@@ -379,16 +379,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newTrackon.persistence as persistence
+        import newtrackon.persistence as persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newTrackon.trackon as trackon
+        import newtrackon.trackon as trackon
 
         importlib.reload(trackon)
 
-        import newTrackon.ingest as ingest
+        import newtrackon.ingest as ingest
 
         importlib.reload(ingest)
 
@@ -407,16 +407,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newTrackon.persistence as persistence
+        import newtrackon.persistence as persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newTrackon.trackon as trackon
+        import newtrackon.trackon as trackon
 
         importlib.reload(trackon)
 
-        import newTrackon.ingest as ingest
+        import newtrackon.ingest as ingest
 
         importlib.reload(ingest)
 
@@ -466,16 +466,16 @@ class TestLoadingBehavior:
         # Force reimport of the module
         import importlib
 
-        import newTrackon.persistence as persistence
+        import newtrackon.persistence as persistence
 
         importlib.reload(persistence)
 
         # Also reload trackon to update its references to the new deques
-        import newTrackon.trackon as trackon
+        import newtrackon.trackon as trackon
 
         importlib.reload(trackon)
 
-        import newTrackon.ingest as ingest
+        import newtrackon.ingest as ingest
 
         importlib.reload(ingest)
 
@@ -490,13 +490,13 @@ class TestFilePathConstants:
 
     def test_raw_history_file_path(self) -> None:
         """Test raw_history_file constant value."""
-        from newTrackon import persistence
+        from newtrackon import persistence
 
         assert persistence.raw_history_file == "data/raw_data.json"
 
     def test_submitted_history_file_path(self) -> None:
         """Test submitted_history_file constant value."""
-        from newTrackon import persistence
+        from newtrackon import persistence
 
         assert persistence.submitted_history_file == "data/submitted_data.json"
 
@@ -506,7 +506,7 @@ class TestRoundTripPersistence:
 
     def test_round_trip_with_tracker_data(self, tmp_path: Path) -> None:
         """Test that tracker data survives save/load cycle."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "trackers.json"
         original_data: list[HistoryData] = [
@@ -528,7 +528,7 @@ class TestRoundTripPersistence:
 
     def test_round_trip_with_submission_data(self, tmp_path: Path) -> None:
         """Test that submission result data survives save/load cycle."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "submissions.json"
         original_data: list[HistoryData] = [
@@ -549,7 +549,7 @@ class TestRoundTripPersistence:
 
     def test_round_trip_preserves_order(self, tmp_path: Path) -> None:
         """Test that item order is preserved through save/load cycle."""
-        from newTrackon.persistence import save_deque_to_disk
+        from newtrackon.persistence import save_deque_to_disk
 
         filepath = tmp_path / "ordered.json"
         original_data: list[HistoryData] = [

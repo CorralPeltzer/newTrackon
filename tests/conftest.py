@@ -16,7 +16,7 @@ import pytest
 from flask.testing import FlaskClient
 
 if TYPE_CHECKING:
-    from newTrackon.tracker import Tracker
+    from newtrackon.tracker import Tracker
 
 # Type alias for sample tracker data
 TrackerDataDict = dict[str, Any]
@@ -34,7 +34,7 @@ def drain_submitted_queue(persistence: ModuleType) -> None:
 @pytest.fixture(autouse=True)
 def clean_global_state() -> Generator[None]:
     """Automatically clean global state before and after each test."""
-    import newTrackon.persistence as persistence
+    import newtrackon.persistence as persistence
 
     # Clear before test
     drain_submitted_queue(persistence)
@@ -117,7 +117,7 @@ def sample_tracker_data() -> TrackerDataDict:
 @pytest.fixture
 def sample_tracker(sample_tracker_data: TrackerDataDict) -> Tracker:
     """Create a sample Tracker instance for testing."""
-    from newTrackon.tracker import Tracker
+    from newtrackon.tracker import Tracker
 
     tracker = Tracker(
         host=sample_tracker_data["host"],  # pyright: ignore[reportUnknownArgumentType]
@@ -189,8 +189,8 @@ def mock_network() -> Generator[dict[str, MagicMock]]:
 @pytest.fixture
 def reset_globals() -> Generator[None]:
     """Reset global state between tests."""
-    import newTrackon.persistence as persistence
-    import newTrackon.scraper as scraper
+    import newtrackon.persistence as persistence
+    import newtrackon.scraper as scraper
 
     # Save original scalar values
     old_ipv4 = scraper.my_ipv4
@@ -216,7 +216,7 @@ def reset_globals() -> Generator[None]:
 @pytest.fixture
 def empty_queues(reset_globals: None) -> Generator[ModuleType]:
     """Provide empty buffers for testing."""
-    import newTrackon.persistence as persistence
+    import newtrackon.persistence as persistence
 
     drain_submitted_queue(persistence)
     persistence.raw_data.clear()
@@ -227,7 +227,7 @@ def empty_queues(reset_globals: None) -> Generator[ModuleType]:
 @pytest.fixture
 def flask_client(mock_db_connection: Connection) -> Generator[FlaskClient]:
     """Create Flask test client with mocked database."""
-    from newTrackon.views import app
+    from newtrackon.views import app
 
     app.config["TESTING"] = True
     with app.test_client() as client:

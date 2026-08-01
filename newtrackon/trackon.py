@@ -2,13 +2,13 @@ import logging
 from time import sleep, time
 from typing import NoReturn
 
-from newTrackon import db
-from newTrackon.persistence import (
+from newtrackon import db
+from newtrackon.persistence import (
     raw_data,
     raw_history_file,
     save_deque_to_disk,
 )
-from newTrackon.tracker import Tracker
+from newtrackon.tracker import Tracker
 
 logger: logging.Logger = logging.getLogger("newtrackon")
 

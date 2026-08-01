@@ -8,7 +8,7 @@
     ],
     "html": {
         "fileMatch": [
-            "^(newTrackon/tpl)/[^/]+\.jinja$"
+            "^(newtrackon/tpl)/[^/]+\.jinja$"
         ]
     }
 }

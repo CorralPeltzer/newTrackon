@@ -7,7 +7,7 @@ from queue import Queue
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
-    from newTrackon.tracker import Tracker
+    from newtrackon.tracker import Tracker
 
 
 class HistoryData(TypedDict):

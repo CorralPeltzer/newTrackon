@@ -6,16 +6,16 @@ from time import time
 from typing import NoReturn, cast
 from urllib.parse import urlparse
 
-from newTrackon import db
-from newTrackon.persistence import (
+from newtrackon import db
+from newtrackon.persistence import (
     HistoryData,
     save_deque_to_disk,
     submitted_data,
     submitted_history_file,
     submitted_queue,
 )
-from newTrackon.scraper import attempt_submitted
-from newTrackon.tracker import Tracker
+from newtrackon.scraper import attempt_submitted
+from newtrackon.tracker import Tracker
 
 list_lock: Lock = Lock()
 

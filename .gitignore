@@ -1,7 +1,7 @@
 *.pyc
 __pycache__/
 .idea
-*.json
+.vscode/
 *.sh
 *.log
 *.html

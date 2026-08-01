@@ -29,7 +29,7 @@ class TestMainPage:
         self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
     ) -> None:
         """POST / with new_trackers should trigger enqueue_new_trackers."""
-        with patch("newTrackon.ingest.enqueue_new_trackers"):
+        with patch("newtrackon.ingest.enqueue_new_trackers"):
             response = flask_client.post(
                 "/",
                 data={"new_trackers": "udp://tracker.test.com:6969/announce"},
@@ -71,7 +71,7 @@ class TestApiAddEndpoint:
         self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection
     ) -> None:
         """POST /api/add with valid trackers should return 204."""
-        with patch("newTrackon.ingest.enqueue_new_trackers"):
+        with patch("newtrackon.ingest.enqueue_new_trackers"):
             response = flask_client.post(
                 "/api/add",
                 data={"new_trackers": "udp://tracker.test.com:6969/announce"},
@@ -1005,8 +1005,8 @@ class TestSubmittedEndpoint:
 
     def test_get_submitted_with_data(self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection) -> None:
         """GET /submitted should render the submitted template."""
-        with patch("newTrackon.views.persistence.submitted_data", []):
-            with patch("newTrackon.views.persistence.submitted_queue.qsize", return_value=0):
+        with patch("newtrackon.views.persistence.submitted_data", []):
+            with patch("newtrackon.views.persistence.submitted_queue.qsize", return_value=0):
                 response = flask_client.get("/submitted")
                 assert response.status_code == 200
 
@@ -1021,7 +1021,7 @@ class TestRawEndpoint:
 
     def test_get_raw_with_data(self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection) -> None:
         """GET /raw should render the raw template."""
-        with patch("newTrackon.trackon.raw_data", []):
+        with patch("newtrackon.trackon.raw_data", []):
             response = flask_client.get("/raw")
             assert response.status_code == 200
 
@@ -1079,7 +1079,7 @@ class TestApiResponseHeaders:
 
     def test_api_add_cors_header(self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection) -> None:
         """POST /api/add should include CORS header."""
-        with patch("newTrackon.ingest.enqueue_new_trackers"):
+        with patch("newtrackon.ingest.enqueue_new_trackers"):
             response = flask_client.post(
                 "/api/add",
                 data={"new_trackers": "udp://test.tracker.com:6969/announce"},
