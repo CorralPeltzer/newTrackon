@@ -446,6 +446,59 @@ class TestIsUpIsDown:
 class TestUpdateIps:
     """Tests for Tracker.update_ips method."""
 
+    @pytest.mark.parametrize(
+        "address",
+        [
+            "64:ff9b::c0a8:1",  # NAT64 embedding private IPv4
+            "64:ff9b::a00:1",
+            "64:ff9b::a9fe:a9fe",  # NAT64 embedding link-local IPv4
+            "::c0a8:1",  # IPv4-compatible
+            "::7f00:1",
+            "64:ff9b::808:808",  # Public embedded IPv4 is intentionally blocked too
+            "::808:808",
+            "4000::1",  # Other reserved IPv6
+            "224.0.0.1",  # IPv4 multicast
+            "239.255.255.250",
+            "ff02::1",  # IPv6 multicast
+            "ff0e::1",
+            "::ffff:224.0.0.1",  # IPv4-mapped multicast
+            "fec0::1",  # Deprecated IPv6 site-local
+            "feff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            "::ffff:192.168.0.1",  # IPv4-mapped private address
+            "100.64.0.1",  # Shared address space
+            "64:ff9b:1::a00:1",  # Local-use NAT64
+            "2002:0808:0808::1",  # 6to4
+            "2001:0:4136:e378:8000:63bf:3fff:fdd2",  # Teredo
+        ],
+    )
+    @pytest.mark.parametrize("include_public", [False, True])
+    def test_update_ips_rejects_special_addresses(
+        self, sample_tracker: Tracker, mock_network: dict[str, Any], address: str, include_public: bool
+    ) -> None:
+        """One disallowed DNS answer must reject the tracker, even alongside a public answer."""
+        family = socket.AF_INET6 if ":" in address else socket.AF_INET
+        answers = [(family, socket.SOCK_DGRAM, 17, "", (address, 6969))]
+        if include_public:
+            answers.append((socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)))
+        mock_network["getaddrinfo"].return_value = answers  # pyright: ignore[reportUnknownMemberType]
+
+        with pytest.raises(RuntimeError, match="not globally routable"):
+            sample_tracker.update_ips()
+
+        assert sample_tracker.ips is None
+        assert sample_tracker.to_be_deleted is True
+
+    def test_update_ips_accepts_public_mapped_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+        """IPv4-mapped public destinations remain supported despite the reserved IPv6 check."""
+        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+            (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("::ffff:8.8.8.8", 6969, 0, 0)),
+        ]
+
+        sample_tracker.update_ips()
+
+        assert sample_tracker.ips == ["::ffff:8.8.8.8"]
+        assert sample_tracker.to_be_deleted is False
+
     def test_update_ips_resolves_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
         """Test that update_ips resolves IPv4 addresses."""
         mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]

@@ -255,9 +255,9 @@ class Tracker:
             parsed_ips: list[IPv4Address | IPv6Address] = []
             for ip in temp_ips:
                 parsed_ips.append(ip_address(ip))
-            # Check that all IPs are globally routable
+            # is_global alone also accepts some reserved, multicast and site-local addresses.
             for ip in parsed_ips:
-                if not ip.is_global:
+                if not ip.is_global or ip.is_reserved or ip.is_multicast or (isinstance(ip, IPv6Address) and ip.is_site_local):
                     self.ips = None
                     self.to_be_deleted = True
                     raise RuntimeError(f"IP {ip} is not globally routable, removed")
