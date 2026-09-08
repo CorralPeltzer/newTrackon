@@ -22,7 +22,7 @@ class TestMainPage:
         """The shared layout should expose the color theme toggle."""
         response = flask_client.get("/")
 
-        assert b"/static/js/theme.js" in response.data
+        assert b"/static/js/theme-v2.js" in response.data
         assert b'id="theme-toggle"' in response.data
         assert b'id="theme-toggle-icon"' in response.data
         assert b"data-bs-theme-value" not in response.data

@@ -66,6 +66,7 @@
     }
   });
 
+  // Rocket Loader can replay DOMContentLoaded after the native event.
   document.addEventListener("DOMContentLoaded", () => {
     const theme = getTheme();
     applyTheme(theme);
@@ -77,5 +78,5 @@
       applyTheme(selectedTheme);
       updateThemeToggle(selectedTheme);
     });
-  });
+  }, { once: true });
 })();
