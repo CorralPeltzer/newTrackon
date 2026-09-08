@@ -18,6 +18,15 @@ class TestMainPage:
         response = flask_client.get("/")
         assert response.status_code == 200
 
+    def test_main_page_includes_theme_toggle(self, flask_client: FlaskClient, mock_db_connection: sqlite3.Connection) -> None:
+        """The shared layout should expose the color theme toggle."""
+        response = flask_client.get("/")
+
+        assert b"/static/js/theme.js" in response.data
+        assert b'id="theme-toggle"' in response.data
+        assert b'id="theme-toggle-icon"' in response.data
+        assert b"data-bs-theme-value" not in response.data
+
     def test_get_main_page_with_trackers(self, flask_client: FlaskClient, insert_sample_tracker: dict[str, Any]) -> None:
         """GET / should display trackers from database."""
         response = flask_client.get("/")

@@ -63,8 +63,14 @@ hr {
 }
 
 .navbar .navbar-brand:hover,
-.navbar .nav-link:hover {
+.navbar .nav-link:hover,
+.navbar .nav-link:focus-visible {
   color: #fff !important;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus-visible {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .navbar .nav-link.active {
@@ -82,7 +88,7 @@ hr {
   bottom: 0;
   width: 100%;
   min-height: 60px;
-  background-color: #ECF0F1;
+  background-color: var(--bs-tertiary-bg);
   padding: 15px 0;
   display: flex;
   align-items: center;
@@ -133,15 +139,26 @@ td.down {
 }
 
 td.up {
-  background-color: #98ee99!important;
+  background-color: #98ee99 !important;
 }
 
 td.down {
-  background-color: #ff867c!important;
+  background-color: #ff867c !important;
 }
 
 td.rejected {
-  background-color: #ffcccb!important;
+  background-color: #ffcccb !important;
+}
+
+[data-bs-theme="dark"] td.up {
+  background-color: var(--bs-success-bg-subtle) !important;
+  color: var(--bs-success-text-emphasis);
+}
+
+[data-bs-theme="dark"] td.down,
+[data-bs-theme="dark"] td.rejected {
+  background-color: var(--bs-danger-bg-subtle) !important;
+  color: var(--bs-danger-text-emphasis);
 }
 
 .initially-hidden {
@@ -158,8 +175,9 @@ td.rejected {
 
 /* Bootstrap 3 style pre element */
 pre {
-  background-color: #f5f5f5;
-  border: 1px solid #ccc;
+  background-color: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
+  color: var(--bs-body-color);
   padding: 10px;
 }

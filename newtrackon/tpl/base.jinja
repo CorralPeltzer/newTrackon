@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#087F23">
         <meta name="author" content="Miguel Angel Corral Peltzer">
+        <script src="/static/js/theme.js"></script>
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
         <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
@@ -35,7 +36,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
             <div class="container">
                 <a href="./" class="navbar-brand">newTrackon</a>
-                <button class="navbar-toggler"
+                <button class="navbar-toggler order-2 ms-2"
                         type="button"
                         data-bs-toggle="collapse"
                         data-bs-target="#navbar-main"
@@ -45,7 +46,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 {% set navigation = [('Home', 'fa-home', '/'), ('List', 'fa-list', '/list'), ('Submitted', 'fa-plus', '/submitted'), ('FAQ', 'fa-question-circle', '/faq'), ('API', 'fa-code', '/api'), ('Raw data', 'fa-terminal', '/raw')] %}
-                <div class="collapse navbar-collapse" id="navbar-main">
+                <div class="collapse navbar-collapse order-3 order-lg-0" id="navbar-main">
                     <ul class="navbar-nav me-auto">
                         {% for name, icon, url in navigation %}
                             <li class="nav-item">
@@ -59,13 +60,20 @@
                         <li class="nav-item">
                             <a class="nav-link" href="https://github.com/CorralPeltzer/newTrackon"><i class="fab fa-github" aria-hidden="true"></i> Source</a>
                         </li>
-                    </ul>
-                    <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link{% if active == 'About' %} active{% endif %}"
                                href="/about"><i class="fas fa-user" aria-hidden="true"></i> About</a>
                         </li>
                     </ul>
+                </div>
+                <div class="navbar-nav flex-row align-items-center order-1 ms-auto ms-lg-0">
+                    <button class="nav-link"
+                            id="theme-toggle"
+                            type="button"
+                            aria-label="Switch color theme"
+                            title="Switch color theme">
+                        <i class="fas fa-moon" id="theme-toggle-icon" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
         </nav>
