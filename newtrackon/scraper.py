@@ -229,8 +229,9 @@ def get_bep_34(hostname: str | None) -> tuple[bool, list[ProtocolPref] | None]:
     return False, None
 
 
-def announce_http(url: str, thash: bytes = urandom(20)) -> BDecodeResponse:
+def announce_http(url: str) -> BDecodeResponse:
     logger.info("%s Scraping HTTP(S)", url)
+    thash = urandom(20)
     pid = "-qB4390-" + "".join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
 
     args_dict = {
@@ -276,9 +277,10 @@ def announce_http(url: str, thash: bytes = urandom(20)) -> BDecodeResponse:
     return tracker_response
 
 
-def announce_udp(udp_url: str, thash: bytes = urandom(20)) -> tuple[UDPAnnounceResponse, str | None]:
+def announce_udp(udp_url: str) -> tuple[UDPAnnounceResponse, str | None]:
     parsed_tracker = urlparse(udp_url)
     logger.info("%s Scraping UDP", udp_url)
+    thash = urandom(20)
     ip: str | None = None
     try:
         getaddr_responses: Sequence[AddrInfo] = socket.getaddrinfo(

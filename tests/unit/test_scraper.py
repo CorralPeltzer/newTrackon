@@ -278,7 +278,7 @@ class TestAnnounceHTTP:
         mock_response.status_code = 200
         mock_get.return_value = (mock_response, bencoded)
 
-        result = announce_http("http://tracker.example.com/announce", b"\x00" * 20)
+        result = announce_http("http://tracker.example.com/announce")
 
         assert result["interval"] == 1800
         assert "peers" in result
@@ -439,7 +439,7 @@ class TestAnnounceUDP:
 
         mock_sock.recv.side_effect = recv_side_effect
 
-        result, ip = announce_udp("udp://tracker.example.com:6969/announce", b"\x00" * 20)
+        result, ip = announce_udp("udp://tracker.example.com:6969/announce")
 
         assert result["interval"] == 1800
         assert result["leechers"] == 50
@@ -1161,7 +1161,7 @@ class TestEdgeCases:
         mock_response.status_code = 200
         mock_get.return_value = (mock_response, bencoded)
 
-        result = announce_http("http://tracker.example.com/announce", b"\x00" * 20)
+        result = announce_http("http://tracker.example.com/announce")
 
         assert result["interval"] == 1800
         assert "peers6" in result
