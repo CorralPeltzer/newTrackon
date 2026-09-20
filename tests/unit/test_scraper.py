@@ -76,8 +76,9 @@ class TestUDPBinaryEncoding:
         """Test that announce request has correct structure and length."""
         connection_id = 0x12345678ABCDEF01
         thash = b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a" * 2  # 20 bytes
+        peer_id = b"-qB5230-abcdefghijkl"
 
-        buf, transaction_id = udp_create_announce_request(connection_id, thash)
+        buf, transaction_id = udp_create_announce_request(connection_id, thash, peer_id)
 
         # Announce request should be 98 bytes
         assert len(buf) == 98
@@ -98,9 +99,9 @@ class TestUDPBinaryEncoding:
         info_hash = struct.unpack_from("!20s", buf, 16)[0]
         assert info_hash == thash
 
-        # Verify peer_id (same as hash in this implementation)
-        peer_id = struct.unpack_from("!20s", buf, 36)[0]
-        assert peer_id == thash
+        # Verify peer_id
+        packed_peer_id = struct.unpack_from("!20s", buf, 36)[0]
+        assert packed_peer_id == peer_id
 
         # Verify downloaded, left, uploaded are 0
         downloaded = struct.unpack_from("!q", buf, 56)[0]
@@ -1101,17 +1102,18 @@ class TestEdgeCases:
     def test_udp_create_announce_request_with_random_hash(self) -> None:
         """Test announce request with various hash values."""
         connection_id = 0x1234567890ABCDEF
+        peer_id = b"-qB5230-abcdefghijkl"
 
         # Test with all zeros
-        buf, _ = udp_create_announce_request(connection_id, b"\x00" * 20)
+        buf, _ = udp_create_announce_request(connection_id, b"\x00" * 20, peer_id)
         assert len(buf) == 98
 
         # Test with all ones
-        buf, _ = udp_create_announce_request(connection_id, b"\xff" * 20)
+        buf, _ = udp_create_announce_request(connection_id, b"\xff" * 20, peer_id)
         assert len(buf) == 98
 
         # Test with mixed values
-        buf, _ = udp_create_announce_request(connection_id, bytes(range(20)))
+        buf, _ = udp_create_announce_request(connection_id, bytes(range(20)), peer_id)
         assert len(buf) == 98
 
     def test_udp_parse_announce_response_no_peers(self) -> None:

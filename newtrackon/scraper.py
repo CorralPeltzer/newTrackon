@@ -47,6 +47,8 @@ class AttemptResult(NamedTuple):
 
 HTTP_PORT: int = 6881
 UDP_PORT: int = 30461
+PEER_ID_PREFIX = "-qB5230-"
+PEER_ID_CHARS = string.ascii_letters + string.digits + "-_.~"
 my_ipv4: str | None = None
 my_ipv6: str | None = None
 SCRAPING_HEADERS: dict[str, str] = {
@@ -229,14 +231,17 @@ def get_bep_34(hostname: str | None) -> tuple[bool, list[ProtocolPref] | None]:
     return False, None
 
 
+def generate_peer_id() -> bytes:
+    return (PEER_ID_PREFIX + "".join(random.choices(PEER_ID_CHARS, k=12))).encode()
+
+
 def announce_http(url: str) -> BDecodeResponse:
     logger.info("%s Scraping HTTP(S)", url)
     thash = urandom(20)
-    pid = "-qB4390-" + "".join([random.choice(string.ascii_letters + string.digits) for _ in range(12)])
 
     args_dict = {
         "info_hash": thash,
-        "peer_id": pid,
+        "peer_id": generate_peer_id(),
         "port": HTTP_PORT,
         "uploaded": 0,
         "downloaded": 0,
@@ -281,6 +286,7 @@ def announce_udp(udp_url: str) -> tuple[UDPAnnounceResponse, str | None]:
     parsed_tracker = urlparse(udp_url)
     logger.info("%s Scraping UDP", udp_url)
     thash = urandom(20)
+    peer_id = generate_peer_id()
     ip: str | None = None
     try:
         getaddr_responses: Sequence[AddrInfo] = socket.getaddrinfo(
@@ -321,7 +327,7 @@ def announce_udp(udp_url: str) -> tuple[UDPAnnounceResponse, str | None]:
             connection_id = udp_parse_connection_response(buf, transaction_id)
 
             # Announce
-            req, transaction_id = udp_create_announce_request(connection_id, thash)
+            req, transaction_id = udp_create_announce_request(connection_id, thash, peer_id)
             sock.sendall(req)
             buf = sock.recv(2048)
             ip_family = sock.family
@@ -372,14 +378,14 @@ def udp_parse_connection_response(buf: bytes, sent_transaction_id: int) -> int |
         raise RuntimeError(f"Error while trying to get a connection response: {error}")
 
 
-def udp_create_announce_request(connection_id: int | None, thash: bytes) -> tuple[bytes, int]:
+def udp_create_announce_request(connection_id: int | None, thash: bytes, peer_id: bytes) -> tuple[bytes, int]:
     action = 0x1  # action (1 = announce)
     transaction_id = udp_get_transaction_id()
     buf = struct.pack("!q", connection_id)  # first 8 bytes is connection id
     buf += struct.pack("!i", action)  # next 4 bytes is action
     buf += struct.pack("!i", transaction_id)  # followed by 4 byte transaction id
     buf += struct.pack("!20s", thash)  # hash
-    buf += struct.pack("!20s", thash)  # peer id, should be random
+    buf += struct.pack("!20s", peer_id)
     buf += struct.pack("!q", 0x0)  # number of bytes downloaded
     buf += struct.pack("!q", 0x0)  # number of bytes left
     buf += struct.pack("!q", 0x0)  # number of bytes uploaded
