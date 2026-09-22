@@ -478,8 +478,7 @@ class TestBdecodeFunction:
         assert len(peers) == 1
         peer = peers[0]
         assert isinstance(peer, dict)
-        assert peer["IP"] == "192.168.1.1"  # pyright: ignore[reportArgumentType]
-        assert peer["port"] == 6881  # pyright: ignore[reportArgumentType]
+        assert peer == {"IP": "192.168.1.1", "port": 6881}
 
     def test_bdecode_processes_ipv6_peers(self):
         """bdecode() should decode binary peers6 field."""
@@ -493,8 +492,7 @@ class TestBdecodeFunction:
         assert len(peers6) == 1
         peer6 = peers6[0]
         assert isinstance(peer6, dict)
-        assert peer6["IP"] == "2001:db8::1"  # pyright: ignore[reportArgumentType]
-        assert peer6["port"] == 6881  # pyright: ignore[reportArgumentType]
+        assert peer6 == {"IP": "2001:db8::1", "port": 6881}
 
     def test_bdecode_processes_external_ip_v4(self):
         """bdecode() should decode external ip field for IPv4."""
@@ -561,12 +559,10 @@ class TestRealisticTrackerResponses:
         assert len(peers) == 2
         peer0 = peers[0]
         assert isinstance(peer0, dict)
-        assert peer0["IP"] == "1.2.3.4"  # pyright: ignore[reportArgumentType]
-        assert peer0["port"] == 6881  # pyright: ignore[reportArgumentType]
+        assert peer0 == {"IP": "1.2.3.4", "port": 6881}
         peer1 = peers[1]
         assert isinstance(peer1, dict)
-        assert peer1["IP"] == "5.6.7.8"  # pyright: ignore[reportArgumentType]
-        assert peer1["port"] == 8080  # pyright: ignore[reportArgumentType]
+        assert peer1 == {"IP": "5.6.7.8", "port": 8080}
 
     def test_tracker_response_with_both_peer_types(self):
         """Decode a tracker response with both IPv4 and IPv6 peers."""
@@ -590,13 +586,13 @@ class TestRealisticTrackerResponses:
         assert len(peers) == 1
         peer = peers[0]
         assert isinstance(peer, dict)
-        assert peer["IP"] == "1.2.3.4"  # pyright: ignore[reportArgumentType]
+        assert peer == {"IP": "1.2.3.4", "port": 6881}
         peers6 = result["peers6"]
         assert isinstance(peers6, list)
         assert len(peers6) == 1
         peer6 = peers6[0]
         assert isinstance(peer6, dict)
-        assert peer6["IP"] == "2001:db8::1"  # pyright: ignore[reportArgumentType]
+        assert peer6 == {"IP": "2001:db8::1", "port": 8080}
 
     def test_tracker_failure_response(self):
         """Decode a tracker failure response."""
@@ -650,7 +646,7 @@ class TestRealisticTrackerResponses:
         assert len(peers) == 1
         peer = peers[0]
         assert isinstance(peer, dict)
-        assert peer["IP"] == "192.168.1.1"  # pyright: ignore[reportArgumentType]
+        assert peer == {"IP": "192.168.1.1", "port": 6881}
 
 
 class TestEdgeCases:
