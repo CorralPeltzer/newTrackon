@@ -30,15 +30,23 @@ def bdecode(data: bytes) -> BDecodeResponse:
     for key, value in bdecoded_response.items():
         response[key.decode()] = value
 
-    if "peers" in response:
-        peers_value = response["peers"]
-        if isinstance(peers_value, bytes):
-            response["peers"] = decode_binary_peers_list(peers_value, 0, AF_INET)
+    for key, ip_family in (("peers", AF_INET), ("peers6", AF_INET6)):
+        if key not in response:
+            continue
+        peers = response[key]
+        if isinstance(peers, bytes):
+            response[key] = decode_binary_peers_list(peers, 0, ip_family)
+        elif not isinstance(peers, list):
+            raise RuntimeError(f"Invalid peer list for '{key}': expected a list, got {type(peers).__name__}")
 
-    if "peers6" in response:
-        peers6_value = response["peers6"]
-        if isinstance(peers6_value, bytes):
-            response["peers6"] = decode_binary_peers_list(peers6_value, 0, AF_INET6)
+    for key in ("seeds", "leechers", "complete", "incomplete"):
+        if key not in response:
+            continue
+        count = response[key]
+        if type(count) is not int:
+            raise RuntimeError(f"Invalid peer count for '{key}': expected an integer, got {type(count).__name__}")
+        if count < 0:
+            raise RuntimeError(f"Tracker reported negative peer count for '{key}': {count}")
 
     if "external ip" in response:
         external_ip = response["external ip"]

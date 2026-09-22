@@ -431,6 +431,41 @@ class TestBdecodeFunction:
         with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
             bdecode(b"5:hello")
 
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    @pytest.mark.parametrize("encoded_value", [b"4:many", b"1:0", b"2:11", b"2:-1", b"3:1.5", b"le", b"de", b"e"])
+    def test_bdecode_rejects_non_integer_peer_counts(self, field: str, encoded_value: bytes) -> None:
+        data = b"d" + f"{len(field)}:{field}".encode() + encoded_value + b"e"
+
+        with pytest.raises(RuntimeError, match=f"'{field}': expected an integer"):
+            bdecode(data)
+
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    def test_bdecode_rejects_negative_peer_counts(self, field: str) -> None:
+        data = b"d" + f"{len(field)}:{field}i-1ee".encode()
+
+        with pytest.raises(RuntimeError, match=f"negative peer count for '{field}': -1"):
+            bdecode(data)
+
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    @pytest.mark.parametrize("count", [0, 100])
+    def test_bdecode_accepts_non_negative_peer_counts(self, field: str, count: int) -> None:
+        data = b"d" + f"{len(field)}:{field}i{count}ee".encode()
+
+        assert bdecode(data)[field] == count
+
+    @pytest.mark.parametrize("field", ["peers", "peers6"])
+    @pytest.mark.parametrize("encoded_value", [b"i0e", b"i-1e", b"de", b"e"])
+    def test_bdecode_rejects_invalid_peer_list_types(self, field: str, encoded_value: bytes) -> None:
+        data = b"d" + f"{len(field)}:{field}".encode() + encoded_value + b"e"
+
+        with pytest.raises(RuntimeError, match=f"'{field}': expected a list"):
+            bdecode(data)
+
+    def test_bdecode_accepts_non_compact_peer_list(self) -> None:
+        data = b"d5:peersld2:ip8:10.0.0.14:porti6881eeee"
+
+        assert bdecode(data)["peers"] == [{b"ip": b"10.0.0.1", b"port": 6881}]
+
     def test_bdecode_processes_ipv4_peers(self):
         """bdecode() should decode binary peers field."""
         # Dict with peers as binary data: 192.168.1.1:6881

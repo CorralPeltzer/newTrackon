@@ -30,6 +30,8 @@ unsafe-fixes = true
 
 [tool.ruff.lint]
 extend-select = ["UP", "Q", "G", "PLE", "PLC", "RUF"]
+# Allow type validation to use the application's existing exception types.
+ignore = ["TRY004"]
 
 [tool.ruff.lint.per-file-ignores]
 # Allow imports inside test functions for test isolation

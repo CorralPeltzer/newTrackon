@@ -4,11 +4,11 @@ import socket
 import string
 import struct
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from logging import getLogger
 from os import urandom
 from time import time
-from typing import TYPE_CHECKING, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, NamedTuple, TypedDict, cast
 from urllib.parse import ParseResult, urlencode, urlparse
 
 import requests
@@ -47,6 +47,7 @@ class AttemptResult(NamedTuple):
 
 HTTP_PORT: int = 6881
 UDP_PORT: int = 30461
+MAX_PEERS = 10  # a random info hash has no real swarm; anything beyond noise is a tracker injecting fake peers
 PEER_ID_PREFIX = "-qB5230-"
 PEER_ID_CHARS = string.ascii_letters + string.digits + "-_.~"
 my_ipv4: str | None = None
@@ -278,8 +279,16 @@ def announce_http(url: str) -> BDecodeResponse:
         raise RuntimeError(f"Tracker error message: {tracker_response['failure reason']}")
     if "peers" not in tracker_response and "peers6" not in tracker_response:
         raise RuntimeError(f"Invalid response, both 'peers' and 'peers6' field are missing: {tracker_response}")
+    check_peer_count(tracker_response)
     logger.info("%s response: %s", url, tracker_response)
     return tracker_response
+
+
+def check_peer_count(response: Mapping[str, object]) -> None:
+    total = sum(len(cast(Sequence[object], response.get(key, []))) for key in ("peers", "peers6"))
+    total += sum(cast(int, response.get(key, 0)) for key in ("seeds", "leechers", "complete", "incomplete"))
+    if total > MAX_PEERS:
+        raise RuntimeError(f"Tracker reported {total} peers for a random info hash")
 
 
 def announce_udp(udp_url: str) -> tuple[UDPAnnounceResponse, str | None]:
@@ -334,6 +343,7 @@ def announce_udp(udp_url: str) -> tuple[UDPAnnounceResponse, str | None]:
             sock.close()
 
             parsed_response, _raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
+            check_peer_count(parsed_response)
             logger.info("%s response: %s", udp_url, parsed_response)
             return parsed_response, ip
         except ConnectionRefusedError:
@@ -417,6 +427,9 @@ def udp_parse_announce_response(
         offset += 4
         seeds = struct.unpack_from("!i", buf, offset)[0]
         offset += 4
+        for key, count in (("leechers", leechers), ("seeds", seeds)):
+            if count < 0:
+                raise RuntimeError(f"Tracker reported negative peer count for '{key}': {count}")
         peers = decode_binary_peers_list(buf, offset, ip_family)
         ret: UDPAnnounceResponse = {"interval": interval, "leechers": leechers, "seeds": seeds, "peers": peers}
         return ret, buf.hex()

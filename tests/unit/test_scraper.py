@@ -22,8 +22,10 @@ import requests
 from dns.exception import DNSException
 
 from newtrackon import scraper
+from newtrackon.bdecode import PeerInfo
 from newtrackon.scraper import (
     HTTP_PORT,
+    MAX_PEERS,
     UDP_PORT,
     announce_http,
     announce_udp,
@@ -33,6 +35,7 @@ from newtrackon.scraper import (
     attempt_httpx,
     attempt_submitted,
     attempt_udp,
+    check_peer_count,
     get_bep_34,
     get_server_ip,
     memory_limited_get,
@@ -232,6 +235,17 @@ class TestUDPResponseParsing:
         with pytest.raises(RuntimeError, match="Wrong response length"):
             udp_parse_announce_response(buf, 0, socket.AF_INET)
 
+    @pytest.mark.parametrize(("field", "leechers", "seeds"), [("leechers", -1, 0), ("seeds", 0, -1)])
+    @pytest.mark.parametrize("peer_count", [0, MAX_PEERS + 1])
+    def test_udp_parse_announce_response_rejects_negative_counts(
+        self, field: str, leechers: int, seeds: int, peer_count: int
+    ) -> None:
+        buf = struct.pack("!iiiii", 1, 42, 1800, leechers, seeds)
+        buf += bytes([10, 0, 0, 1, 0x1A, 0xE1]) * peer_count
+
+        with pytest.raises(RuntimeError, match=f"negative peer count for '{field}': -1"):
+            udp_parse_announce_response(buf, 42, socket.AF_INET)
+
     def test_udp_parse_announce_response_transaction_id_mismatch(self) -> None:
         """Test that mismatched transaction ID raises RuntimeError."""
         buf = struct.pack("!i", 1)  # action
@@ -381,6 +395,86 @@ class TestAnnounceHTTP:
         with pytest.raises(RuntimeError, match="Unhandled HTTP error"):
             announce_http("http://tracker.example.com/announce")
 
+    @patch("newtrackon.scraper.memory_limited_get")
+    def test_announce_http_rejects_too_many_peers(self, mock_get: MagicMock) -> None:
+        """A random info hash has no swarm, so a long peer list means fake peers."""
+        peers = b"".join(bytes([10, 0, 0, i, 0x1A, 0xE1]) for i in range(MAX_PEERS + 1))
+        bencoded = b"d8:intervali1800e5:peers" + str(len(peers)).encode() + b":" + peers + b"e"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_get.return_value = (mock_response, bencoded)
+
+        with pytest.raises(RuntimeError, match=f"reported {MAX_PEERS + 1} peers"):
+            announce_http("http://tracker.example.com/announce")
+
+    @patch("newtrackon.scraper.memory_limited_get")
+    def test_announce_http_rejects_large_reported_swarm(self, mock_get: MagicMock) -> None:
+        """complete/incomplete counts add up even when the peer list is short."""
+        bencoded = b"d8:completei8e10:incompletei3e8:intervali1800e5:peers0:e"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_get.return_value = (mock_response, bencoded)
+
+        with pytest.raises(RuntimeError, match="reported 11 peers"):
+            announce_http("http://tracker.example.com/announce")
+
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    @pytest.mark.parametrize("encoded_value", [b"4:many", b"2:11", b"le", b"de"])
+    @patch("newtrackon.scraper.memory_limited_get")
+    def test_announce_http_rejects_non_integer_counts(self, mock_get: MagicMock, field: str, encoded_value: bytes) -> None:
+        bencoded = b"d" + f"{len(field)}:{field}".encode() + encoded_value + b"8:intervali1800e5:peers0:e"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_get.return_value = (mock_response, bencoded)
+
+        with pytest.raises(RuntimeError, match=f"Failed bdecoding HTTP response: Invalid peer count for '{field}'"):
+            announce_http("http://tracker.example.com/announce")
+
+    @pytest.mark.parametrize("field", ["peers", "peers6"])
+    @pytest.mark.parametrize("encoded_value", [b"i0e", b"de"])
+    @patch("newtrackon.scraper.memory_limited_get")
+    def test_announce_http_rejects_non_list_peers(self, mock_get: MagicMock, field: str, encoded_value: bytes) -> None:
+        bencoded = b"d8:intervali1800e" + f"{len(field)}:{field}".encode() + encoded_value + b"e"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_get.return_value = (mock_response, bencoded)
+
+        with pytest.raises(RuntimeError, match=f"Failed bdecoding HTTP response: Invalid peer list for '{field}'"):
+            announce_http("http://tracker.example.com/announce")
+
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    @pytest.mark.parametrize("peer_count", [0, MAX_PEERS + 1])
+    @patch("newtrackon.scraper.memory_limited_get")
+    def test_announce_http_rejects_negative_counts(self, mock_get: MagicMock, field: str, peer_count: int) -> None:
+        peers = bytes([10, 0, 0, 1, 0x1A, 0xE1]) * peer_count
+        bencoded = b"d" + f"{len(field)}:{field}i-1e8:intervali1800e5:peers{len(peers)}:".encode() + peers + b"e"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_get.return_value = (mock_response, bencoded)
+
+        with pytest.raises(
+            RuntimeError, match=f"Failed bdecoding HTTP response: Tracker reported negative peer count for '{field}': -1"
+        ):
+            announce_http("http://tracker.example.com/announce")
+
+
+PEER: PeerInfo = {"IP": "10.0.0.1", "port": 6881}
+
+
+class TestCheckPeerCount:
+    def test_accepts_zero_counts(self) -> None:
+        check_peer_count({"peers": [], "peers6": [], "seeds": 0, "leechers": 0, "complete": 0, "incomplete": 0})
+
+    def test_accepts_at_limit(self) -> None:
+        check_peer_count({"peers": [PEER] * (MAX_PEERS - 2), "seeds": 1, "leechers": 1})
+
+    def test_rejects_when_all_fields_add_up_above_limit(self) -> None:
+        with pytest.raises(RuntimeError, match=f"reported {MAX_PEERS + 1} peers"):
+            check_peer_count({"peers": [PEER] * (MAX_PEERS - 2), "peers6": [PEER], "seeds": 1, "leechers": 1})
+
+    def test_accepts_missing_counts(self) -> None:
+        check_peer_count({"peers": []})
+
 
 class TestAnnounceUDP:
     """Test UDP announce functionality with mocked socket."""
@@ -414,8 +508,8 @@ class TestAnnounceUDP:
         announce_response = struct.pack("!i", 1)  # action = 1
         announce_response += struct.pack("!i", 0)  # will be overwritten
         announce_response += struct.pack("!i", 1800)  # interval
-        announce_response += struct.pack("!i", 50)  # leechers
-        announce_response += struct.pack("!i", 100)  # seeds
+        announce_response += struct.pack("!i", 2)  # leechers
+        announce_response += struct.pack("!i", 3)  # seeds
 
         def recv_side_effect(size: int) -> bytes:
             if mock_sock.recv.call_count == 1:  # pyright: ignore[reportUnknownMemberType]
@@ -434,8 +528,8 @@ class TestAnnounceUDP:
                 response = struct.pack("!i", 1)  # action
                 response += struct.pack("!i", sent_transaction_id)
                 response += struct.pack("!i", 1800)
-                response += struct.pack("!i", 50)
-                response += struct.pack("!i", 100)
+                response += struct.pack("!i", 2)
+                response += struct.pack("!i", 3)
                 return response
 
         mock_sock.recv.side_effect = recv_side_effect
@@ -443,8 +537,8 @@ class TestAnnounceUDP:
         result, ip = announce_udp("udp://tracker.example.com:6969/announce")
 
         assert result["interval"] == 1800
-        assert result["leechers"] == 50
-        assert result["seeds"] == 100
+        assert result["leechers"] == 2
+        assert result["seeds"] == 3
         assert ip == "93.184.216.34"
 
     @patch("socket.getaddrinfo")
