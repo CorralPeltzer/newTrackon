@@ -288,7 +288,7 @@ def check_peer_count(response: Mapping[str, object]) -> None:
     total = sum(len(cast(Sequence[object], response.get(key, []))) for key in ("peers", "peers6"))
     total += sum(cast(int, response.get(key, 0)) for key in ("seeds", "leechers", "complete", "incomplete"))
     if total > MAX_PEERS:
-        raise RuntimeError(f"Tracker reported {total} peers for a random info hash")
+        raise RuntimeError(f"Tracker rejected for reporting more than {MAX_PEERS} peers for a random info hash")
 
 
 def announce_udp(udp_url: str) -> tuple[UDPAnnounceResponse, str | None]:

@@ -404,7 +404,9 @@ class TestAnnounceHTTP:
         mock_response.status_code = 200
         mock_get.return_value = (mock_response, bencoded)
 
-        with pytest.raises(RuntimeError, match=f"reported {MAX_PEERS + 1} peers"):
+        with pytest.raises(
+            RuntimeError, match=f"Tracker rejected for reporting more than {MAX_PEERS} peers for a random info hash"
+        ):
             announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
@@ -415,7 +417,9 @@ class TestAnnounceHTTP:
         mock_response.status_code = 200
         mock_get.return_value = (mock_response, bencoded)
 
-        with pytest.raises(RuntimeError, match="reported 11 peers"):
+        with pytest.raises(
+            RuntimeError, match=f"Tracker rejected for reporting more than {MAX_PEERS} peers for a random info hash"
+        ):
             announce_http("http://tracker.example.com/announce")
 
     @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
@@ -469,7 +473,9 @@ class TestCheckPeerCount:
         check_peer_count({"peers": [PEER] * (MAX_PEERS - 2), "seeds": 1, "leechers": 1})
 
     def test_rejects_when_all_fields_add_up_above_limit(self) -> None:
-        with pytest.raises(RuntimeError, match=f"reported {MAX_PEERS + 1} peers"):
+        with pytest.raises(
+            RuntimeError, match=f"Tracker rejected for reporting more than {MAX_PEERS} peers for a random info hash"
+        ):
             check_peer_count({"peers": [PEER] * (MAX_PEERS - 2), "peers6": [PEER], "seeds": 1, "leechers": 1})
 
     def test_accepts_missing_counts(self) -> None:
