@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from newtrackon.scraper import ScraperResult
-from newtrackon.tracker import Tracker, max_downtime
+from newtrackon.tracker import IP_HISTORY_WINDOW, Tracker, max_downtime
 
 
 class TestTrackerInit:
@@ -702,6 +702,41 @@ class TestUpdateStatus:
             sample_tracker.update_status()
 
             assert sample_tracker.status == 0
+
+    @pytest.mark.parametrize("dns_error", [True, False], ids=["dns-error", "empty-answer"])
+    def test_failed_dns_expires_ip_history(self, sample_tracker: Tracker, dns_error: bool) -> None:
+        """Failed lookups expire history without renewing the last successful addresses."""
+        now = 1800000000
+        sample_tracker.last_uptime = now
+        sample_tracker.recent_ips = {
+            "93.184.216.34": now - IP_HISTORY_WINDOW - 1,
+            "1.1.1.1": now - IP_HISTORY_WINDOW,
+            "8.8.8.8": now - 60,
+        }
+
+        with (
+            patch("newtrackon.tracker.time", return_value=now) as mock_time,
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch(
+                "socket.getaddrinfo",
+                side_effect=socket.gaierror("DNS failure") if dns_error else None,
+                return_value=[],
+            ),
+        ):
+            sample_tracker.update_status()
+
+            assert sample_tracker.ips is None
+            assert sample_tracker.status == 0
+            assert sample_tracker.to_be_deleted is False
+            assert sample_tracker.recent_ips == {
+                "1.1.1.1": now - IP_HISTORY_WINDOW,
+                "8.8.8.8": now - 60,
+            }
+
+            mock_time.return_value = now + IP_HISTORY_WINDOW
+            sample_tracker.update_status()
+
+            assert sample_tracker.recent_ips == {}
 
     def test_update_status_sets_interval_when_uptime_zero(
         self, sample_tracker: Tracker, mock_network: dict[str, Any], reset_globals: None

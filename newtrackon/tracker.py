@@ -117,8 +117,11 @@ class Tracker:
                 raise RuntimeError("Tracker unresponsive for too long, removed")
 
             self.update_scheme_from_bep_34()
-            self.update_ips()
-            self.refresh_recent_ips()
+            try:
+                self.update_ips()
+            finally:
+                # Expire IP history even when DNS resolution fails.
+                self.refresh_recent_ips()
         except RuntimeError as reason:
             self.clear_tracker(reason=str(reason))
             return

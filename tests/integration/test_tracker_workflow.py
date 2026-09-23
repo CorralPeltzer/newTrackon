@@ -14,7 +14,7 @@ import pytest
 from pytest import MonkeyPatch
 
 from newtrackon import persistence
-from newtrackon.tracker import Tracker
+from newtrackon.tracker import IP_HISTORY_WINDOW, Tracker
 
 
 @pytest.fixture
@@ -948,6 +948,41 @@ class TestTrackerIPResolutionFailure:
         # Tracker should be marked as down
         assert sample_tracker.status == 0
         assert sample_tracker.ips is None
+
+    def test_failed_dns_persists_expired_history_without_conflict_warnings(
+        self, shared_memory_db: Connection, sample_tracker: Tracker, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """A failed DNS check must stop expired database history from producing conflicts."""
+        from newtrackon import db, ingest, trackon
+
+        now = 1800000000
+        sample_tracker.last_uptime = now
+        sample_tracker.recent_ips = {"93.184.216.34": now - IP_HISTORY_WINDOW - 1}
+        db.insert_new_tracker(sample_tracker)
+
+        with (
+            patch("newtrackon.tracker.time", return_value=now),
+            patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
+            patch("socket.getaddrinfo", side_effect=OSError("DNS resolution failed")),
+        ):
+            sample_tracker.update_status()
+        db.update_tracker(sample_tracker)
+
+        stored_tracker = db.get_all_data()[0]
+        assert stored_tracker.recent_ips == {}
+        assert stored_tracker.ips is None
+
+        other_tracker = db.get_all_data()[0]
+        other_tracker.host = "other.example.com"
+        other_tracker.url = "udp://other.example.com:6969/announce"
+        other_tracker.ips = ["93.184.216.34"]
+        other_tracker.recent_ips = {"93.184.216.34": now}
+        db.insert_new_tracker(other_tracker)
+
+        assert ingest.collect_ip_conflicts(other_tracker, [stored_tracker]) == ({}, {})
+        with caplog.at_level("WARNING", logger="newtrackon"):
+            trackon.warn_of_ip_conflicts()
+        assert caplog.records == []
 
 
 class TestBEP34Integration:
