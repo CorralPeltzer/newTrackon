@@ -1,6 +1,7 @@
 import logging
+from collections import deque
 from ipaddress import ip_address
-from queue import Empty, Full
+from queue import Empty, Full, Queue
 from threading import Lock
 from time import time
 from typing import NoReturn, cast
@@ -12,11 +13,11 @@ from newtrackon.persistence import (
     save_deque_to_disk,
     submitted_data,
     submitted_history_file,
-    submitted_queue,
 )
 from newtrackon.scraper import attempt_submitted
 from newtrackon.tracker import Tracker
 
+submitted_queue: Queue[Tracker] = Queue(maxsize=10000)
 list_lock: Lock = Lock()
 
 logger: logging.Logger = logging.getLogger("newtrackon")
@@ -82,13 +83,13 @@ def add_one_tracker_to_submitted_queue(url: str) -> None:
     try:
         parsed_url = urlparse(url)
         if parsed_url.hostname:
-            ip_address(parsed_url.hostname)
+            _ = ip_address(parsed_url.hostname)
             logger.info("Tracker %s denied, hostname is IP", url)
             return
     except ValueError:
         pass
     with submitted_queue.mutex:
-        queued_trackers = cast(list[Tracker], list(submitted_queue.queue))
+        queued_trackers = list(cast("deque[Tracker]", submitted_queue.queue))
     for tracker_in_queue in queued_trackers:
         if urlparse(tracker_in_queue.url).netloc == urlparse(url).netloc:
             logger.info("Tracker %s denied, already in the queue", url)
@@ -163,7 +164,7 @@ def process_new_tracker(tracker_candidate: Tracker) -> None:
             tracker_candidate.interval,
             tracker_candidate.url,
             tracker_candidate.latency,
-        ) = attempt_submitted(tracker_candidate)
+        ) = attempt_submitted(tracker_candidate.url)
     except RuntimeError, ValueError:
         return
     if not tracker_candidate.interval:

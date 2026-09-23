@@ -1,18 +1,17 @@
 """Comprehensive tests for newtrackon.utils module."""
 
-from typing import Any
 from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
 from freezegun import freeze_time
 
+from newtrackon.tracker import Tracker, format_uptime_and_downtime_time
 from newtrackon.utils import (
     add_api_headers,
     build_httpx_url,
     dict_factory,
     format_list,
     format_time,
-    format_uptime_and_downtime_time,
     process_txt_prefs,
     remove_ipvx_only_trackers,
 )
@@ -58,14 +57,6 @@ class TestAddApiHeaders:
         assert result.headers["Access-Control-Allow-Origin"] == "*"
 
 
-def _make_mock_row(values: tuple[Any, ...]) -> MagicMock:  # pyright: ignore[reportExplicitAny]
-    """Create a MagicMock that behaves like sqlite3.Row (supports indexing and len)."""
-    row = MagicMock()
-    row.__getitem__ = lambda self, i: values[i]  # pyright: ignore[reportUnknownLambdaType]
-    row.__len__ = lambda self: len(values)  # pyright: ignore[reportUnknownLambdaType]
-    return row
-
-
 class TestDictFactory:
     """Tests for dict_factory SQLite row factory."""
 
@@ -73,7 +64,7 @@ class TestDictFactory:
         """Should create a dictionary mapping column names to row values."""
         cursor = MagicMock()
         cursor.description = [("id",), ("name",), ("value",)]
-        row = _make_mock_row((1, "test", 42))
+        row = (1, "test", 42)
 
         result = dict_factory(cursor, row)
 
@@ -83,7 +74,7 @@ class TestDictFactory:
         """Should handle empty rows."""
         cursor = MagicMock()
         cursor.description = []
-        row = _make_mock_row(())
+        row = ()
 
         result = dict_factory(cursor, row)
 
@@ -93,7 +84,7 @@ class TestDictFactory:
         """Should handle single column rows."""
         cursor = MagicMock()
         cursor.description = [("count",)]
-        row = _make_mock_row((100,))
+        row = (100,)
 
         result = dict_factory(cursor, row)
 
@@ -103,7 +94,7 @@ class TestDictFactory:
         """Should preserve None values in the row."""
         cursor = MagicMock()
         cursor.description = [("id",), ("nullable_col",)]
-        row = _make_mock_row((1, None))
+        row = (1, None)
 
         result = dict_factory(cursor, row)
 
@@ -113,7 +104,7 @@ class TestDictFactory:
         """Should handle various SQLite data types."""
         cursor = MagicMock()
         cursor.description = [("int_col",), ("float_col",), ("text_col",), ("blob_col",)]
-        row = _make_mock_row((42, 3.14, "hello", b"binary"))
+        row = (42, 3.14, "hello", b"binary")
 
         result = dict_factory(cursor, row)
 
@@ -338,12 +329,13 @@ class TestFormatUptimeAndDowntimeTime:
 
         tracker = MagicMock()
         tracker.status = 1
-        tracker.last_downtime = time() - 3600  # 1 hour ago
+        last_downtime = time() - 3600
+        tracker.last_downtime = last_downtime  # 1 hour ago
 
         result = format_uptime_and_downtime_time([tracker])
 
         assert result[0].status_readable == "Working for 1 hour"
-        assert result[0].status_epoch == tracker.last_downtime
+        assert result[0].status_epoch == last_downtime
 
     @freeze_time("2024-01-15 12:00:00")
     def test_working_tracker_never_down(self):
@@ -434,9 +426,9 @@ class TestFormatUptimeAndDowntimeTime:
 
     def test_returns_same_list(self) -> None:
         """Should return the same list object passed in."""
-        trackers: list[Any] = []  # pyright: ignore[reportExplicitAny]
+        trackers: list[Tracker] = []
 
-        result = format_uptime_and_downtime_time(trackers)  # pyright: ignore[reportUnknownArgumentType]
+        result = format_uptime_and_downtime_time(trackers)
 
         assert result is trackers
 
@@ -515,7 +507,7 @@ class TestRemoveIpvxOnlyTrackers:
             ("udp://tracker2.example.com:6969", ["192.168.1.1"]),
         ]
 
-        result = remove_ipvx_only_trackers(raw_list, version=6)  # type: ignore[arg-type]
+        result = remove_ipvx_only_trackers(raw_list, version=6)
 
         assert len(result) == 1
         assert result[0][0] == "udp://tracker2.example.com:6969"

@@ -14,7 +14,7 @@ Tests cover:
 import socket
 import struct
 from collections import deque
-from typing import Any
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -153,7 +153,7 @@ class TestUDPResponseParsing:
         buf = b"\x00" * 15  # Too short
 
         with pytest.raises(RuntimeError, match="Wrong response length"):
-            udp_parse_connection_response(buf, 0)
+            _ = udp_parse_connection_response(buf, 0)
 
     def test_udp_parse_connection_response_transaction_id_mismatch(self) -> None:
         """Test that mismatched transaction ID raises RuntimeError."""
@@ -162,7 +162,7 @@ class TestUDPResponseParsing:
         buf += struct.pack("!q", 0)  # connection_id
 
         with pytest.raises(RuntimeError, match="Transaction ID doesn't match"):
-            udp_parse_connection_response(buf, 42)
+            _ = udp_parse_connection_response(buf, 42)
 
     def test_udp_parse_connection_response_error_action(self) -> None:
         """Test that error action (0x3) raises RuntimeError."""
@@ -172,7 +172,7 @@ class TestUDPResponseParsing:
         buf += b"Error msg"
 
         with pytest.raises(RuntimeError, match="Error while trying to get a connection response"):
-            udp_parse_connection_response(buf, transaction_id)
+            _ = udp_parse_connection_response(buf, transaction_id)
 
     def test_udp_parse_announce_response_success_ipv4(self) -> None:
         """Test successful parsing of IPv4 announce response."""
@@ -191,7 +191,7 @@ class TestUDPResponseParsing:
         buf += bytes([192, 168, 1, 1])  # IP: 192.168.1.1
         buf += struct.pack("!H", 6881)  # port
 
-        result, _raw_hex = udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
+        result = udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
 
         assert result["interval"] == interval
         assert result["leechers"] == leechers
@@ -219,7 +219,7 @@ class TestUDPResponseParsing:
         )  # 2001:db8::1
         buf += struct.pack("!H", 6881)  # port
 
-        result, _raw_hex = udp_parse_announce_response(buf, transaction_id, socket.AF_INET6)
+        result = udp_parse_announce_response(buf, transaction_id, socket.AF_INET6)
 
         assert result["interval"] == interval
         assert result["leechers"] == leechers
@@ -233,7 +233,7 @@ class TestUDPResponseParsing:
         buf = b"\x00" * 19  # Too short (need at least 20)
 
         with pytest.raises(RuntimeError, match="Wrong response length"):
-            udp_parse_announce_response(buf, 0, socket.AF_INET)
+            _ = udp_parse_announce_response(buf, 0, socket.AF_INET)
 
     @pytest.mark.parametrize(("field", "leechers", "seeds"), [("leechers", -1, 0), ("seeds", 0, -1)])
     @pytest.mark.parametrize("peer_count", [0, MAX_PEERS + 1])
@@ -244,7 +244,7 @@ class TestUDPResponseParsing:
         buf += bytes([10, 0, 0, 1, 0x1A, 0xE1]) * peer_count
 
         with pytest.raises(RuntimeError, match=f"negative peer count for '{field}': -1"):
-            udp_parse_announce_response(buf, 42, socket.AF_INET)
+            _ = udp_parse_announce_response(buf, 42, socket.AF_INET)
 
     def test_udp_parse_announce_response_transaction_id_mismatch(self) -> None:
         """Test that mismatched transaction ID raises RuntimeError."""
@@ -255,7 +255,7 @@ class TestUDPResponseParsing:
         buf += struct.pack("!i", 0)  # seeds
 
         with pytest.raises(RuntimeError, match="Transaction ID doesnt match"):
-            udp_parse_announce_response(buf, 42, socket.AF_INET)
+            _ = udp_parse_announce_response(buf, 42, socket.AF_INET)
 
     def test_udp_parse_announce_response_error_action(self) -> None:
         """Test that non-announce action raises RuntimeError."""
@@ -268,7 +268,7 @@ class TestUDPResponseParsing:
         buf += b"E"  # error message
 
         with pytest.raises(RuntimeError, match="Error while annoucing"):
-            udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
+            _ = udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
 
 
 class TestAnnounceHTTP:
@@ -281,8 +281,7 @@ class TestAnnounceHTTP:
         bencoded = b"d8:intervali1800e5:peers6:\xc0\xa8\x01\x01\x1a\xe1e"
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.raw = MagicMock()
-        mock_response.raw.read = MagicMock(return_value=bencoded)
+        mock_response.raw = MagicMock(read=MagicMock(return_value=bencoded))
         return mock_response
 
     @patch("newtrackon.scraper.memory_limited_get")
@@ -304,7 +303,7 @@ class TestAnnounceHTTP:
         mock_get.side_effect = requests.Timeout()
 
         with pytest.raises(RuntimeError, match="HTTP timeout"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_connection_error(self, mock_get: MagicMock) -> None:
@@ -312,7 +311,7 @@ class TestAnnounceHTTP:
         mock_get.side_effect = requests.ConnectionError()
 
         with pytest.raises(RuntimeError, match="HTTP connection failed"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_invalid_status_code(self, mock_get: MagicMock) -> None:
@@ -322,7 +321,7 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, b"Not found")
 
         with pytest.raises(RuntimeError, match="HTTP 404 status code returned"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_empty_response(self, mock_get: MagicMock) -> None:
@@ -332,7 +331,7 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, b"")
 
         with pytest.raises(RuntimeError, match="Got empty HTTP response"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_invalid_bencoded_response(self, mock_get: MagicMock) -> None:
@@ -342,7 +341,7 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, b"invalid bencoded data")
 
         with pytest.raises(RuntimeError, match="Failed bdecoding HTTP response"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_wraps_bdecode_type_error(self, mock_get: MagicMock) -> None:
@@ -355,7 +354,7 @@ class TestAnnounceHTTP:
             patch("newtrackon.scraper.bdecode", side_effect=TypeError("invalid root type")),
             pytest.raises(RuntimeError, match="Failed bdecoding HTTP response: invalid root type"),
         ):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_tracker_failure_reason(self, mock_get: MagicMock) -> None:
@@ -366,7 +365,7 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, bencoded)
 
         with pytest.raises(RuntimeError, match="Tracker error message"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_missing_peers_field(self, mock_get: MagicMock) -> None:
@@ -377,7 +376,7 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, bencoded)
 
         with pytest.raises(RuntimeError, match=r"Invalid response.*peers.*missing"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_response_too_large(self, mock_get: MagicMock) -> None:
@@ -385,7 +384,7 @@ class TestAnnounceHTTP:
         mock_get.side_effect = RuntimeError("HTTP response size above 1 MB")
 
         with pytest.raises(RuntimeError, match="HTTP response size above 1 MB"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_request_exception(self, mock_get: MagicMock) -> None:
@@ -393,7 +392,7 @@ class TestAnnounceHTTP:
         mock_get.side_effect = requests.RequestException()
 
         with pytest.raises(RuntimeError, match="Unhandled HTTP error"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_rejects_too_many_peers(self, mock_get: MagicMock) -> None:
@@ -407,7 +406,7 @@ class TestAnnounceHTTP:
         with pytest.raises(
             RuntimeError, match=f"Tracker rejected for reporting more than {MAX_PEERS} peers for a random info hash"
         ):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
     def test_announce_http_rejects_large_reported_swarm(self, mock_get: MagicMock) -> None:
@@ -420,7 +419,7 @@ class TestAnnounceHTTP:
         with pytest.raises(
             RuntimeError, match=f"Tracker rejected for reporting more than {MAX_PEERS} peers for a random info hash"
         ):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
     @pytest.mark.parametrize("encoded_value", [b"4:many", b"2:11", b"le", b"de"])
@@ -432,7 +431,7 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, bencoded)
 
         with pytest.raises(RuntimeError, match=f"Failed bdecoding HTTP response: Invalid peer count for '{field}'"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @pytest.mark.parametrize("field", ["peers", "peers6"])
     @pytest.mark.parametrize("encoded_value", [b"i0e", b"de"])
@@ -444,7 +443,7 @@ class TestAnnounceHTTP:
         mock_get.return_value = (mock_response, bencoded)
 
         with pytest.raises(RuntimeError, match=f"Failed bdecoding HTTP response: Invalid peer list for '{field}'"):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
     @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
     @pytest.mark.parametrize("peer_count", [0, MAX_PEERS + 1])
@@ -459,7 +458,7 @@ class TestAnnounceHTTP:
         with pytest.raises(
             RuntimeError, match=f"Failed bdecoding HTTP response: Tracker reported negative peer count for '{field}': -1"
         ):
-            announce_http("http://tracker.example.com/announce")
+            _ = announce_http("http://tracker.example.com/announce")
 
 
 PEER: PeerInfo = {"IP": "10.0.0.1", "port": 6881}
@@ -500,7 +499,9 @@ class TestAnnounceUDP:
         mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969))]
 
         # Create mock socket
-        mock_sock = MagicMock()
+        mock_recv = MagicMock()
+        mock_sendall = MagicMock()
+        mock_sock = MagicMock(recv=mock_recv, sendall=mock_sendall)
         mock_sock.family = socket.AF_INET
         mock_socket_class.return_value = mock_sock
 
@@ -517,11 +518,11 @@ class TestAnnounceUDP:
         announce_response += struct.pack("!i", 2)  # leechers
         announce_response += struct.pack("!i", 3)  # seeds
 
-        def recv_side_effect(size: int) -> bytes:
-            if mock_sock.recv.call_count == 1:  # pyright: ignore[reportUnknownMemberType]
+        def recv_side_effect(_size: int) -> bytes:
+            if mock_recv.call_count == 1:
                 # First recv is for connection response
                 # Get the transaction ID from the sent request
-                sent_data = mock_sock.sendall.call_args_list[0][0][0]
+                sent_data = cast(bytes, mock_sendall.call_args_list[0][0][0])
                 sent_transaction_id = struct.unpack_from("!i", sent_data, 12)[0]
                 response = struct.pack("!i", 0)  # action
                 response += struct.pack("!i", sent_transaction_id)
@@ -529,7 +530,7 @@ class TestAnnounceUDP:
                 return response
             else:
                 # Second recv is for announce response
-                sent_data = mock_sock.sendall.call_args_list[1][0][0]
+                sent_data = cast(bytes, mock_sendall.call_args_list[1][0][0])
                 sent_transaction_id = struct.unpack_from("!i", sent_data, 12)[0]
                 response = struct.pack("!i", 1)  # action
                 response += struct.pack("!i", sent_transaction_id)
@@ -538,7 +539,7 @@ class TestAnnounceUDP:
                 response += struct.pack("!i", 3)
                 return response
 
-        mock_sock.recv.side_effect = recv_side_effect
+        mock_recv.side_effect = recv_side_effect
 
         result, ip = announce_udp("udp://tracker.example.com:6969/announce")
 
@@ -553,7 +554,7 @@ class TestAnnounceUDP:
         mock_getaddrinfo.side_effect = OSError("Name or service not known")
 
         with pytest.raises(RuntimeError, match="UDP error"):
-            announce_udp("udp://invalid.tracker.com:6969/announce")
+            _ = announce_udp("udp://invalid.tracker.com:6969/announce")
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
@@ -563,10 +564,10 @@ class TestAnnounceUDP:
 
         mock_sock = MagicMock()
         mock_socket_class.return_value = mock_sock
-        mock_sock.sendall.side_effect = ConnectionRefusedError()
+        mock_sock.sendall = MagicMock(side_effect=ConnectionRefusedError())
 
         with pytest.raises(RuntimeError, match="UDP connection failed"):
-            announce_udp("udp://tracker.example.com:6969/announce")
+            _ = announce_udp("udp://tracker.example.com:6969/announce")
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
@@ -576,10 +577,10 @@ class TestAnnounceUDP:
 
         mock_sock = MagicMock()
         mock_socket_class.return_value = mock_sock
-        mock_sock.recv.side_effect = TimeoutError()
+        mock_sock.recv = MagicMock(side_effect=TimeoutError())
 
         with pytest.raises(RuntimeError, match="UDP timeout"):
-            announce_udp("udp://tracker.example.com:6969/announce")
+            _ = announce_udp("udp://tracker.example.com:6969/announce")
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
@@ -590,7 +591,7 @@ class TestAnnounceUDP:
         mock_socket_class.side_effect = OSError("Cannot create socket")
 
         with pytest.raises(RuntimeError, match="UDP connection error"):
-            announce_udp("udp://tracker.example.com:6969/announce")
+            _ = announce_udp("udp://tracker.example.com:6969/announce")
 
     @patch("socket.getaddrinfo")
     @patch("socket.socket")
@@ -600,10 +601,10 @@ class TestAnnounceUDP:
 
         mock_sock = MagicMock()
         mock_socket_class.return_value = mock_sock
-        mock_sock.connect.side_effect = OSError("Connection failed")
+        mock_sock.connect = MagicMock(side_effect=OSError("Connection failed"))
 
         with pytest.raises(RuntimeError, match="UDP connection error"):
-            announce_udp("udp://tracker.example.com:6969/announce")
+            _ = announce_udp("udp://tracker.example.com:6969/announce")
 
 
 class TestGetBEP34:
@@ -685,29 +686,35 @@ class TestMemoryLimitedGet:
     def test_memory_limited_get_success(self, mock_get: MagicMock) -> None:
         """Test successful GET within size limit."""
         mock_response = MagicMock()
-        mock_response.raw.read.return_value = b"x" * 1000
+        mock_read = MagicMock()
+        mock_response.raw = MagicMock(read=mock_read)
+        mock_read.return_value = b"x" * 1000
         mock_get.return_value = mock_response
 
         _response, content = memory_limited_get("http://example.com")
 
         assert len(content) == 1000
-        mock_response.raw.read.assert_called_once_with(1024 * 1024 + 1, decode_content=True)  # pyright: ignore[reportUnknownMemberType]
+        mock_read.assert_called_once_with(1024 * 1024 + 1, decode_content=True)
 
     @patch("requests.get")
     def test_memory_limited_get_exceeds_limit(self, mock_get: MagicMock) -> None:
         """Test GET that exceeds 1MB limit."""
         mock_response = MagicMock()
-        mock_response.raw.read.return_value = b"x" * (1024 * 1024 + 1)
+        mock_read = MagicMock()
+        mock_response.raw = MagicMock(read=mock_read)
+        mock_read.return_value = b"x" * (1024 * 1024 + 1)
         mock_get.return_value = mock_response
 
         with pytest.raises(RuntimeError, match="HTTP response size above 1 MB"):
-            memory_limited_get("http://example.com")
+            _ = memory_limited_get("http://example.com")
 
     @patch("requests.get")
     def test_memory_limited_get_exactly_at_limit(self, mock_get: MagicMock) -> None:
         """Test GET exactly at 1MB limit."""
         mock_response = MagicMock()
-        mock_response.raw.read.return_value = b"x" * (1024 * 1024)
+        mock_read = MagicMock()
+        mock_response.raw = MagicMock(read=mock_read)
+        mock_read.return_value = b"x" * (1024 * 1024)
         mock_get.return_value = mock_response
 
         _response, content = memory_limited_get("http://example.com")
@@ -718,14 +725,16 @@ class TestMemoryLimitedGet:
     def test_memory_limited_get_uses_correct_headers(self, mock_get: MagicMock) -> None:
         """Test that correct headers are used."""
         mock_response = MagicMock()
-        mock_response.raw.read.return_value = b"content"
+        mock_read = MagicMock()
+        mock_response.raw = MagicMock(read=mock_read)
+        mock_read.return_value = b"content"
         mock_get.return_value = mock_response
 
-        memory_limited_get("http://example.com")
+        _ = memory_limited_get("http://example.com")
 
-        mock_get.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
-        call_kwargs: dict[str, Any] = mock_get.call_args[1]  # pyright: ignore[reportUnknownMemberType]
-        assert call_kwargs["headers"]["User-Agent"] == "qBittorrent/4.3.9"
+        mock_get.assert_called_once()
+        call_kwargs = cast(dict[str, object], mock_get.call_args.kwargs)
+        assert call_kwargs["headers"] == scraper.SCRAPING_HEADERS
         assert call_kwargs["timeout"] == 10
         assert call_kwargs["stream"] is True
         assert call_kwargs["allow_redirects"] is False
@@ -809,7 +818,7 @@ class TestAttemptUDP:
 
     @patch("newtrackon.scraper.announce_udp")
     @patch("newtrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
-    def test_attempt_udp_success(self, mock_submitted_data: MagicMock, mock_announce_udp: MagicMock) -> None:
+    def test_attempt_udp_success(self, _mock_submitted_data: MagicMock, mock_announce_udp: MagicMock) -> None:
         """Test successful UDP attempt."""
         mock_announce_udp.return_value = (
             {"interval": 1800, "leechers": 50, "seeds": 100, "peers": []},
@@ -825,7 +834,7 @@ class TestAttemptUDP:
 
     @patch("newtrackon.scraper.announce_udp")
     @patch("newtrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
-    def test_attempt_udp_failure(self, mock_submitted_data: MagicMock, mock_announce_udp: MagicMock) -> None:
+    def test_attempt_udp_failure(self, _mock_submitted_data: MagicMock, mock_announce_udp: MagicMock) -> None:
         """Test failed UDP attempt."""
         mock_announce_udp.side_effect = RuntimeError("UDP timeout")
 
@@ -840,7 +849,7 @@ class TestAttemptHTTPX:
 
     @patch("newtrackon.scraper.announce_http")
     @patch("newtrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
-    def test_attempt_httpx_https_success(self, mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
+    def test_attempt_httpx_https_success(self, _mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
         """Test successful HTTPS attempt."""
         from urllib.parse import urlparse
 
@@ -855,7 +864,7 @@ class TestAttemptHTTPX:
 
     @patch("newtrackon.scraper.announce_http")
     @patch("newtrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
-    def test_attempt_httpx_http_success(self, mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
+    def test_attempt_httpx_http_success(self, _mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
         """Test successful HTTP attempt."""
         from urllib.parse import urlparse
 
@@ -870,7 +879,7 @@ class TestAttemptHTTPX:
 
     @patch("newtrackon.scraper.announce_http")
     @patch("newtrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
-    def test_attempt_httpx_failure(self, mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
+    def test_attempt_httpx_failure(self, _mock_submitted_data: MagicMock, mock_announce_http: MagicMock) -> None:
         """Test failed HTTP attempt."""
         from urllib.parse import urlparse
 
@@ -902,7 +911,7 @@ class TestAttemptHTTPSHTTP:
         assert result.interval == 1800
         assert "https://" in result.url
         # Should only call once since HTTPS succeeded
-        assert mock_attempt_httpx.call_count == 1  # pyright: ignore[reportUnknownMemberType]
+        assert mock_attempt_httpx.call_count == 1
 
     @patch("newtrackon.scraper.attempt_httpx")
     def test_attempt_https_http_https_fails_http_succeeds(self, mock_attempt_httpx: MagicMock) -> None:
@@ -922,7 +931,7 @@ class TestAttemptHTTPSHTTP:
         assert result is not None
         assert result.interval == 1800
         assert "http://" in result.url
-        assert mock_attempt_httpx.call_count == 2  # pyright: ignore[reportUnknownMemberType]
+        assert mock_attempt_httpx.call_count == 2
 
     @patch("newtrackon.scraper.attempt_httpx")
     def test_attempt_https_http_both_fail(self, mock_attempt_httpx: MagicMock) -> None:
@@ -937,7 +946,7 @@ class TestAttemptHTTPSHTTP:
         result = attempt_https_http("93.184.216.34", url)
 
         assert result is None
-        assert mock_attempt_httpx.call_count == 2  # pyright: ignore[reportUnknownMemberType]
+        assert mock_attempt_httpx.call_count == 2
 
 
 class TestAttemptAllProtocols:
@@ -958,7 +967,7 @@ class TestAttemptAllProtocols:
 
         assert result.interval == 1800
         assert "udp://" in result.url
-        mock_https_http.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
+        mock_https_http.assert_not_called()
 
     @patch("newtrackon.scraper.attempt_udp")
     @patch("newtrackon.scraper.attempt_https_http")
@@ -990,7 +999,7 @@ class TestAttemptAllProtocols:
         url = urlparse("http://tracker.example.com/announce")  # No port
         result = attempt_all_protocols(url, "93.184.216.34")
 
-        mock_udp.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
+        mock_udp.assert_not_called()
         assert result.interval == 1800
 
     @patch("newtrackon.scraper.attempt_udp")
@@ -1007,7 +1016,7 @@ class TestAttemptAllProtocols:
         url = urlparse("udp://tracker.example.com:6969/announce")
 
         with pytest.raises(RuntimeError):
-            attempt_all_protocols(url, "93.184.216.34")
+            _ = attempt_all_protocols(url, "93.184.216.34")
 
 
 class TestAttemptFromTxtPrefs:
@@ -1029,7 +1038,7 @@ class TestAttemptFromTxtPrefs:
         result = attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
 
         assert result.interval == 1800
-        mock_https_http.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
+        mock_https_http.assert_not_called()
 
     @patch("newtrackon.scraper.attempt_udp")
     @patch("newtrackon.scraper.attempt_https_http")
@@ -1047,7 +1056,7 @@ class TestAttemptFromTxtPrefs:
         result = attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
 
         assert result.interval == 1800
-        mock_udp.assert_not_called()  # pyright: ignore[reportUnknownMemberType]
+        mock_udp.assert_not_called()
 
     @patch("newtrackon.scraper.attempt_udp")
     @patch("newtrackon.scraper.attempt_https_http")
@@ -1064,7 +1073,7 @@ class TestAttemptFromTxtPrefs:
         txt_prefs: list[tuple[str, int]] = [("udp", 6969), ("tcp", 80)]
 
         with pytest.raises(RuntimeError):
-            attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
+            _ = attempt_from_txt_prefs(url, "93.184.216.34", txt_prefs)
 
 
 class TestAttemptSubmitted:
@@ -1082,15 +1091,14 @@ class TestAttemptSubmitted:
         mock_bep34.return_value = (False, None)
         mock_all_protocols.return_value = (1800, "udp://tracker.example.com:6969/announce", 50)
 
-        tracker = MagicMock()
-        tracker.url = "udp://tracker.example.com:6969/announce"
+        url = "udp://tracker.example.com:6969/announce"
 
-        result = attempt_submitted(tracker)
+        result = attempt_submitted(url)
         assert result is not None
         interval, _url, _latency = result
 
         assert interval == 1800
-        mock_all_protocols.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
+        mock_all_protocols.assert_called_once()
 
     @patch("newtrackon.scraper.get_bep_34")
     @patch("newtrackon.scraper.attempt_from_txt_prefs")
@@ -1103,31 +1111,29 @@ class TestAttemptSubmitted:
         mock_bep34.return_value = (True, [("udp", 6969)])
         mock_txt_prefs.return_value = (1800, "udp://tracker.example.com:6969/announce", 50)
 
-        tracker = MagicMock()
-        tracker.url = "udp://tracker.example.com:6969/announce"
+        url = "udp://tracker.example.com:6969/announce"
 
-        result = attempt_submitted(tracker)
+        result = attempt_submitted(url)
         assert result is not None
         interval, _url, _latency = result
 
         assert interval == 1800
-        mock_txt_prefs.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
+        mock_txt_prefs.assert_called_once()
 
     @patch("newtrackon.scraper.get_bep_34")
     @patch("newtrackon.persistence.submitted_data", new_callable=lambda: deque[str](maxlen=100))
     @patch("socket.getaddrinfo")
     def test_attempt_submitted_bep34_denies(
-        self, mock_getaddrinfo: MagicMock, mock_submitted_data: MagicMock, mock_bep34: MagicMock
+        self, mock_getaddrinfo: MagicMock, _mock_submitted_data: MagicMock, mock_bep34: MagicMock
     ) -> None:
         """Test submitted tracker with BEP34 that denies connection."""
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("93.184.216.34", 6969))]
         mock_bep34.return_value = (True, [])  # Empty list = deny
 
-        tracker = MagicMock()
-        tracker.url = "udp://tracker.example.com:6969/announce"
+        url = "udp://tracker.example.com:6969/announce"
 
         with pytest.raises(RuntimeError):
-            attempt_submitted(tracker)
+            _ = attempt_submitted(url)
 
     @patch("newtrackon.scraper.get_bep_34")
     @patch("newtrackon.scraper.attempt_all_protocols")
@@ -1140,11 +1146,10 @@ class TestAttemptSubmitted:
         mock_bep34.return_value = (False, None)
         mock_all_protocols.return_value = (1800, "url", 50)
 
-        tracker = MagicMock()
-        tracker.url = "udp://tracker.example.com:6969/announce"
+        url = "udp://tracker.example.com:6969/announce"
 
         # Should still work with empty failover_ip
-        result = attempt_submitted(tracker)
+        result = attempt_submitted(url)
         assert result is not None
         interval, _url, _latency = result
         assert interval == 1800
@@ -1161,7 +1166,7 @@ class TestGetServerIP:
         result = get_server_ip("4")
 
         assert result == "93.184.216.34"
-        mock_check_output.assert_called_with(["curl", "-s", "-4", "https://icanhazip.com/"])  # pyright: ignore[reportUnknownMemberType]
+        mock_check_output.assert_called_with(["curl", "-s", "-4", "https://icanhazip.com/"])
 
     @patch("subprocess.check_output")
     def test_get_server_ip_v6(self, mock_check_output: MagicMock) -> None:
@@ -1171,7 +1176,7 @@ class TestGetServerIP:
         result = get_server_ip("6")
 
         assert result == "2001:db8::1"
-        mock_check_output.assert_called_with(["curl", "-s", "-6", "https://icanhazip.com/"])  # pyright: ignore[reportUnknownMemberType]
+        mock_check_output.assert_called_with(["curl", "-s", "-6", "https://icanhazip.com/"])
 
 
 class TestGlobalConstants:
@@ -1226,7 +1231,7 @@ class TestEdgeCases:
         buf += struct.pack("!i", 0)  # seeds
         # No peer data
 
-        result, _ = udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
+        result = udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
 
         assert result["interval"] == 1800
         assert result["leechers"] == 0
@@ -1246,7 +1251,7 @@ class TestEdgeCases:
             buf += bytes([192, 168, 1, i + 1])
             buf += struct.pack("!H", 6881 + i)
 
-        result, _ = udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
+        result = udp_parse_announce_response(buf, transaction_id, socket.AF_INET)
 
         assert len(result["peers"]) == 3
         assert result["peers"][0]["IP"] == "192.168.1.1"

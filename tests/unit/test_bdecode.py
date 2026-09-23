@@ -256,25 +256,25 @@ class TestDecoderErrors:
         """Empty data should raise EOFError."""
         decoder = Decoder(b"")
         with pytest.raises(EOFError):
-            decoder.decode()
+            _ = decoder.decode()
 
     def test_invalid_token_raises_runtime_error(self):
         """Invalid starting token should raise RuntimeError."""
         decoder = Decoder(b"x123")
         with pytest.raises(RuntimeError, match="Could not bdecode data"):
-            decoder.decode()
+            _ = decoder.decode()
 
     def test_truncated_string_raises_runtime_error(self):
         """Truncated string should raise RuntimeError."""
         decoder = Decoder(b"10:hello")  # Says 10 chars but only 5
         with pytest.raises(RuntimeError):
-            decoder.decode()
+            _ = decoder.decode()
 
     def test_truncated_integer_raises_runtime_error(self):
         """Integer without end marker should raise RuntimeError."""
         decoder = Decoder(b"i42")
         with pytest.raises(RuntimeError):
-            decoder.decode()
+            _ = decoder.decode()
 
     def test_truncated_list_raises_eof_error(self):
         """List without end marker should raise EOFError.
@@ -283,7 +283,7 @@ class TestDecoderErrors:
         """
         decoder = Decoder(b"li1ei2e")
         with pytest.raises(EOFError):
-            decoder.decode()
+            _ = decoder.decode()
 
     def test_truncated_dict_raises_eof_error(self):
         """Dict without end marker should raise EOFError.
@@ -292,13 +292,13 @@ class TestDecoderErrors:
         """
         decoder = Decoder(b"d3:fooi42e")
         with pytest.raises(EOFError):
-            decoder.decode()
+            _ = decoder.decode()
 
     def test_string_without_length_separator(self):
         """String without colon should raise error."""
         decoder = Decoder(b"5hello")
         with pytest.raises(RuntimeError):
-            decoder.decode()
+            _ = decoder.decode()
 
 
 class TestDecodeBinaryPeersList:
@@ -419,17 +419,17 @@ class TestBdecodeFunction:
         """bdecode() should raise TypeError if root is not a dict."""
         # A bencoded list at the root level
         with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
-            bdecode(b"li1ei2ee")
+            _ = bdecode(b"li1ei2ee")
 
     def test_bdecode_integer_raises_type_error(self):
         """bdecode() should raise TypeError if root is an integer."""
         with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
-            bdecode(b"i42e")
+            _ = bdecode(b"i42e")
 
     def test_bdecode_string_raises_type_error(self):
         """bdecode() should raise TypeError if root is a string."""
         with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
-            bdecode(b"5:hello")
+            _ = bdecode(b"5:hello")
 
     @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
     @pytest.mark.parametrize("encoded_value", [b"4:many", b"1:0", b"2:11", b"2:-1", b"3:1.5", b"le", b"de", b"e"])
@@ -437,14 +437,14 @@ class TestBdecodeFunction:
         data = b"d" + f"{len(field)}:{field}".encode() + encoded_value + b"e"
 
         with pytest.raises(RuntimeError, match=f"'{field}': expected an integer"):
-            bdecode(data)
+            _ = bdecode(data)
 
     @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
     def test_bdecode_rejects_negative_peer_counts(self, field: str) -> None:
         data = b"d" + f"{len(field)}:{field}i-1ee".encode()
 
         with pytest.raises(RuntimeError, match=f"negative peer count for '{field}': -1"):
-            bdecode(data)
+            _ = bdecode(data)
 
     @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
     @pytest.mark.parametrize("count", [0, 100])
@@ -459,7 +459,7 @@ class TestBdecodeFunction:
         data = b"d" + f"{len(field)}:{field}".encode() + encoded_value + b"e"
 
         with pytest.raises(RuntimeError, match=f"'{field}': expected a list"):
-            bdecode(data)
+            _ = bdecode(data)
 
     def test_bdecode_accepts_non_compact_peer_list(self) -> None:
         data = b"d5:peersld2:ip8:10.0.0.14:porti6881eeee"
@@ -518,7 +518,7 @@ class TestBdecodeFunction:
         ip_binary = b"\x01\x02\x03\x04\x05\x06\x07\x08"
         data = b"d11:external ip" + str(len(ip_binary)).encode() + b":" + ip_binary + b"e"
         with pytest.raises(RuntimeError, match="Invalid external IP size"):
-            bdecode(data)
+            _ = bdecode(data)
 
 
 class TestRealisticTrackerResponses:
@@ -569,8 +569,7 @@ class TestRealisticTrackerResponses:
         peers_binary = b"\x01\x02\x03\x04\x1a\xe1"
         peers6_binary = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1f\x90"
         data = (
-            b"d8:intervali1800e"
-            b"5:peers"
+            b"d8:intervali1800e5:peers"
             + str(len(peers_binary)).encode()
             + b":"
             + peers_binary
@@ -628,12 +627,11 @@ class TestRealisticTrackerResponses:
         peers_binary = b"\xc0\xa8\x01\x01\x1a\xe1"  # 192.168.1.1:6881
         external_ip = b"\x0a\x00\x00\x01"  # 10.0.0.1
         data = (
-            b"d"
-            b"8:completei150e"
-            b"11:external ip4:" + external_ip + b"10:incompletei75e"
-            b"8:intervali1800e"
-            b"12:min intervali900e"
-            b"5:peers6:" + peers_binary + b"e"
+            b"d8:completei150e11:external ip4:"
+            + external_ip
+            + b"10:incompletei75e8:intervali1800e12:min intervali900e5:peers6:"
+            + peers_binary
+            + b"e"
         )
         result = bdecode(data)
         assert result["complete"] == 150
@@ -752,7 +750,7 @@ class TestDecoderInternals:
         """read() raises RuntimeError when reading past end."""
         decoder = Decoder(b"hi")
         with pytest.raises(RuntimeError):
-            decoder.read(5)
+            _ = decoder.read(5)
 
     def test_read_until_finds_token(self):
         """read_until() correctly finds and stops at token."""
@@ -765,7 +763,7 @@ class TestDecoderInternals:
         """read_until() raises RuntimeError when token not found."""
         decoder = Decoder(b"hello world")
         with pytest.raises(RuntimeError):
-            decoder.read_until(b":")
+            _ = decoder.read_until(b":")
 
     def test_decode_returns_none_for_end_token(self):
         """decode() returns None when encountering TOK_END at the top level.

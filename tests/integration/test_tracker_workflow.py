@@ -7,14 +7,16 @@ from collections.abc import Generator
 from contextlib import suppress
 from sqlite3 import Connection
 from time import time
-from typing import Any
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pytest import MonkeyPatch
 
-from newtrackon import persistence
+from newtrackon import ingest
+from newtrackon.bdecode import BDecodeResponse
 from newtrackon.tracker import IP_HISTORY_WINDOW, Tracker
+from tests.helpers import TrackerDataDict
 
 
 @pytest.fixture
@@ -26,7 +28,7 @@ def shared_memory_db(monkeypatch: MonkeyPatch) -> Generator[Connection]:
     """
     # Create the shared database with schema
     conn = sqlite3.connect("file::memory:?cache=shared", uri=True)
-    conn.execute("""
+    _ = conn.execute("""
         CREATE TABLE IF NOT EXISTS status (
             host TEXT PRIMARY KEY,
             url TEXT NOT NULL,
@@ -50,19 +52,19 @@ def shared_memory_db(monkeypatch: MonkeyPatch) -> Generator[Connection]:
 
     original_connect = sqlite3.connect
 
-    def patched_connect(database: str, *args: Any, **kwargs: Any) -> Connection:
+    def patched_connect(database: str) -> Connection:
         if database == "data/trackon.db":
             # Return a new connection to the shared memory database
             return original_connect("file::memory:?cache=shared", uri=True)
-        return original_connect(database, *args, **kwargs)
+        return original_connect(database)
 
-    monkeypatch.setattr("sqlite3.connect", patched_connect)  # pyright: ignore[reportUnknownMemberType]
+    monkeypatch.setattr("sqlite3.connect", patched_connect)
 
     yield conn
 
     # Cleanup: drop table and close
     with suppress(sqlite3.Error):
-        conn.execute("DROP TABLE IF EXISTS status")
+        _ = conn.execute("DROP TABLE IF EXISTS status")
         conn.commit()
     conn.close()
 
@@ -70,9 +72,8 @@ def shared_memory_db(monkeypatch: MonkeyPatch) -> Generator[Connection]:
 class TestTrackerUpdateCycle:
     """Test end-to-end tracker update cycle combining multiple modules."""
 
-    def test_update_status_with_successful_scrape(
-        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("reset_globals")
+    def test_update_status_with_successful_scrape(self, shared_memory_db: Connection, sample_tracker: Tracker) -> None:
         """Insert tracker in DB, call update_status() with mocked scraper,
         verify status, uptime, historic updated, and db.update_tracker() persists changes.
         """
@@ -82,7 +83,7 @@ class TestTrackerUpdateCycle:
         sample_tracker.last_uptime = int(time())
 
         # Insert tracker into DB
-        shared_memory_db.execute(
+        _ = shared_memory_db.execute(
             "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
@@ -110,7 +111,7 @@ class TestTrackerUpdateCycle:
         initial_last_checked = sample_tracker.last_checked
 
         # Mock scraper to return successful response
-        mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: BDecodeResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
@@ -141,24 +142,23 @@ class TestTrackerUpdateCycle:
 
         # Verify changes persisted in database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT status, interval, historic FROM status WHERE host = ?", (sample_tracker.host,))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT status, interval, historic FROM status WHERE host = ?", (sample_tracker.host,))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is not None
         assert row[0] == 1  # status
         assert row[1] == 1800  # interval
-        historic_from_db = json.loads(row[2])
+        historic_from_db = cast(list[int], json.loads(cast(str, row[2])))
         assert historic_from_db[-1] == 1  # Last historic entry
 
-    def test_update_status_updates_latency(
-        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("reset_globals")
+    def test_update_status_updates_latency(self, shared_memory_db: Connection, sample_tracker: Tracker) -> None:
         """Verify latency is calculated and stored after successful scrape."""
 
         # Ensure tracker has a recent last_uptime to avoid max_downtime deletion
         sample_tracker.last_uptime = int(time())
 
         # Insert tracker into DB
-        shared_memory_db.execute(
+        _ = shared_memory_db.execute(
             "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
@@ -181,7 +181,7 @@ class TestTrackerUpdateCycle:
         )
         shared_memory_db.commit()
 
-        mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: BDecodeResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
@@ -200,9 +200,8 @@ class TestTrackerUpdateCycle:
 class TestTrackerGoesDown:
     """Test workflow when a tracker becomes unresponsive."""
 
-    def test_tracker_goes_down_on_scraper_error(
-        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("reset_globals")
+    def test_tracker_goes_down_on_scraper_error(self, shared_memory_db: Connection, sample_tracker: Tracker) -> None:
         """Insert working tracker, mock scraper to raise RuntimeError,
         verify status changes to 0 and last_downtime updated.
         """
@@ -212,7 +211,7 @@ class TestTrackerGoesDown:
         initial_last_downtime = sample_tracker.last_downtime
 
         # Insert tracker into DB
-        shared_memory_db.execute(
+        _ = shared_memory_db.execute(
             "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
@@ -254,9 +253,8 @@ class TestTrackerGoesDown:
         # Verify historic records the down status
         assert sample_tracker.historic[-1] == 0
 
-    def test_tracker_goes_down_updates_database(
-        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("reset_globals")
+    def test_tracker_goes_down_updates_database(self, shared_memory_db: Connection, sample_tracker: Tracker) -> None:
         """Verify that tracker going down is properly persisted to database."""
         from newtrackon import db
 
@@ -264,7 +262,7 @@ class TestTrackerGoesDown:
         sample_tracker.last_uptime = int(time())
 
         # Insert tracker into DB
-        shared_memory_db.execute(
+        _ = shared_memory_db.execute(
             "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker.host,
@@ -300,15 +298,14 @@ class TestTrackerGoesDown:
 
         # Verify in database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT status, last_downtime FROM status WHERE host = ?", (sample_tracker.host,))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT status, last_downtime FROM status WHERE host = ?", (sample_tracker.host,))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is not None
         assert row[0] == 0  # status is DOWN
         assert row[1] == sample_tracker.last_downtime
 
-    def test_http_tracker_goes_down(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("shared_memory_db", "reset_globals")
+    def test_http_tracker_goes_down(self, sample_tracker_data: TrackerDataDict) -> None:
         """Test HTTP tracker going down."""
 
         # Create HTTP tracker
@@ -346,19 +343,19 @@ class TestTrackerGoesDown:
 class TestNewTrackerSubmissionFlow:
     """Test end-to-end new tracker submission workflow."""
 
-    def test_add_tracker_to_submitted_queue(self, shared_memory_db: Connection, empty_queues: Any) -> None:
+    @pytest.mark.usefixtures("shared_memory_db", "empty_queues")
+    def test_add_tracker_to_submitted_queue(self) -> None:
         """Call add_one_tracker_to_submitted_queue with valid URL,
         verify tracker added to submitted queue.
         """
-        from newtrackon import ingest
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
         # Mock Tracker.from_url to return a valid tracker
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = test_url  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.host = "newtracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.ips = ["5.6.7.8"]  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.url = test_url
+        mock_tracker.host = "newtracker.example.com"
+        mock_tracker.ips = ["5.6.7.8"]
 
         with (
             patch.object(Tracker, "from_url", return_value=mock_tracker),
@@ -366,16 +363,14 @@ class TestNewTrackerSubmissionFlow:
             ingest.add_one_tracker_to_submitted_queue(test_url)
 
         # Verify tracker was added to submitted queue
-        assert persistence.submitted_queue.qsize() == 1
-        with persistence.submitted_queue.mutex:
-            queued = list(persistence.submitted_queue.queue)
+        assert ingest.submitted_queue.qsize() == 1
+        with ingest.submitted_queue.mutex:
+            queued = list(cast(deque[Tracker], ingest.submitted_queue.queue))
         assert queued[0] == mock_tracker
 
-    def test_tracker_ends_up_in_database_after_processing(
-        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_tracker_ends_up_in_database_after_processing(self, shared_memory_db: Connection) -> None:
         """Verify tracker ends up in database after full submission processing."""
-        from newtrackon import ingest
 
         test_url = "udp://newtracker.example.com:6969/announce"
 
@@ -402,7 +397,7 @@ class TestNewTrackerSubmissionFlow:
         mock_attempt_result = (1800, test_url, 50)
 
         # Add tracker to submitted queue
-        persistence.submitted_queue.put_nowait(mock_tracker)
+        ingest.submitted_queue.put_nowait(mock_tracker)
 
         with (
             patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
@@ -412,15 +407,15 @@ class TestNewTrackerSubmissionFlow:
 
         # Verify tracker was inserted into database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host, url FROM status WHERE host = ?", (mock_tracker.host,))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host, url FROM status WHERE host = ?", (mock_tracker.host,))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is not None
         assert row[0] == mock_tracker.host
         assert row[1] == test_url
 
-    def test_full_submission_flow_integration(self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_full_submission_flow_integration(self, shared_memory_db: Connection) -> None:
         """Test complete flow from URL submission to database insertion."""
-        from newtrackon import ingest
 
         test_url = "udp://complete-flow.example.com:6969/announce"
 
@@ -453,34 +448,32 @@ class TestNewTrackerSubmissionFlow:
         ):
             # Step 1: Add to submission queue
             ingest.add_one_tracker_to_submitted_queue(test_url)
-            assert persistence.submitted_queue.qsize() == 1
+            assert ingest.submitted_queue.qsize() == 1
 
             # Step 2: Process the queue
             ingest.process_submitted_queue()
 
         # Verify empty queue after processing
-        assert persistence.submitted_queue.qsize() == 0
+        assert ingest.submitted_queue.qsize() == 0
 
         # Verify tracker in database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host FROM status WHERE host = ?", ("complete-flow.example.com",))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host FROM status WHERE host = ?", ("complete-flow.example.com",))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is not None
 
 
 class TestDuplicateIPRejection:
     """Test rejection of trackers with duplicate IPs."""
 
-    def test_reject_tracker_with_duplicate_ip(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues")
+    def test_reject_tracker_with_duplicate_ip(self, shared_memory_db: Connection, sample_tracker_data: TrackerDataDict) -> None:
         """Insert tracker with IP 1.2.3.4, try to add new tracker that
         resolves to same IP, verify rejection.
         """
-        from newtrackon import ingest
 
         # Insert an existing tracker with known IP
-        shared_memory_db.execute(
+        _ = shared_memory_db.execute(
             "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker_data["host"],
@@ -506,24 +499,24 @@ class TestDuplicateIPRejection:
         # Try to add a new tracker that resolves to the same IP
         new_url = "udp://different-tracker.example.com:6969/announce"
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = new_url  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.host = "different-tracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.ips = ["1.2.3.4"]  # Same IP as existing tracker  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.url = new_url
+        mock_tracker.host = "different-tracker.example.com"
+        mock_tracker.ips = ["1.2.3.4"]  # Same IP as existing tracker
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
             ingest.add_one_tracker_to_submitted_queue(new_url)
 
         # Verify tracker was NOT added to the submission queue
-        assert persistence.submitted_queue.qsize() == 0
+        assert ingest.submitted_queue.qsize() == 0
 
+    @pytest.mark.usefixtures("empty_queues")
     def test_reject_tracker_with_overlapping_ips(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
+        self, shared_memory_db: Connection, sample_tracker_data: TrackerDataDict
     ) -> None:
         """Test rejection when new tracker has any IP overlapping with existing."""
-        from newtrackon import ingest
 
         # Insert existing tracker with multiple IPs
-        shared_memory_db.execute(
+        _ = shared_memory_db.execute(
             "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker_data["host"],
@@ -549,24 +542,22 @@ class TestDuplicateIPRejection:
         # New tracker with one overlapping IP
         new_url = "udp://another-tracker.example.com:6969/announce"
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = new_url  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.host = "another-tracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.ips = ["9.10.11.12", "5.6.7.8"]  # 5.6.7.8 overlaps  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.url = new_url
+        mock_tracker.host = "another-tracker.example.com"
+        mock_tracker.ips = ["9.10.11.12", "5.6.7.8"]  # 5.6.7.8 overlaps
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
             ingest.add_one_tracker_to_submitted_queue(new_url)
 
         # Should be rejected
-        assert persistence.submitted_queue.qsize() == 0
+        assert ingest.submitted_queue.qsize() == 0
 
-    def test_allow_tracker_with_unique_ip(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], empty_queues: Any
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues")
+    def test_allow_tracker_with_unique_ip(self, shared_memory_db: Connection, sample_tracker_data: TrackerDataDict) -> None:
         """Test that tracker with unique IP is allowed."""
-        from newtrackon import ingest
 
         # Insert existing tracker with known IP
-        shared_memory_db.execute(
+        _ = shared_memory_db.execute(
             "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 sample_tracker_data["host"],
@@ -592,28 +583,26 @@ class TestDuplicateIPRejection:
         # New tracker with completely different IP
         new_url = "udp://unique-tracker.example.com:6969/announce"
         mock_tracker = MagicMock(spec=Tracker)
-        mock_tracker.url = new_url  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.host = "unique-tracker.example.com"  # pyright: ignore[reportAttributeAccessIssue]
-        mock_tracker.ips = ["9.10.11.12"]  # Different IP  # pyright: ignore[reportAttributeAccessIssue]
+        mock_tracker.url = new_url
+        mock_tracker.host = "unique-tracker.example.com"
+        mock_tracker.ips = ["9.10.11.12"]  # Different IP
 
         with patch.object(Tracker, "from_url", return_value=mock_tracker):
             ingest.add_one_tracker_to_submitted_queue(new_url)
 
         # Should be allowed
-        assert persistence.submitted_queue.qsize() == 1
-        with persistence.submitted_queue.mutex:
-            queued = list(persistence.submitted_queue.queue)
+        assert ingest.submitted_queue.qsize() == 1
+        with ingest.submitted_queue.mutex:
+            queued = list(cast(deque[Tracker], ingest.submitted_queue.queue))
         assert queued[0] == mock_tracker
 
 
 class TestIntervalValidation:
     """Test interval validation during tracker submission."""
 
-    def test_reject_tracker_with_interval_below_minimum(
-        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_reject_tracker_with_interval_below_minimum(self, shared_memory_db: Connection) -> None:
         """Mock scraper to return interval < 300, verify tracker rejected."""
-        from newtrackon import ingest
         from newtrackon.persistence import submitted_data
 
         test_url = "udp://low-interval.example.com:6969/announce"
@@ -642,7 +631,7 @@ class TestIntervalValidation:
         # Pre-populate submitted_data with expected debug entry
         submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "ip": "", "info": ["Response data"]})
 
-        persistence.submitted_queue.put_nowait(mock_tracker)
+        ingest.submitted_queue.put_nowait(mock_tracker)
 
         with (
             patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
@@ -653,15 +642,13 @@ class TestIntervalValidation:
 
         # Verify tracker was NOT inserted into database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host FROM status WHERE host = ?", ("low-interval.example.com",))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host FROM status WHERE host = ?", ("low-interval.example.com",))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is None
 
-    def test_reject_tracker_with_interval_above_maximum(
-        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_reject_tracker_with_interval_above_maximum(self, shared_memory_db: Connection) -> None:
         """Mock scraper to return interval > 10800, verify tracker rejected."""
-        from newtrackon import ingest
         from newtrackon.persistence import submitted_data
 
         test_url = "udp://high-interval.example.com:6969/announce"
@@ -690,7 +677,7 @@ class TestIntervalValidation:
         # Pre-populate submitted_data with expected debug entry
         submitted_data.appendleft({"url": test_url, "time": int(time()), "status": 1, "ip": "", "info": ["Response data"]})
 
-        persistence.submitted_queue.put_nowait(mock_tracker)
+        ingest.submitted_queue.put_nowait(mock_tracker)
 
         with (
             patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
@@ -701,15 +688,13 @@ class TestIntervalValidation:
 
         # Verify tracker was NOT inserted into database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host FROM status WHERE host = ?", ("high-interval.example.com",))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host FROM status WHERE host = ?", ("high-interval.example.com",))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is None
 
-    def test_accept_tracker_with_valid_interval(
-        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_accept_tracker_with_valid_interval(self, shared_memory_db: Connection) -> None:
         """Verify tracker with interval between 300 and 10800 is accepted."""
-        from newtrackon import ingest
 
         test_url = "udp://valid-interval.example.com:6969/announce"
 
@@ -734,7 +719,7 @@ class TestIntervalValidation:
         # Valid interval of 1800 (30 minutes)
         mock_attempt_result = (1800, test_url, 50)
 
-        persistence.submitted_queue.put_nowait(mock_tracker)
+        ingest.submitted_queue.put_nowait(mock_tracker)
 
         with (
             patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
@@ -745,20 +730,18 @@ class TestIntervalValidation:
 
         # Verify tracker WAS inserted into database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host, interval FROM status WHERE host = ?", ("valid-interval.example.com",))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host, interval FROM status WHERE host = ?", ("valid-interval.example.com",))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is not None
         assert row[0] == "valid-interval.example.com"
         assert row[1] == 1800
 
-    def test_accept_tracker_with_exactly_minimum_interval(
-        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_accept_tracker_with_exactly_minimum_interval(self, shared_memory_db: Connection) -> None:
         """Interval of exactly 300 should be accepted (boundary condition).
 
         Per code logic: "300 > tracker_candidate.interval" means 300 is NOT rejected.
         """
-        from newtrackon import ingest
 
         test_url = "udp://boundary-low.example.com:6969/announce"
 
@@ -783,7 +766,7 @@ class TestIntervalValidation:
         # Interval of exactly 300 - boundary condition
         mock_attempt_result = (300, test_url, 50)
 
-        persistence.submitted_queue.put_nowait(mock_tracker)
+        ingest.submitted_queue.put_nowait(mock_tracker)
 
         with (
             patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
@@ -794,15 +777,13 @@ class TestIntervalValidation:
 
         # Based on "300 > interval" - 300 > 300 is False, so 300 should be accepted
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host FROM status WHERE host = ?", ("boundary-low.example.com",))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host FROM status WHERE host = ?", ("boundary-low.example.com",))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is not None
 
-    def test_accept_tracker_with_exactly_maximum_interval(
-        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_accept_tracker_with_exactly_maximum_interval(self, shared_memory_db: Connection) -> None:
         """Interval of exactly 10800 should be accepted."""
-        from newtrackon import ingest
 
         test_url = "udp://boundary-high.example.com:6969/announce"
 
@@ -827,7 +808,7 @@ class TestIntervalValidation:
         # Interval of exactly 10800 - boundary condition
         mock_attempt_result = (10800, test_url, 50)
 
-        persistence.submitted_queue.put_nowait(mock_tracker)
+        ingest.submitted_queue.put_nowait(mock_tracker)
 
         with (
             patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
@@ -838,16 +819,14 @@ class TestIntervalValidation:
 
         # Based on "interval > 10800" - 10800 > 10800 is False, so accepted
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host, interval FROM status WHERE host = ?", ("boundary-high.example.com",))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host, interval FROM status WHERE host = ?", ("boundary-high.example.com",))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is not None
         assert row[1] == 10800
 
-    def test_reject_tracker_with_missing_interval(
-        self, shared_memory_db: Connection, empty_queues: Any, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("empty_queues", "reset_globals")
+    def test_reject_tracker_with_missing_interval(self, shared_memory_db: Connection) -> None:
         """Verify tracker with missing interval is rejected."""
-        from newtrackon import ingest
 
         test_url = "udp://no-interval.example.com:6969/announce"
 
@@ -872,7 +851,7 @@ class TestIntervalValidation:
         # No interval returned (None)
         mock_attempt_result = (None, test_url, 50)
 
-        persistence.submitted_queue.put_nowait(mock_tracker)
+        ingest.submitted_queue.put_nowait(mock_tracker)
 
         with (
             patch("newtrackon.ingest.attempt_submitted", return_value=mock_attempt_result),
@@ -884,17 +863,16 @@ class TestIntervalValidation:
 
         # Verify tracker was NOT inserted into database
         cursor = shared_memory_db.cursor()
-        cursor.execute("SELECT host FROM status WHERE host = ?", ("no-interval.example.com",))
-        row = cursor.fetchone()
+        _ = cursor.execute("SELECT host FROM status WHERE host = ?", ("no-interval.example.com",))
+        row = cast(tuple[object, ...] | None, cursor.fetchone())
         assert row is None
 
 
 class TestTrackerDeletionWorkflow:
     """Test workflow for tracker deletion due to prolonged downtime."""
 
-    def test_tracker_marked_for_deletion_after_max_downtime(
-        self, shared_memory_db: Connection, sample_tracker_data: dict[str, Any], reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("shared_memory_db", "reset_globals")
+    def test_tracker_marked_for_deletion_after_max_downtime(self, sample_tracker_data: TrackerDataDict) -> None:
         """Test that tracker is marked for deletion if last_uptime exceeds max_downtime."""
         from newtrackon.tracker import max_downtime
 
@@ -932,9 +910,8 @@ class TestTrackerDeletionWorkflow:
 class TestTrackerIPResolutionFailure:
     """Test behavior when tracker IP resolution fails."""
 
-    def test_tracker_cleared_on_ip_resolution_failure(
-        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("shared_memory_db", "reset_globals")
+    def test_tracker_cleared_on_ip_resolution_failure(self, sample_tracker: Tracker) -> None:
         """Test that tracker is cleared when IP resolution fails."""
         sample_tracker.status = 1
         sample_tracker.last_uptime = int(time())
@@ -949,11 +926,12 @@ class TestTrackerIPResolutionFailure:
         assert sample_tracker.status == 0
         assert sample_tracker.ips is None
 
+    @pytest.mark.usefixtures("shared_memory_db")
     def test_failed_dns_persists_expired_history_without_conflict_warnings(
-        self, shared_memory_db: Connection, sample_tracker: Tracker, caplog: pytest.LogCaptureFixture
+        self, sample_tracker: Tracker, caplog: pytest.LogCaptureFixture
     ) -> None:
         """A failed DNS check must stop expired database history from producing conflicts."""
-        from newtrackon import db, ingest, trackon
+        from newtrackon import db, trackon
 
         now = 1800000000
         sample_tracker.last_uptime = now
@@ -988,7 +966,8 @@ class TestTrackerIPResolutionFailure:
 class TestBEP34Integration:
     """Test BEP34 (DNS-based tracker discovery) integration."""
 
-    def test_tracker_denied_by_bep34(self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None) -> None:
+    @pytest.mark.usefixtures("shared_memory_db", "reset_globals")
+    def test_tracker_denied_by_bep34(self, sample_tracker: Tracker) -> None:
         """Test tracker is marked for deletion when BEP34 denies connection."""
         sample_tracker.status = 1
         sample_tracker.last_uptime = int(time())
@@ -1001,9 +980,8 @@ class TestBEP34Integration:
         # Tracker should be marked for deletion
         assert sample_tracker.to_be_deleted is True
 
-    def test_tracker_updates_url_from_bep34(
-        self, shared_memory_db: Connection, sample_tracker: Tracker, reset_globals: None
-    ) -> None:
+    @pytest.mark.usefixtures("shared_memory_db", "reset_globals")
+    def test_tracker_updates_url_from_bep34(self, sample_tracker: Tracker) -> None:
         """Test tracker URL is updated based on BEP34 preferences."""
         sample_tracker.status = 1
         sample_tracker.last_uptime = int(time())
@@ -1011,7 +989,7 @@ class TestBEP34Integration:
         # BEP34 returns UDP preference on port 1337
         bep34_prefs = [("udp", 1337)]
 
-        mock_response: dict[str, int | list[Any]] = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: BDecodeResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newtrackon.scraper.get_bep_34", return_value=(True, bep34_prefs)),

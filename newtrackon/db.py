@@ -1,11 +1,34 @@
 import json
 import sqlite3
 from collections import deque
+from collections.abc import Iterable, Sequence
 from os import path
-from typing import Any, cast
+from typing import TypedDict, cast
 
 from newtrackon.tracker import Tracker
-from newtrackon.utils import TrackerEndpoint, dict_factory, format_list, remove_ipvx_only_trackers
+from newtrackon.utils import TrackerEndpointInput, dict_factory, format_list, remove_ipvx_only_trackers
+
+
+class TrackerRow(TypedDict):
+    """Columns written by this module; collection fields contain JSON."""
+
+    host: str
+    url: str
+    ip: str
+    latency: int | None
+    last_checked: int
+    interval: int
+    status: int
+    uptime: float
+    country: str
+    country_code: str
+    network: str
+    added: int
+    historic: str
+    last_downtime: int
+    last_uptime: int
+    recent_ip: str | None
+
 
 db_file = "data/trackon.db"
 
@@ -18,7 +41,7 @@ def ensure_db_existence() -> None:
 def create_db() -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute(
+    _ = c.execute(
         """CREATE TABLE `status` (
         `host`	TEXT NOT NULL,
         `url`	TEXT NOT NULL,
@@ -47,8 +70,8 @@ def update_tracker(tracker: Tracker) -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute(
-        "UPDATE status SET url=?, ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,"
-        " historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=?, recent_ip=? WHERE host=?",
+        """UPDATE status SET url=?, ip=?, latency=?, last_checked=?, status=?, interval=?, uptime=?,
+           historic=?, country=?, country_code=?, network=?, last_downtime=?, last_uptime=?, recent_ip=? WHERE host=?""",
         (
             tracker.url,
             json.dumps(tracker.ips),
@@ -84,27 +107,27 @@ def delete_tracker(tracker: Tracker) -> None:
 
 def get_all_data() -> list[Tracker]:
     conn = sqlite3.connect(db_file)
-    conn.row_factory = cast(Any, dict_factory)
+    conn.row_factory = dict_factory
     c = conn.cursor()
     trackers_from_db: list[Tracker] = []
-    for row in c.execute("SELECT * FROM STATUS ORDER BY uptime DESC"):
+    for row in cast(Iterable[TrackerRow], c.execute("SELECT * FROM STATUS ORDER BY uptime DESC")):
         tracker_in_db = Tracker(
-            host=row.get("host"),
-            url=row.get("url"),
-            ips=json.loads(row.get("ip")),
-            latency=row.get("latency"),
-            last_checked=row.get("last_checked"),
-            interval=row.get("interval"),
-            status=row.get("status"),
-            uptime=row.get("uptime"),
-            countries=json.loads(row.get("country")),
-            country_codes=json.loads(row.get("country_code")),
-            historic=deque(json.loads(row.get("historic")), maxlen=1000),
-            added=row.get("added"),
-            networks=json.loads(row.get("network")),
-            last_downtime=row.get("last_downtime"),
-            last_uptime=row.get("last_uptime"),
-            recent_ips=json.loads(row.get("recent_ip") or "{}"),
+            host=row["host"],
+            url=row["url"],
+            ips=cast(list[str] | None, json.loads(row["ip"])),
+            latency=row["latency"],
+            last_checked=row["last_checked"],
+            interval=row["interval"],
+            status=row["status"],
+            uptime=row["uptime"],
+            countries=cast(list[str] | None, json.loads(row["country"])),
+            country_codes=cast(list[str] | None, json.loads(row["country_code"])),
+            historic=deque(cast(list[int], json.loads(row["historic"])), maxlen=1000),
+            added=row["added"],
+            networks=cast(list[str] | None, json.loads(row["network"])),
+            last_downtime=row["last_downtime"],
+            last_uptime=row["last_uptime"],
+            recent_ips=cast(dict[str, int], json.loads(row["recent_ip"] or "{}")),
         )
         trackers_from_db.append(tracker_in_db)
     conn.close()
@@ -138,12 +161,12 @@ def get_api_data(
         params += (added_before,)
 
     sql += " ORDER BY UPTIME DESC"
-    c.execute(sql, params)
+    _ = c.execute(sql, params)
 
-    raw_rows = c.fetchall()
+    raw_rows = cast(list[tuple[str, str]], c.fetchall())
     conn.close()
 
-    urls_and_ips: list[TrackerEndpoint] = [(url, json.loads(ips)) for url, ips in raw_rows]
+    urls_and_ips: Sequence[TrackerEndpointInput] = [(url, cast(list[str] | None, json.loads(ips))) for url, ips in raw_rows]
 
     if not include_ipv4_only:
         urls_and_ips = remove_ipvx_only_trackers(urls_and_ips, version=4)
@@ -157,7 +180,7 @@ def get_api_data(
 def insert_new_tracker(tracker: Tracker) -> None:
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute(
+    _ = c.execute(
         "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             tracker.host,

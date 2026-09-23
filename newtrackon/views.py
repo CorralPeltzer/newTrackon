@@ -16,6 +16,7 @@ from flask import (
 from werkzeug.routing import BaseConverter, Map
 
 from newtrackon import db, ingest, persistence, utils
+from newtrackon.tracker import format_uptime_and_downtime_time
 
 max_input_length: int = 1000000
 
@@ -26,7 +27,7 @@ app.template_folder = "tpl"
 class RegexConverter(BaseConverter):
     def __init__(self, url_map: Map, *items: str) -> None:
         super().__init__(url_map)
-        self.regex = items[0]
+        self.regex: str = items[0]
 
 
 app.url_map.converters["regex"] = RegexConverter
@@ -62,7 +63,7 @@ logger.info("Server started")
 @app.route("/")
 def main(form_feedback: str | None = None) -> str:
     trackers_list = db.get_all_data()
-    trackers_list = utils.format_uptime_and_downtime_time(trackers_list)
+    trackers_list = format_uptime_and_downtime_time(trackers_list)
     return render_template("main.jinja", form_feedback=form_feedback, trackers=trackers_list, active="Home")
 
 
@@ -102,7 +103,7 @@ def submitted():
         "submitted.jinja",
         # Iterating a deque while rendering can cause RuntimeError: deque mutated during iteration, so we cast it to a list
         data=list(persistence.submitted_data),
-        size=persistence.submitted_queue.qsize(),
+        size=ingest.submitted_queue.qsize(),
         active="Submitted",
     )
 

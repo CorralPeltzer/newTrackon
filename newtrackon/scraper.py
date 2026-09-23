@@ -4,24 +4,23 @@ import socket
 import string
 import struct
 import subprocess
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from logging import getLogger
 from os import urandom
 from time import time
-from typing import TYPE_CHECKING, NamedTuple, TypedDict, cast
+from typing import NamedTuple, TypedDict, cast
 from urllib.parse import ParseResult, urlencode, urlparse
 
 import requests
 from dns import resolver
 from dns.exception import DNSException
+from dns.rdata import Rdata
 from urllib3.exceptions import HTTPError
+from urllib3.response import HTTPResponse
 
 from newtrackon.bdecode import BDecodeResponse, PeerInfo, bdecode, decode_binary_peers_list
 from newtrackon.persistence import HistoryData, submitted_data
 from newtrackon.utils import ProtocolPref, build_httpx_url, process_txt_prefs
-
-if TYPE_CHECKING:
-    from newtrackon.tracker import Tracker
 
 # Socket address types for getaddrinfo results
 SockAddr = tuple[str, int] | tuple[str, int, int, int] | tuple[int, bytes]
@@ -71,8 +70,8 @@ class UDPAnnounceResponse(TypedDict):
     peers: list[PeerInfo]
 
 
-def attempt_submitted(tracker: Tracker) -> ScraperResult:
-    submitted_url = urlparse(tracker.url)
+def attempt_submitted(url: str) -> ScraperResult:
+    submitted_url = urlparse(url)
     try:
         failover_ip: str = str(socket.getaddrinfo(submitted_url.hostname, None)[0][4][0])
     except OSError:
@@ -84,11 +83,11 @@ def attempt_submitted(tracker: Tracker) -> ScraperResult:
         if not bep_34_info:
             logger.info(
                 "Hostname denies connection via BEP34, giving up on submitted tracker %s",
-                tracker.url,
+                url,
             )
             submitted_data.appendleft(
                 {
-                    "url": tracker.url,
+                    "url": url,
                     "time": int(time()),
                     "status": 0,
                     "ip": failover_ip,
@@ -98,7 +97,7 @@ def attempt_submitted(tracker: Tracker) -> ScraperResult:
             raise RuntimeError
         logger.info(
             "Tracker %s sets protocol and port preferences from BEP34: %s",
-            tracker.url,
+            url,
             bep_34_info,
         )
         return attempt_from_txt_prefs(submitted_url, failover_ip, bep_34_info)
@@ -223,7 +222,7 @@ def get_bep_34(hostname: str | None) -> tuple[bool, list[ProtocolPref] | None]:
         return False, None
     try:
         answer: resolver.Answer = resolver.resolve(hostname, "TXT")
-        for rdata in answer:
+        for rdata in cast(Iterable[Rdata], answer):
             record_text = str(rdata).strip('"')
             if record_text.startswith("BITTORRENT"):
                 return True, process_txt_prefs(record_text)
@@ -342,7 +341,7 @@ def announce_udp(udp_url: str) -> tuple[UDPAnnounceResponse, str | None]:
             ip_family = sock.family
             sock.close()
 
-            parsed_response, _raw_response = udp_parse_announce_response(buf, transaction_id, ip_family)
+            parsed_response = udp_parse_announce_response(buf, transaction_id, ip_family)
             check_peer_count(parsed_response)
             logger.info("%s response: %s", udp_url, parsed_response)
             return parsed_response, ip
@@ -408,9 +407,7 @@ def udp_create_announce_request(connection_id: int | None, thash: bytes, peer_id
     return buf, transaction_id
 
 
-def udp_parse_announce_response(
-    buf: bytes, sent_transaction_id: int, ip_family: socket.AddressFamily
-) -> tuple[UDPAnnounceResponse, str]:
+def udp_parse_announce_response(buf: bytes, sent_transaction_id: int, ip_family: socket.AddressFamily) -> UDPAnnounceResponse:
     if len(buf) < 20:
         raise RuntimeError(f"Wrong response length while announcing: {len(buf)}")
     action = struct.unpack_from("!i", buf)[0]  # first 4 bytes is action
@@ -431,8 +428,7 @@ def udp_parse_announce_response(
             if count < 0:
                 raise RuntimeError(f"Tracker reported negative peer count for '{key}': {count}")
         peers = decode_binary_peers_list(buf, offset, ip_family)
-        ret: UDPAnnounceResponse = {"interval": interval, "leechers": leechers, "seeds": seeds, "peers": peers}
-        return ret, buf.hex()
+        return {"interval": interval, "leechers": leechers, "seeds": seeds, "peers": peers}
     # an error occured, try and extract the error string
     error = struct.unpack_from("!s", buf, 8)
     raise RuntimeError(f"Error while annoucing: {error}")
@@ -448,8 +444,8 @@ def get_server_ip(ip_version: str) -> str:
 
 def memory_limited_get(url: str) -> tuple[requests.Response, bytes]:
     response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10, stream=True, allow_redirects=False)
-    content = None
-    content = response.raw.read(MAX_RESPONSE_SIZE + 1, decode_content=True)
+    raw = cast(HTTPResponse, response.raw)
+    content = raw.read(MAX_RESPONSE_SIZE + 1, decode_content=True)
     if len(content) > MAX_RESPONSE_SIZE:
         raise RuntimeError("HTTP response size above 1 MB")
     return response, content

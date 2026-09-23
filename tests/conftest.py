@@ -8,25 +8,27 @@ from collections import deque
 from collections.abc import Generator
 from queue import Empty
 from sqlite3 import Connection
-from types import ModuleType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
 from flask.testing import FlaskClient
 
+from newtrackon.bdecode import BDecodeResponse
+from newtrackon.scraper import UDPAnnounceResponse
+from tests.helpers import ReusableConnection, TrackerDataDict
+
 if TYPE_CHECKING:
     from newtrackon.tracker import Tracker
 
-# Type alias for sample tracker data
-TrackerDataDict = dict[str, Any]
 
+def drain_submitted_queue() -> None:
+    from newtrackon import ingest
 
-def drain_submitted_queue(persistence: ModuleType) -> None:
     while True:
         try:
-            persistence.submitted_queue.get_nowait()
-            persistence.submitted_queue.task_done()
+            _ = ingest.submitted_queue.get_nowait()
+            ingest.submitted_queue.task_done()
         except Empty:
             break
 
@@ -37,14 +39,14 @@ def clean_global_state() -> Generator[None]:
     from newtrackon import persistence
 
     # Clear before test
-    drain_submitted_queue(persistence)
+    drain_submitted_queue()
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
 
     yield
 
     # Clear after test
-    drain_submitted_queue(persistence)
+    drain_submitted_queue()
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
 
@@ -52,8 +54,8 @@ def clean_global_state() -> Generator[None]:
 @pytest.fixture
 def in_memory_db() -> Generator[Connection]:
     """Provide an in-memory SQLite database with schema."""
-    conn = sqlite3.connect(":memory:")
-    conn.execute("""
+    conn = sqlite3.connect(":memory:", factory=ReusableConnection)
+    _ = conn.execute("""
         CREATE TABLE status (
             host TEXT PRIMARY KEY,
             url TEXT NOT NULL,
@@ -75,7 +77,7 @@ def in_memory_db() -> Generator[Connection]:
     """)
     conn.commit()
     yield conn
-    conn.close()
+    sqlite3.Connection.close(conn)
 
 
 @pytest.fixture
@@ -83,10 +85,10 @@ def mock_db_connection(in_memory_db: Connection, monkeypatch: pytest.MonkeyPatch
     """Patch sqlite3.connect to use in-memory database."""
     original_connect = sqlite3.connect
 
-    def patched_connect(database: str, *args: Any, **kwargs: Any) -> Connection:
+    def patched_connect(database: str) -> Connection:
         if database == "data/trackon.db":
             return in_memory_db
-        return original_connect(database, *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
+        return original_connect(database)
 
     monkeypatch.setattr("sqlite3.connect", patched_connect)
     return in_memory_db
@@ -120,21 +122,21 @@ def sample_tracker(sample_tracker_data: TrackerDataDict) -> Tracker:
     from newtrackon.tracker import Tracker
 
     tracker = Tracker(
-        host=sample_tracker_data["host"],  # pyright: ignore[reportUnknownArgumentType]
-        url=sample_tracker_data["url"],  # pyright: ignore[reportUnknownArgumentType]
-        ips=sample_tracker_data["ips"],  # pyright: ignore[reportUnknownArgumentType]
-        latency=sample_tracker_data["latency"],  # pyright: ignore[reportUnknownArgumentType]
-        last_checked=sample_tracker_data["last_checked"],  # pyright: ignore[reportUnknownArgumentType]
-        interval=sample_tracker_data["interval"],  # pyright: ignore[reportUnknownArgumentType]
-        status=sample_tracker_data["status"],  # pyright: ignore[reportUnknownArgumentType]
-        uptime=sample_tracker_data["uptime"],  # pyright: ignore[reportUnknownArgumentType]
-        countries=sample_tracker_data["countries"],  # pyright: ignore[reportUnknownArgumentType]
-        country_codes=sample_tracker_data["country_codes"],  # pyright: ignore[reportUnknownArgumentType]
-        networks=sample_tracker_data["networks"],  # pyright: ignore[reportUnknownArgumentType]
-        historic=deque(sample_tracker_data["historic"], maxlen=1000),  # pyright: ignore[reportUnknownArgumentType]
-        added=sample_tracker_data["added"],  # pyright: ignore[reportUnknownArgumentType]
-        last_downtime=sample_tracker_data["last_downtime"],  # pyright: ignore[reportUnknownArgumentType]
-        last_uptime=sample_tracker_data["last_uptime"],  # pyright: ignore[reportUnknownArgumentType]
+        host=sample_tracker_data["host"],
+        url=sample_tracker_data["url"],
+        ips=sample_tracker_data["ips"],
+        latency=sample_tracker_data["latency"],
+        last_checked=sample_tracker_data["last_checked"],
+        interval=sample_tracker_data["interval"],
+        status=sample_tracker_data["status"],
+        uptime=sample_tracker_data["uptime"],
+        countries=sample_tracker_data["countries"],
+        country_codes=sample_tracker_data["country_codes"],
+        networks=sample_tracker_data["networks"],
+        historic=deque(sample_tracker_data["historic"], maxlen=1000),
+        added=sample_tracker_data["added"],
+        last_downtime=sample_tracker_data["last_downtime"],
+        last_uptime=sample_tracker_data["last_uptime"],
     )
     return tracker
 
@@ -142,7 +144,7 @@ def sample_tracker(sample_tracker_data: TrackerDataDict) -> Tracker:
 @pytest.fixture
 def insert_sample_tracker(mock_db_connection: Connection, sample_tracker_data: TrackerDataDict) -> TrackerDataDict:
     """Insert sample tracker into the test database."""
-    mock_db_connection.execute(
+    _ = mock_db_connection.execute(
         "INSERT INTO status VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             sample_tracker_data["host"],
@@ -196,7 +198,7 @@ def reset_globals() -> Generator[None]:
     old_ipv6 = scraper.my_ipv6
 
     # Clear buffers at the start to ensure clean state
-    drain_submitted_queue(persistence)
+    drain_submitted_queue()
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
 
@@ -207,25 +209,27 @@ def reset_globals() -> Generator[None]:
     scraper.my_ipv6 = old_ipv6
 
     # Clear buffers after test (don't restore old contents - start fresh for next test)
-    drain_submitted_queue(persistence)
+    drain_submitted_queue()
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
 
 
 @pytest.fixture
-def empty_queues(reset_globals: None) -> Generator[ModuleType]:
+def empty_queues(reset_globals: None) -> Generator[None]:
     """Provide empty buffers for testing."""
+    _ = reset_globals
     from newtrackon import persistence
 
-    drain_submitted_queue(persistence)
+    drain_submitted_queue()
     persistence.raw_data.clear()
     persistence.submitted_data.clear()
-    yield persistence
+    yield
 
 
 @pytest.fixture
 def flask_client(mock_db_connection: Connection) -> Generator[FlaskClient]:
     """Create Flask test client with mocked database."""
+    _ = mock_db_connection
     from newtrackon.views import app
 
     app.config["TESTING"] = True
@@ -234,7 +238,7 @@ def flask_client(mock_db_connection: Connection) -> Generator[FlaskClient]:
 
 
 @pytest.fixture
-def mock_tracker_response() -> dict[str, Any]:
+def mock_tracker_response() -> BDecodeResponse:
     """Return a mock successful tracker response."""
     return {
         "interval": 1800,
@@ -245,7 +249,7 @@ def mock_tracker_response() -> dict[str, Any]:
 
 
 @pytest.fixture
-def mock_udp_response() -> dict[str, Any]:
+def mock_udp_response() -> UDPAnnounceResponse:
     """Return mock UDP tracker response data."""
     return {
         "interval": 1800,

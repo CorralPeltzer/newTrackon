@@ -1,15 +1,10 @@
 import sqlite3
-import sys
 from collections.abc import Mapping, Sequence
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from time import time
-from typing import TYPE_CHECKING
 from urllib.parse import ParseResult
 
 from flask import Response
-
-if TYPE_CHECKING:
-    from newtrackon.tracker import Tracker
 
 # Type alias for BEP34 protocol preferences: (protocol, port)
 ProtocolPref = tuple[str, int]
@@ -25,31 +20,11 @@ def add_api_headers(resp: Response) -> Response:
     return resp
 
 
-def dict_factory(cursor: sqlite3.Cursor, row: sqlite3.Row) -> dict[str, object]:
+def dict_factory(cursor: sqlite3.Cursor, row: tuple[object, ...]) -> dict[str, object]:
     d: dict[str, object] = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
-
-
-def format_uptime_and_downtime_time(trackers_unprocessed: list[Tracker]) -> list[Tracker]:
-    for tracker in trackers_unprocessed:
-        if tracker.status == 1:
-            tracker.status_epoch = tracker.last_downtime
-            if not tracker.last_downtime:
-                tracker.status_readable = "Working"
-            else:
-                time_string = format_time(tracker.last_downtime)
-                tracker.status_readable = "Working for " + time_string
-        elif tracker.status == 0:
-            tracker.status_epoch = sys.maxsize
-            if not tracker.last_uptime:
-                tracker.status_readable = "Down"
-            else:
-                time_string = format_time(tracker.last_uptime)
-                tracker.status_readable = "Down for " + time_string
-
-    return trackers_unprocessed
 
 
 def format_time(last_time: float) -> str:
@@ -106,7 +81,7 @@ def remove_ipvx_only_trackers(raw_list: Sequence[TrackerEndpointInput], version:
     return cleaned_list
 
 
-def format_list(raw_list: list[TrackerEndpoint]) -> str:
+def format_list(raw_list: Sequence[TrackerEndpointInput]) -> str:
     formatted_list = ""
     for url in raw_list:
         url_string = url[0]

@@ -37,10 +37,6 @@ ignore = ["TRY004"]
 # Allow imports inside test functions for test isolation
 "tests/**/*.py" = ["PLC0415"]
 
-
-[tool.pyright]
-typeCheckingMode = "strict"
-
 [tool.djlint]
 profile = "jinja"
 extension = "jinja"

@@ -3,11 +3,11 @@
 import socket
 from collections import deque
 from time import time
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from newtrackon.persistence import HistoryData
 from newtrackon.scraper import ScraperResult
 from newtrackon.tracker import IP_HISTORY_WINDOW, Tracker, max_downtime
 
@@ -81,7 +81,8 @@ class TestTrackerInit:
 class TestValidateUrl:
     """Tests for Tracker.validate_url method."""
 
-    def test_validate_url_udp_scheme(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_udp_scheme(self) -> None:
         """Test that UDP scheme is accepted."""
         tracker = Tracker(
             url="udp://tracker.example.com:6969",
@@ -103,7 +104,8 @@ class TestValidateUrl:
         tracker.validate_url()
         assert tracker.url == "udp://tracker.example.com:6969/announce"
 
-    def test_validate_url_http_scheme(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_http_scheme(self) -> None:
         """Test that HTTP scheme is accepted."""
         tracker = Tracker(
             url="http://tracker.example.com:80",
@@ -125,7 +127,8 @@ class TestValidateUrl:
         tracker.validate_url()
         assert tracker.url == "http://tracker.example.com:80/announce"
 
-    def test_validate_url_https_scheme(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_https_scheme(self) -> None:
         """Test that HTTPS scheme is accepted."""
         tracker = Tracker(
             url="https://tracker.example.com:443",
@@ -147,7 +150,8 @@ class TestValidateUrl:
         tracker.validate_url()
         assert tracker.url == "https://tracker.example.com:443/announce"
 
-    def test_validate_url_invalid_scheme_ws(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_invalid_scheme_ws(self) -> None:
         """Test that WebSocket scheme is rejected."""
         tracker = Tracker(
             url="ws://tracker.example.com:6969",
@@ -169,7 +173,8 @@ class TestValidateUrl:
         with pytest.raises(RuntimeError, match="Tracker URLs have to start with"):
             tracker.validate_url()
 
-    def test_validate_url_invalid_scheme_ftp(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_invalid_scheme_ftp(self) -> None:
         """Test that FTP scheme is rejected."""
         tracker = Tracker(
             url="ftp://tracker.example.com:21",
@@ -191,7 +196,8 @@ class TestValidateUrl:
         with pytest.raises(RuntimeError, match="Tracker URLs have to start with"):
             tracker.validate_url()
 
-    def test_validate_url_adds_announce_path(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_adds_announce_path(self) -> None:
         """Test that /announce path is added to URL."""
         tracker = Tracker(
             url="udp://tracker.example.com:6969/something/else",
@@ -213,7 +219,8 @@ class TestValidateUrl:
         tracker.validate_url()
         assert tracker.url == "udp://tracker.example.com:6969/announce"
 
-    def test_validate_url_replaces_existing_path(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_replaces_existing_path(self) -> None:
         """Test that existing path is replaced with /announce."""
         tracker = Tracker(
             url="http://tracker.example.com:80/custom/path",
@@ -235,7 +242,8 @@ class TestValidateUrl:
         tracker.validate_url()
         assert "/announce" in tracker.url
 
-    def test_validate_url_invalid_characters_in_netloc(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_invalid_characters_in_netloc(self) -> None:
         """Test that invalid characters in netloc are rejected."""
         tracker = Tracker(
             url="udp://tracker<script>.example.com:6969",
@@ -257,7 +265,8 @@ class TestValidateUrl:
         with pytest.raises(RuntimeError, match="Invalid announce URL"):
             tracker.validate_url()
 
-    def test_validate_url_with_spaces(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_validate_url_with_spaces(self) -> None:
         """Test that spaces in URL are rejected."""
         tracker = Tracker(
             url="udp://tracker example.com:6969",
@@ -283,9 +292,9 @@ class TestValidateUrl:
 class TestFromUrl:
     """Tests for Tracker.from_url class method."""
 
-    def test_from_url_creates_tracker(self, mock_network: dict[str, Any]) -> None:
+    def test_from_url_creates_tracker(self, mock_network: dict[str, MagicMock]) -> None:
         """Test that from_url creates a Tracker with correct initial values."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
         ]
 
@@ -298,9 +307,9 @@ class TestFromUrl:
         assert tracker.historic.maxlen == 1000
         assert tracker.added is not None
 
-    def test_from_url_resolves_ipv4(self, mock_network: dict[str, Any]) -> None:
+    def test_from_url_resolves_ipv4(self, mock_network: dict[str, MagicMock]) -> None:
         """Test that from_url resolves IPv4 addresses."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("1.2.3.4", 6969)),
         ]
 
@@ -309,9 +318,9 @@ class TestFromUrl:
         assert tracker.ips is not None
         assert "1.2.3.4" in tracker.ips
 
-    def test_from_url_resolves_ipv6(self, mock_network: dict[str, Any]) -> None:
+    def test_from_url_resolves_ipv6(self, mock_network: dict[str, MagicMock]) -> None:
         """Test that from_url resolves IPv6 addresses."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
 
@@ -320,9 +329,9 @@ class TestFromUrl:
         assert tracker.ips is not None
         assert "2606:2800:21f:cb07:6820:80da:af6b:8b2c" in tracker.ips
 
-    def test_from_url_orders_ipv6_first(self, mock_network: dict[str, Any]) -> None:
+    def test_from_url_orders_ipv6_first(self, mock_network: dict[str, MagicMock]) -> None:
         """Test that from_url orders IPv6 addresses before IPv4."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("1.2.3.4", 6969)),
             (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
@@ -333,21 +342,22 @@ class TestFromUrl:
         assert tracker.ips[0] == "2606:2800:21f:cb07:6820:80da:af6b:8b2c"
         assert tracker.ips[1] == "1.2.3.4"
 
-    def test_from_url_invalid_scheme_raises(self, mock_network: dict[str, Any]) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network")
+    def test_from_url_invalid_scheme_raises(self) -> None:
         """Test that from_url raises RuntimeError for invalid scheme."""
         with pytest.raises(RuntimeError, match="Tracker URLs have to start with"):
-            Tracker.from_url("ftp://tracker.example.com:21")
+            _ = Tracker.from_url("ftp://tracker.example.com:21")
 
-    def test_from_url_dns_failure_raises(self, mock_network: dict[str, Any]) -> None:
+    def test_from_url_dns_failure_raises(self, mock_network: dict[str, MagicMock]) -> None:
         """Test that from_url raises RuntimeError when DNS resolution fails."""
-        mock_network["getaddrinfo"].side_effect = OSError("Name resolution failed")  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].side_effect = OSError("Name resolution failed")
 
         with pytest.raises(RuntimeError, match="Can't resolve IP"):
-            Tracker.from_url("udp://nonexistent.tracker.com:6969")
+            _ = Tracker.from_url("udp://nonexistent.tracker.com:6969")
 
-    def test_from_url_sets_added_timestamp(self, mock_network: dict[str, Any]) -> None:
+    def test_from_url_sets_added_timestamp(self, mock_network: dict[str, MagicMock]) -> None:
         """Test that from_url sets the added timestamp."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("1.2.3.4", 6969)),
         ]
 
@@ -473,14 +483,14 @@ class TestUpdateIps:
     )
     @pytest.mark.parametrize("include_public", [False, True])
     def test_update_ips_rejects_special_addresses(
-        self, sample_tracker: Tracker, mock_network: dict[str, Any], address: str, include_public: bool
+        self, sample_tracker: Tracker, mock_network: dict[str, MagicMock], address: str, include_public: bool
     ) -> None:
         """One disallowed DNS answer must reject the tracker, even alongside a public answer."""
         family = socket.AF_INET6 if ":" in address else socket.AF_INET
         answers = [(family, socket.SOCK_DGRAM, 17, "", (address, 6969))]
         if include_public:
             answers.append((socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)))
-        mock_network["getaddrinfo"].return_value = answers  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = answers
 
         with pytest.raises(RuntimeError, match="not globally routable"):
             sample_tracker.update_ips()
@@ -488,9 +498,9 @@ class TestUpdateIps:
         assert sample_tracker.ips is None
         assert sample_tracker.to_be_deleted is True
 
-    def test_update_ips_accepts_public_mapped_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_accepts_public_mapped_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """IPv4-mapped public destinations remain supported despite the reserved IPv6 check."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("::ffff:8.8.8.8", 6969, 0, 0)),
         ]
 
@@ -499,9 +509,9 @@ class TestUpdateIps:
         assert sample_tracker.ips == ["::ffff:8.8.8.8"]
         assert sample_tracker.to_be_deleted is False
 
-    def test_update_ips_resolves_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_resolves_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips resolves IPv4 addresses."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
         ]
 
@@ -509,9 +519,9 @@ class TestUpdateIps:
 
         assert sample_tracker.ips == ["93.184.216.34"]
 
-    def test_update_ips_resolves_ipv6(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_resolves_ipv6(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips resolves IPv6 addresses."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
 
@@ -519,9 +529,9 @@ class TestUpdateIps:
 
         assert sample_tracker.ips == ["2606:2800:21f:cb07:6820:80da:af6b:8b2c"]
 
-    def test_update_ips_orders_ipv6_before_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_orders_ipv6_before_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips orders IPv6 addresses before IPv4."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
             (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),
         ]
@@ -530,9 +540,9 @@ class TestUpdateIps:
 
         assert sample_tracker.ips == ["2606:2800:21f:cb07:6820:80da:af6b:8b2c", "93.184.216.34"]
 
-    def test_update_ips_deduplicates(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_deduplicates(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips removes duplicate IPs."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
             (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 6969)),
         ]
@@ -541,25 +551,25 @@ class TestUpdateIps:
 
         assert sample_tracker.ips == ["93.184.216.34"]
 
-    def test_update_ips_dns_failure_raises(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_dns_failure_raises(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips raises RuntimeError on DNS failure."""
-        mock_network["getaddrinfo"].side_effect = OSError("DNS failure")  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].side_effect = OSError("DNS failure")
 
         with pytest.raises(RuntimeError, match="Can't resolve IP"):
             sample_tracker.update_ips()
 
         assert sample_tracker.ips is None
 
-    def test_update_ips_empty_result_raises(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_empty_result_raises(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips raises RuntimeError when no IPs returned."""
-        mock_network["getaddrinfo"].return_value = []  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = []
 
         with pytest.raises(RuntimeError, match="Can't resolve IP"):
             sample_tracker.update_ips()
 
-    def test_update_ips_rejects_non_global_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_rejects_non_global_ipv4(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips rejects private/non-global IPv4 addresses."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("192.168.1.1", 6969)),
         ]
 
@@ -569,9 +579,9 @@ class TestUpdateIps:
         assert sample_tracker.ips is None
         assert sample_tracker.to_be_deleted is True
 
-    def test_update_ips_rejects_non_global_ipv6(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_rejects_non_global_ipv6(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips rejects non-global IPv6 addresses (documentation prefix)."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2001:db8::1", 6969, 0, 0)),
         ]
 
@@ -581,9 +591,9 @@ class TestUpdateIps:
         assert sample_tracker.ips is None
         assert sample_tracker.to_be_deleted is True
 
-    def test_update_ips_rejects_loopback(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_rejects_loopback(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips rejects loopback addresses."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("127.0.0.1", 6969)),
         ]
 
@@ -593,9 +603,9 @@ class TestUpdateIps:
         assert sample_tracker.ips is None
         assert sample_tracker.to_be_deleted is True
 
-    def test_update_ips_rejects_unspecified(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_rejects_unspecified(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test that update_ips rejects unspecified address (0.0.0.0)."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("0.0.0.0", 6969)),
         ]
 
@@ -609,7 +619,8 @@ class TestUpdateIps:
 class TestUpdateStatus:
     """Tests for Tracker.update_status method."""
 
-    def test_update_status_udp_success(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_update_status_udp_success(self, sample_tracker: Tracker) -> None:
         """Test update_status with successful UDP announce."""
         # Set last_uptime to recent time to avoid deletion check
         sample_tracker.last_uptime = int(time())
@@ -622,7 +633,7 @@ class TestUpdateStatus:
             patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
             patch("newtrackon.tracker.scraper.announce_udp") as mock_announce,
             patch("newtrackon.tracker.scraper.redact_origin", return_value="mocked"),
-            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()),
             patch("newtrackon.tracker.socket.getaddrinfo", return_value=mock_getaddrinfo_return),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
@@ -634,7 +645,8 @@ class TestUpdateStatus:
             assert sample_tracker.interval == 1800
             assert sample_tracker.latency is not None
 
-    def test_update_status_http_success(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_update_status_http_success(self, sample_tracker: Tracker) -> None:
         """Test update_status with successful HTTP announce."""
         sample_tracker.url = "http://tracker.example.com:80/announce"
         # Set last_uptime to recent time to avoid deletion check
@@ -648,7 +660,7 @@ class TestUpdateStatus:
             patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
             patch("newtrackon.tracker.scraper.announce_http") as mock_announce,
             patch("newtrackon.tracker.scraper.redact_origin", return_value="mocked"),
-            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()),
             patch("newtrackon.tracker.socket.getaddrinfo", return_value=mock_getaddrinfo_return),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
@@ -659,18 +671,17 @@ class TestUpdateStatus:
             assert sample_tracker.status == 1
             assert sample_tracker.interval == 1800
 
-    def test_update_status_announce_failure(
-        self, sample_tracker: Tracker, mock_network: dict[str, Any], reset_globals: None
-    ) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_update_status_announce_failure(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test update_status when announce fails."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
         ]
 
         with (
             patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
             patch("newtrackon.tracker.scraper.announce_udp") as mock_announce,
-            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
             mock_announce.side_effect = RuntimeError("UDP timeout")
@@ -679,25 +690,25 @@ class TestUpdateStatus:
 
             assert sample_tracker.status == 0
 
-    def test_update_status_marks_old_tracker_for_deletion(
-        self, sample_tracker: Tracker, mock_network: dict[str, Any], reset_globals: None
-    ) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("mock_network", "reset_globals")
+    def test_update_status_marks_old_tracker_for_deletion(self, sample_tracker: Tracker) -> None:
         """Test that tracker unresponsive for too long is marked for deletion."""
         sample_tracker.last_uptime = int(time()) - max_downtime - 1
 
-        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()):
             sample_tracker.update_status()
 
             assert sample_tracker.to_be_deleted is True
             assert sample_tracker.status == 0
 
-    def test_update_status_dns_failure(self, sample_tracker: Tracker, mock_network: dict[str, Any], reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_update_status_dns_failure(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test update_status handles DNS resolution failure."""
-        mock_network["getaddrinfo"].side_effect = OSError("DNS failure")  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].side_effect = OSError("DNS failure")
 
         with (
             patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
-            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()),
         ):
             sample_tracker.update_status()
 
@@ -738,18 +749,19 @@ class TestUpdateStatus:
 
             assert sample_tracker.recent_ips == {}
 
+    @pytest.mark.usefixtures("reset_globals")
     def test_update_status_sets_interval_when_uptime_zero(
-        self, sample_tracker: Tracker, mock_network: dict[str, Any], reset_globals: None
-    ) -> None:  # pyright: ignore[reportUnusedParameter]
+        self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]
+    ) -> None:
         """Test that interval is set to 10800 when uptime is 0."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
         ]
 
         with (
             patch("newtrackon.tracker.scraper.get_bep_34", return_value=(False, None)),
             patch("newtrackon.tracker.scraper.announce_udp") as mock_announce,
-            patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()),
+            patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()),
             patch.object(sample_tracker, "update_ipapi_data"),
         ):
             mock_announce.side_effect = RuntimeError("UDP timeout")
@@ -835,46 +847,51 @@ class TestUpdateSchemeFromBep34:
 class TestClearTracker:
     """Tests for Tracker.clear_tracker method."""
 
-    def test_clear_tracker_sets_status_down(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_clear_tracker_sets_status_down(self, sample_tracker: Tracker) -> None:
         """Test that clear_tracker marks tracker as down."""
         sample_tracker.status = 1
 
-        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()):
             sample_tracker.clear_tracker("Test reason")
 
             assert sample_tracker.status == 0
 
-    def test_clear_tracker_clears_geo_data(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_clear_tracker_clears_geo_data(self, sample_tracker: Tracker) -> None:
         """Test that clear_tracker clears geolocation data."""
-        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()):
             sample_tracker.clear_tracker("Test reason")
 
             assert sample_tracker.countries is None
             assert sample_tracker.networks is None
             assert sample_tracker.country_codes is None
 
-    def test_clear_tracker_clears_latency(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_clear_tracker_clears_latency(self, sample_tracker: Tracker) -> None:
         """Test that clear_tracker clears latency."""
         sample_tracker.latency = 100
 
-        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()):
             sample_tracker.clear_tracker("Test reason")
 
             assert sample_tracker.latency is None
 
-    def test_clear_tracker_sets_last_checked(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_clear_tracker_sets_last_checked(self, sample_tracker: Tracker) -> None:
         """Test that clear_tracker updates last_checked."""
         before = int(time())
 
-        with patch("newtrackon.tracker.persistence.raw_data", deque[dict[str, Any]]()):
+        with patch("newtrackon.tracker.persistence.raw_data", deque[HistoryData]()):
             sample_tracker.clear_tracker("Test reason")
 
         after = int(time())
         assert before <= sample_tracker.last_checked <= after
 
-    def test_clear_tracker_appends_to_raw_data(self, sample_tracker: Tracker, reset_globals: None) -> None:  # pyright: ignore[reportUnusedParameter]
+    @pytest.mark.usefixtures("reset_globals")
+    def test_clear_tracker_appends_to_raw_data(self, sample_tracker: Tracker) -> None:
         """Test that clear_tracker appends debug info to raw_data."""
-        raw_data: deque[dict[str, Any]] = deque()
+        raw_data: deque[HistoryData] = deque()
 
         with patch("newtrackon.tracker.persistence.raw_data", raw_data):
             sample_tracker.clear_tracker("Test reason")
@@ -941,7 +958,7 @@ class TestIpApi:
     def test_ip_api_success(self) -> None:
         """Test successful IP API query."""
         mock_response = MagicMock()
-        mock_response.read.return_value = b"United States\nus\nExample ISP"  # pyright: ignore[reportUnknownMemberType]
+        mock_response.read = MagicMock(return_value=b"United States\nus\nExample ISP")
 
         with patch("urllib.request.urlopen", return_value=mock_response), patch("time.sleep"):
             result = Tracker.ip_api("93.184.216.34")
@@ -970,9 +987,9 @@ class TestMaxDowntimeConstant:
 class TestEdgeCases:
     """Tests for edge cases and error handling."""
 
-    def test_tracker_with_ip_as_hostname_in_url(self, mock_network: dict[str, Any]) -> None:
+    def test_tracker_with_ip_as_hostname_in_url(self, mock_network: dict[str, MagicMock]) -> None:
         """Test tracker creation with IP address as hostname."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 6969)),
         ]
 
@@ -989,9 +1006,9 @@ class TestEdgeCases:
         with pytest.raises(ZeroDivisionError):
             sample_tracker.update_uptime()
 
-    def test_tracker_url_without_port(self, mock_network: dict[str, Any]) -> None:
+    def test_tracker_url_without_port(self, mock_network: dict[str, MagicMock]) -> None:
         """Test tracker URL without explicit port."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("93.184.216.34", 80)),
         ]
 
@@ -999,9 +1016,9 @@ class TestEdgeCases:
 
         assert tracker.url == "http://tracker.example.com/announce"
 
-    def test_update_ips_with_multiple_address_families(self, sample_tracker: Tracker, mock_network: dict[str, Any]) -> None:
+    def test_update_ips_with_multiple_address_families(self, sample_tracker: Tracker, mock_network: dict[str, MagicMock]) -> None:
         """Test update_ips handles multiple address families correctly."""
-        mock_network["getaddrinfo"].return_value = [  # pyright: ignore[reportUnknownMemberType]
+        mock_network["getaddrinfo"].return_value = [
             (socket.AF_INET, socket.SOCK_DGRAM, 17, "", ("1.2.3.4", 6969)),
             (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("1.2.3.4", 6969)),
             (socket.AF_INET6, socket.SOCK_DGRAM, 17, "", ("2606:2800:21f:cb07:6820:80da:af6b:8b2c", 6969, 0, 0)),

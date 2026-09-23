@@ -84,8 +84,8 @@ def decode_binary_peers_list(buf: bytes, offset: int, ip_family: int) -> list[Pe
 
 class Decoder:
     def __init__(self, data: bytes) -> None:
-        self.index = 0
-        self.data = data
+        self.index: int = 0
+        self.data: bytes = data
 
     def decode(self) -> BDecodedValue:
         # decode the bencoded data
@@ -93,13 +93,13 @@ class Decoder:
         if c is None:
             raise EOFError()
         elif c == TOK_DICT:
-            self.read(1)  # read the token
+            _ = self.read(1)  # read the token
             return self.decode_dict()
         elif c == TOK_LIST:
-            self.read(1)  # read the token
+            _ = self.read(1)  # read the token
             return self.decode_list()
         elif c == TOK_INT:
-            self.read(1)  # read the token
+            _ = self.read(1)  # read the token
             return self.decode_int()
         elif c in b"0123456789":  # the number indicates start of str (tells len(str))
             return self.decode_str()
@@ -142,7 +142,7 @@ class Decoder:
                 raise TypeError("Dict key must be bytes in bencoded data")
             item = self.decode()  # decode the item
             result[key] = item  # add the key item pair to the dict
-        self.read(1)  # read the end token
+        _ = self.read(1)  # read the end token
         return result
 
     # decodes bencoded data into a Python list
@@ -151,7 +151,7 @@ class Decoder:
         while self.data[self.index : self.index + 1] != TOK_END:
             item = self.decode()  # decode an item
             result.append(item)  # add to the list
-        self.read(1)  # read the end token
+        _ = self.read(1)  # read the end token
         return result
 
     # decode bencoded data into a Python int

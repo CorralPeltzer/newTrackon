@@ -1,14 +1,18 @@
 import pprint
 import re
 import socket
+import sys
 from collections import deque
+from http.client import HTTPResponse
 from ipaddress import IPv4Address, IPv6Address, ip_address
 from logging import getLogger
 from time import sleep, time
+from typing import cast
 from urllib import parse, request
 
 from newtrackon import persistence, scraper
 from newtrackon.persistence import HistoryData
+from newtrackon.utils import format_time
 
 logger = getLogger("newtrackon")
 
@@ -304,9 +308,29 @@ class Tracker:
     @staticmethod
     def ip_api(ip: str) -> str:
         try:
-            response = request.urlopen("http://ip-api.com/line/" + ip + "?fields=country,countryCode,isp")
+            response = cast(HTTPResponse, request.urlopen("http://ip-api.com/line/" + ip + "?fields=country,countryCode,isp"))
             tracker_info = response.read().decode("utf-8")
             sleep(1.35)  # Respect the queries per minute limit of IP-API
         except OSError:
             tracker_info = "Error"
         return tracker_info
+
+
+def format_uptime_and_downtime_time(trackers_unprocessed: list[Tracker]) -> list[Tracker]:
+    for tracker in trackers_unprocessed:
+        if tracker.status == 1:
+            tracker.status_epoch = tracker.last_downtime
+            if not tracker.last_downtime:
+                tracker.status_readable = "Working"
+            else:
+                time_string = format_time(tracker.last_downtime)
+                tracker.status_readable = "Working for " + time_string
+        elif tracker.status == 0:
+            tracker.status_epoch = sys.maxsize
+            if not tracker.last_uptime:
+                tracker.status_readable = "Down"
+            else:
+                time_string = format_time(tracker.last_uptime)
+                tracker.status_readable = "Down for " + time_string
+
+    return trackers_unprocessed
