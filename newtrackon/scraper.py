@@ -18,7 +18,7 @@ from dns.rdata import Rdata
 from urllib3.exceptions import HTTPError
 from urllib3.response import HTTPResponse
 
-from newtrackon.bdecode import BDecodeResponse, PeerInfo, bdecode, decode_binary_peers_list
+from newtrackon.bdecode import BDecodedValue, bdecode
 from newtrackon.persistence import HistoryData, submitted_data
 from newtrackon.utils import ProtocolPref, build_httpx_url, process_txt_prefs
 
@@ -61,6 +61,14 @@ MAX_RESPONSE_SIZE: int = 1024 * 1024  # 1MB
 logger = getLogger("newtrackon")
 
 to_redact: list[str] = [str(HTTP_PORT), str(UDP_PORT)]
+
+
+class PeerInfo(TypedDict):
+    IP: str
+    port: int
+
+
+HTTPAnnounceResponse = dict[str, BDecodedValue | str | list[PeerInfo]]
 
 
 class UDPAnnounceResponse(TypedDict):
@@ -235,7 +243,68 @@ def generate_peer_id() -> bytes:
     return (PEER_ID_PREFIX + "".join(random.choices(PEER_ID_CHARS, k=12))).encode()
 
 
-def announce_http(url: str) -> BDecodeResponse:
+def parse_http_tracker_response(data: bytes) -> HTTPAnnounceResponse:
+    """Decode and interpret a bencoded HTTP tracker response."""
+    bdecoded_response = bdecode(data)
+    response: HTTPAnnounceResponse = {}
+    if not isinstance(bdecoded_response, dict):
+        raise TypeError("Could not extract the bencoded dict, probably invalid format")
+    for key, value in bdecoded_response.items():
+        response[key.decode()] = value
+
+    for key, ip_family in (("peers", socket.AF_INET), ("peers6", socket.AF_INET6)):
+        if key not in response:
+            continue
+        peers = response[key]
+        if isinstance(peers, bytes):
+            response[key] = decode_binary_peers_list(peers, 0, ip_family)
+        elif not isinstance(peers, list):
+            raise RuntimeError(f"Invalid peer list for '{key}': expected a list, got {type(peers).__name__}")
+
+    for key in ("seeds", "leechers", "complete", "incomplete"):
+        if key not in response:
+            continue
+        count = response[key]
+        if type(count) is not int:
+            raise RuntimeError(f"Invalid peer count for '{key}': expected an integer, got {type(count).__name__}")
+        if count < 0:
+            raise RuntimeError(f"Tracker reported negative peer count for '{key}': {count}")
+
+    if "external ip" in response:
+        external_ip = response["external ip"]
+        if isinstance(external_ip, bytes):
+            external_ip_length = len(external_ip)
+            if external_ip_length == 4:
+                response["external ip"] = socket.inet_ntop(socket.AF_INET, external_ip)
+            elif external_ip_length == 16:
+                response["external ip"] = socket.inet_ntop(socket.AF_INET6, external_ip)
+            else:
+                raise RuntimeError("Invalid external IP size")
+
+    for key, value in response.items():
+        if isinstance(value, bytes):
+            response[key] = value.decode()
+
+    return response
+
+
+def decode_binary_peers_list(buf: bytes, offset: int, ip_family: int) -> list[PeerInfo]:
+    peers: list[PeerInfo] = []
+    peer_length = 6 if ip_family == socket.AF_INET else 18
+    binary_response = memoryview(buf)
+    while offset != len(buf):
+        if len(buf) < offset + peer_length:
+            return peers
+        ip_address = bytes(binary_response[offset : offset + peer_length - 2])
+        ip_str = socket.inet_ntop(ip_family, ip_address)
+        offset += peer_length - 2
+        port = struct.unpack_from("!H", buf, offset)[0]
+        offset += 2
+        peers.append({"IP": ip_str, "port": port})
+    return peers
+
+
+def announce_http(url: str) -> HTTPAnnounceResponse:
     logger.info("%s Scraping HTTP(S)", url)
     thash = urandom(20)
 
@@ -270,7 +339,7 @@ def announce_http(url: str) -> BDecodeResponse:
 
     else:
         try:
-            tracker_response = bdecode(content)
+            tracker_response = parse_http_tracker_response(content)
         except (EOFError, OSError, RuntimeError, TypeError, ValueError) as e:
             raise RuntimeError(f"Failed bdecoding HTTP response: {e}")
 

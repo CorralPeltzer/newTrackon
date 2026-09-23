@@ -1,6 +1,7 @@
 """Comprehensive tests for newtrackon.scraper module.
 
 Tests cover:
+- HTTP tracker response parsing and compact peer decoding
 - UDP protocol binary encoding/decoding
 - UDP response parsing
 - HTTP announce with mocked requests
@@ -22,11 +23,11 @@ import requests
 from dns.exception import DNSException
 
 from newtrackon import scraper
-from newtrackon.bdecode import PeerInfo
 from newtrackon.scraper import (
     HTTP_PORT,
     MAX_PEERS,
     UDP_PORT,
+    PeerInfo,
     announce_http,
     announce_udp,
     attempt_all_protocols,
@@ -36,15 +37,384 @@ from newtrackon.scraper import (
     attempt_submitted,
     attempt_udp,
     check_peer_count,
+    decode_binary_peers_list,
     get_bep_34,
     get_server_ip,
     memory_limited_get,
+    parse_http_tracker_response,
     redact_origin,
     udp_create_announce_request,
     udp_create_binary_connection_request,
     udp_parse_announce_response,
     udp_parse_connection_response,
 )
+
+
+class TestDecodeBinaryPeersList:
+    """Tests for decode_binary_peers_list function."""
+
+    def test_decode_single_ipv4_peer(self):
+        """Decode a single IPv4 peer."""
+        # IP: 192.168.1.1, Port: 6881 (0x1AE1)
+        buf = b"\xc0\xa8\x01\x01\x1a\xe1"
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET)
+        assert len(result) == 1
+        assert result[0]["IP"] == "192.168.1.1"
+        assert result[0]["port"] == 6881
+
+    def test_decode_multiple_ipv4_peers(self):
+        """Decode multiple IPv4 peers."""
+        # Peer 1: 192.168.1.1:6881
+        # Peer 2: 10.0.0.1:8080
+        buf = (
+            b"\xc0\xa8\x01\x01\x1a\xe1"  # 192.168.1.1:6881
+            b"\x0a\x00\x00\x01\x1f\x90"  # 10.0.0.1:8080
+        )
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET)
+        assert len(result) == 2
+        assert result[0]["IP"] == "192.168.1.1"
+        assert result[0]["port"] == 6881
+        assert result[1]["IP"] == "10.0.0.1"
+        assert result[1]["port"] == 8080
+
+    def test_decode_ipv4_peer_with_offset(self):
+        """Decode IPv4 peers starting from an offset."""
+        # Some padding bytes followed by peer data
+        buf = b"\x00\x00\x00\xc0\xa8\x01\x01\x1a\xe1"
+        result = decode_binary_peers_list(buf, 3, socket.AF_INET)
+        assert len(result) == 1
+        assert result[0]["IP"] == "192.168.1.1"
+        assert result[0]["port"] == 6881
+
+    def test_decode_empty_ipv4_peer_list(self):
+        """Decode an empty peer list."""
+        result = decode_binary_peers_list(b"", 0, socket.AF_INET)
+        assert result == []
+
+    def test_decode_single_ipv6_peer(self):
+        """Decode a single IPv6 peer."""
+        # IPv6: 2001:db8::1, Port: 6881
+        ipv6_bytes = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01"
+        port_bytes = b"\x1a\xe1"  # 6881
+        buf = ipv6_bytes + port_bytes
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET6)
+        assert len(result) == 1
+        assert result[0]["IP"] == "2001:db8::1"
+        assert result[0]["port"] == 6881
+
+    def test_decode_multiple_ipv6_peers(self):
+        """Decode multiple IPv6 peers."""
+        # Peer 1: 2001:db8::1:6881
+        peer1 = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1a\xe1"
+        # Peer 2: ::1:8080
+        peer2 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1f\x90"
+        buf = peer1 + peer2
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET6)
+        assert len(result) == 2
+        assert result[0]["IP"] == "2001:db8::1"
+        assert result[0]["port"] == 6881
+        assert result[1]["IP"] == "::1"
+        assert result[1]["port"] == 8080
+
+    def test_decode_truncated_ipv4_peer(self):
+        """Handle truncated IPv4 peer data gracefully."""
+        # Only 4 bytes instead of 6
+        buf = b"\xc0\xa8\x01\x01"
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET)
+        # Returns empty list when data is insufficient for a complete peer
+        assert result == []
+
+    def test_decode_truncated_ipv6_peer(self):
+        """Handle truncated IPv6 peer data gracefully."""
+        # Only 10 bytes instead of 18
+        buf = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00"
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET6)
+        assert result == []
+
+    def test_decode_ipv4_high_port(self):
+        """Decode IPv4 peer with high port number."""
+        # IP: 1.2.3.4, Port: 65535 (0xFFFF)
+        buf = b"\x01\x02\x03\x04\xff\xff"
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET)
+        assert result[0]["port"] == 65535
+
+    def test_decode_ipv4_low_port(self):
+        """Decode IPv4 peer with low port number."""
+        # IP: 1.2.3.4, Port: 1 (0x0001)
+        buf = b"\x01\x02\x03\x04\x00\x01"
+        result = decode_binary_peers_list(buf, 0, socket.AF_INET)
+        assert result[0]["port"] == 1
+
+
+class TestParseHTTPTrackerResponse:
+    """Tests for the main parse_http_tracker_response() function."""
+
+    def test_converts_bytes_keys_to_strings(self):
+        """parse_http_tracker_response() should convert bytes keys to string keys."""
+        data = b"d3:fooi42e3:bar5:helloe"
+        result = parse_http_tracker_response(data)
+        assert "foo" in result
+        assert "bar" in result
+        assert result["foo"] == 42
+        assert result["bar"] == "hello"
+
+    def test_converts_bytes_values_to_strings(self):
+        """parse_http_tracker_response() should convert bytes values to strings."""
+        data = b"d4:name4:test7:versioni1ee"
+        result = parse_http_tracker_response(data)
+        assert result["name"] == "test"
+
+    def test_non_dict_raises_type_error(self):
+        """parse_http_tracker_response() should raise TypeError if root is not a dict."""
+        # A bencoded list at the root level
+        with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
+            _ = parse_http_tracker_response(b"li1ei2ee")
+
+    def test_integer_raises_type_error(self):
+        """parse_http_tracker_response() should raise TypeError if root is an integer."""
+        with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
+            _ = parse_http_tracker_response(b"i42e")
+
+    def test_string_raises_type_error(self):
+        """parse_http_tracker_response() should raise TypeError if root is a string."""
+        with pytest.raises(TypeError, match="Could not extract the bencoded dict"):
+            _ = parse_http_tracker_response(b"5:hello")
+
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    @pytest.mark.parametrize("encoded_value", [b"4:many", b"1:0", b"2:11", b"2:-1", b"3:1.5", b"le", b"de", b"e"])
+    def test_rejects_non_integer_peer_counts(self, field: str, encoded_value: bytes) -> None:
+        data = b"d" + f"{len(field)}:{field}".encode() + encoded_value + b"e"
+
+        with pytest.raises(RuntimeError, match=f"'{field}': expected an integer"):
+            _ = parse_http_tracker_response(data)
+
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    def test_rejects_negative_peer_counts(self, field: str) -> None:
+        data = b"d" + f"{len(field)}:{field}i-1ee".encode()
+
+        with pytest.raises(RuntimeError, match=f"negative peer count for '{field}': -1"):
+            _ = parse_http_tracker_response(data)
+
+    @pytest.mark.parametrize("field", ["seeds", "leechers", "complete", "incomplete"])
+    @pytest.mark.parametrize("count", [0, 100])
+    def test_accepts_non_negative_peer_counts(self, field: str, count: int) -> None:
+        data = b"d" + f"{len(field)}:{field}i{count}ee".encode()
+
+        assert parse_http_tracker_response(data)[field] == count
+
+    @pytest.mark.parametrize("field", ["peers", "peers6"])
+    @pytest.mark.parametrize("encoded_value", [b"i0e", b"i-1e", b"de", b"e"])
+    def test_rejects_invalid_peer_list_types(self, field: str, encoded_value: bytes) -> None:
+        data = b"d" + f"{len(field)}:{field}".encode() + encoded_value + b"e"
+
+        with pytest.raises(RuntimeError, match=f"'{field}': expected a list"):
+            _ = parse_http_tracker_response(data)
+
+    def test_accepts_non_compact_peer_list(self) -> None:
+        data = b"d5:peersld2:ip8:10.0.0.14:porti6881eeee"
+
+        assert parse_http_tracker_response(data)["peers"] == [{b"ip": b"10.0.0.1", b"port": 6881}]
+
+    def test_processes_ipv4_peers(self):
+        """parse_http_tracker_response() should decode binary peers field."""
+        # Dict with peers as binary data: 192.168.1.1:6881
+        peers_binary = b"\xc0\xa8\x01\x01\x1a\xe1"
+        data = b"d5:peers" + str(len(peers_binary)).encode() + b":" + peers_binary + b"e"
+        result = parse_http_tracker_response(data)
+        assert "peers" in result
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 1
+        peer = peers[0]
+        assert isinstance(peer, dict)
+        assert peer == {"IP": "192.168.1.1", "port": 6881}
+
+    def test_processes_ipv6_peers(self):
+        """parse_http_tracker_response() should decode binary peers6 field."""
+        # IPv6 peer: 2001:db8::1:6881
+        peers6_binary = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1a\xe1"
+        data = b"d6:peers6" + str(len(peers6_binary)).encode() + b":" + peers6_binary + b"e"
+        result = parse_http_tracker_response(data)
+        assert "peers6" in result
+        peers6 = result["peers6"]
+        assert isinstance(peers6, list)
+        assert len(peers6) == 1
+        peer6 = peers6[0]
+        assert isinstance(peer6, dict)
+        assert peer6 == {"IP": "2001:db8::1", "port": 6881}
+
+    def test_processes_external_ip_v4(self):
+        """parse_http_tracker_response() should decode external ip field for IPv4."""
+        # external ip: 1.2.3.4
+        ip_binary = b"\x01\x02\x03\x04"
+        data = b"d11:external ip" + str(len(ip_binary)).encode() + b":" + ip_binary + b"e"
+        result = parse_http_tracker_response(data)
+        assert "external ip" in result
+        assert result["external ip"] == "1.2.3.4"
+
+    def test_processes_external_ip_v6(self):
+        """parse_http_tracker_response() should decode external ip field for IPv6."""
+        # external ip: 2001:db8::1
+        ip_binary = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01"
+        data = b"d11:external ip" + str(len(ip_binary)).encode() + b":" + ip_binary + b"e"
+        result = parse_http_tracker_response(data)
+        assert "external ip" in result
+        assert result["external ip"] == "2001:db8::1"
+
+    def test_invalid_external_ip_size_raises_error(self):
+        """parse_http_tracker_response() should raise RuntimeError for invalid external IP size."""
+        # Invalid size: 8 bytes (not 4 or 16)
+        ip_binary = b"\x01\x02\x03\x04\x05\x06\x07\x08"
+        data = b"d11:external ip" + str(len(ip_binary)).encode() + b":" + ip_binary + b"e"
+        with pytest.raises(RuntimeError, match="Invalid external IP size"):
+            _ = parse_http_tracker_response(data)
+
+
+class TestRealisticTrackerResponses:
+    """Tests with realistic BitTorrent tracker response data."""
+
+    def test_minimal_tracker_response(self):
+        """Decode a minimal successful tracker response."""
+        # d8:intervali1800ee
+        data = b"d8:intervali1800ee"
+        result = parse_http_tracker_response(data)
+        assert result["interval"] == 1800
+
+    def test_full_tracker_response_no_peers(self):
+        """Decode a full tracker response without peers."""
+        data = b"d8:completei100e10:incompletei50e8:intervali1800ee"
+        result = parse_http_tracker_response(data)
+        assert result["complete"] == 100
+        assert result["incomplete"] == 50
+        assert result["interval"] == 1800
+
+    def test_tracker_response_with_peers(self):
+        """Decode a tracker response with binary peer data."""
+        # Two IPv4 peers
+        peers_binary = b"\x01\x02\x03\x04\x1a\xe1\x05\x06\x07\x08\x1f\x90"
+        data = (
+            b"d8:completei10e10:incompletei5e8:intervali1800e5:peers"
+            + str(len(peers_binary)).encode()
+            + b":"
+            + peers_binary
+            + b"e"
+        )
+        result = parse_http_tracker_response(data)
+        assert result["complete"] == 10
+        assert result["incomplete"] == 5
+        assert result["interval"] == 1800
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 2
+        peer0 = peers[0]
+        assert isinstance(peer0, dict)
+        assert peer0 == {"IP": "1.2.3.4", "port": 6881}
+        peer1 = peers[1]
+        assert isinstance(peer1, dict)
+        assert peer1 == {"IP": "5.6.7.8", "port": 8080}
+
+    def test_tracker_response_with_both_peer_types(self):
+        """Decode a tracker response with both IPv4 and IPv6 peers."""
+        peers_binary = b"\x01\x02\x03\x04\x1a\xe1"
+        peers6_binary = b"\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x1f\x90"
+        data = (
+            b"d8:intervali1800e5:peers"
+            + str(len(peers_binary)).encode()
+            + b":"
+            + peers_binary
+            + b"6:peers6"
+            + str(len(peers6_binary)).encode()
+            + b":"
+            + peers6_binary
+            + b"e"
+        )
+        result = parse_http_tracker_response(data)
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 1
+        peer = peers[0]
+        assert isinstance(peer, dict)
+        assert peer == {"IP": "1.2.3.4", "port": 6881}
+        peers6 = result["peers6"]
+        assert isinstance(peers6, list)
+        assert len(peers6) == 1
+        peer6 = peers6[0]
+        assert isinstance(peer6, dict)
+        assert peer6 == {"IP": "2001:db8::1", "port": 8080}
+
+    def test_tracker_failure_response(self):
+        """Decode a tracker failure response."""
+        # The decoder needs additional data after the last value due to peek() behavior
+        # "tracker is offline" is 18 characters
+        data = b"d14:failure reason18:tracker is offline8:intervali0ee"
+        result = parse_http_tracker_response(data)
+        assert result["failure reason"] == "tracker is offline"
+
+    def test_tracker_warning_response(self):
+        """Decode a tracker response with warning message."""
+        data = b"d8:intervali1800e15:warning message11:be careful!e"
+        result = parse_http_tracker_response(data)
+        assert result["interval"] == 1800
+        assert result["warning message"] == "be careful!"
+
+    def test_tracker_response_with_tracker_id(self):
+        """Decode a tracker response with tracker ID."""
+        data = b"d8:intervali1800e10:tracker id8:abc123xye"
+        result = parse_http_tracker_response(data)
+        assert result["tracker id"] == "abc123xy"
+
+    def test_tracker_response_with_min_interval(self):
+        """Decode a tracker response with minimum interval."""
+        data = b"d8:intervali1800e12:min intervali600ee"
+        result = parse_http_tracker_response(data)
+        assert result["interval"] == 1800
+        assert result["min interval"] == 600
+
+    def test_tracker_response_complete_example(self):
+        """Decode a complete realistic tracker response."""
+        # Build a comprehensive response
+        peers_binary = b"\xc0\xa8\x01\x01\x1a\xe1"  # 192.168.1.1:6881
+        external_ip = b"\x0a\x00\x00\x01"  # 10.0.0.1
+        data = (
+            b"d8:completei150e11:external ip4:"
+            + external_ip
+            + b"10:incompletei75e8:intervali1800e12:min intervali900e5:peers6:"
+            + peers_binary
+            + b"e"
+        )
+        result = parse_http_tracker_response(data)
+        assert result["complete"] == 150
+        assert result["incomplete"] == 75
+        assert result["interval"] == 1800
+        assert result["min interval"] == 900
+        assert result["external ip"] == "10.0.0.1"
+        peers = result["peers"]
+        assert isinstance(peers, list)
+        assert len(peers) == 1
+        peer = peers[0]
+        assert isinstance(peer, dict)
+        assert peer == {"IP": "192.168.1.1", "port": 6881}
+
+    def test_empty_peers_list(self):
+        """parse_http_tracker_response() handles empty peers binary data."""
+        data = b"d8:intervali1800e5:peers0:e"
+        result = parse_http_tracker_response(data)
+        assert result["peers"] == []
+
+    def test_empty_peers6_list(self):
+        """parse_http_tracker_response() handles empty peers6 binary data."""
+        data = b"d8:intervali1800e6:peers60:e"
+        result = parse_http_tracker_response(data)
+        assert result["peers6"] == []
+
+    def test_large_integer_values(self):
+        """Test with large integer values typical in tracker responses."""
+        # Large complete/incomplete counts
+        data = b"d8:completei999999e10:incompletei888888e8:intervali7200ee"
+        result = parse_http_tracker_response(data)
+        assert result["complete"] == 999999
+        assert result["incomplete"] == 888888
+        assert result["interval"] == 7200
 
 
 class TestUDPBinaryEncoding:
@@ -344,16 +714,13 @@ class TestAnnounceHTTP:
             _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")
-    def test_announce_http_wraps_bdecode_type_error(self, mock_get: MagicMock) -> None:
-        """TypeError from bdecode should be exposed as an announce failure."""
+    def test_announce_http_rejects_non_dict_response(self, mock_get: MagicMock) -> None:
+        """A valid bencoded list is not a valid HTTP tracker response."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_get.return_value = (mock_response, b"li1ei2ee")
 
-        with (
-            patch("newtrackon.scraper.bdecode", side_effect=TypeError("invalid root type")),
-            pytest.raises(RuntimeError, match="Failed bdecoding HTTP response: invalid root type"),
-        ):
+        with pytest.raises(RuntimeError, match="Failed bdecoding HTTP response: Could not extract the bencoded dict"):
             _ = announce_http("http://tracker.example.com/announce")
 
     @patch("newtrackon.scraper.memory_limited_get")

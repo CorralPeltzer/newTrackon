@@ -14,7 +14,7 @@ import pytest
 from pytest import MonkeyPatch
 
 from newtrackon import ingest
-from newtrackon.bdecode import BDecodeResponse
+from newtrackon.scraper import HTTPAnnounceResponse
 from newtrackon.tracker import IP_HISTORY_WINDOW, Tracker
 from tests.helpers import TrackerDataDict
 
@@ -111,7 +111,7 @@ class TestTrackerUpdateCycle:
         initial_last_checked = sample_tracker.last_checked
 
         # Mock scraper to return successful response
-        mock_response: BDecodeResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: HTTPAnnounceResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
@@ -181,7 +181,7 @@ class TestTrackerUpdateCycle:
         )
         shared_memory_db.commit()
 
-        mock_response: BDecodeResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: HTTPAnnounceResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newtrackon.scraper.get_bep_34", return_value=(False, None)),
@@ -989,7 +989,7 @@ class TestBEP34Integration:
         # BEP34 returns UDP preference on port 1337
         bep34_prefs = [("udp", 1337)]
 
-        mock_response: BDecodeResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
+        mock_response: HTTPAnnounceResponse = {"interval": 1800, "peers": [], "complete": 10, "incomplete": 5}
 
         with (
             patch("newtrackon.scraper.get_bep_34", return_value=(True, bep34_prefs)),

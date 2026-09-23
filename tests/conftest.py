@@ -14,8 +14,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask.testing import FlaskClient
 
-from newtrackon.bdecode import BDecodeResponse
-from newtrackon.scraper import UDPAnnounceResponse
+from newtrackon.scraper import HTTPAnnounceResponse, UDPAnnounceResponse
 from tests.helpers import ReusableConnection, TrackerDataDict
 
 if TYPE_CHECKING:
@@ -238,7 +237,7 @@ def flask_client(mock_db_connection: Connection) -> Generator[FlaskClient]:
 
 
 @pytest.fixture
-def mock_tracker_response() -> BDecodeResponse:
+def mock_tracker_response() -> HTTPAnnounceResponse:
     """Return a mock successful tracker response."""
     return {
         "interval": 1800,
