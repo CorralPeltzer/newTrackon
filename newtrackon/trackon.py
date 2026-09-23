@@ -13,18 +13,15 @@ from newtrackon.tracker import Tracker
 logger: logging.Logger = logging.getLogger("newtrackon")
 
 
-def build_ip_indexes(trackers: list[Tracker]) -> tuple[list[str], dict[str, set[str]]]:
-    all_ips_of_all_trackers: list[str] = []
+def build_ip_indexes(trackers: list[Tracker]) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    current_index: dict[str, set[str]] = {}
     recent_index: dict[str, set[str]] = {}
-    for tracker_in_list in trackers:
-        if tracker_in_list.recent_ips:
-            recent_ips = tracker_in_list.recent_ips.keys()
-            all_ips_of_all_trackers.extend(recent_ips)
-            for ip in recent_ips:
-                recent_index.setdefault(ip, set()).add(tracker_in_list.host)
-        elif tracker_in_list.ips:
-            all_ips_of_all_trackers.extend(tracker_in_list.ips)
-    return all_ips_of_all_trackers, recent_index
+    for tracker in trackers:
+        for ip in tracker.ips or []:
+            current_index.setdefault(ip, set()).add(tracker.host)
+        for ip in tracker.recent_ips:
+            recent_index.setdefault(ip, set()).add(tracker.host)
+    return current_index, recent_index
 
 
 def update_outdated_trackers() -> NoReturn:
@@ -49,50 +46,25 @@ def update_outdated_trackers() -> NoReturn:
         sleep(5)
 
 
-def warn_of_duplicate_ips(all_ips: list[str]) -> None:
-    if all_ips:
-        seen: set[str] = set()
-        duplicates: set[str] = set()
-        for ip in all_ips:
-            if ip not in seen:
-                seen.add(ip)
-            else:
-                duplicates.add(ip)
-        for duplicate_ip in duplicates:
-            logger.warning("IP %s is duplicated, manual action required", duplicate_ip)
-
-
-def warn_of_recent_ip_overlaps(trackers: list[Tracker], recent_index: dict[str, set[str]]) -> None:
-    if not trackers:
-        return
-    if not recent_index:
-        return
-    warned: set[tuple[str, str, str]] = set()
-    for tracker in trackers:
-        if not tracker.ips:
-            continue
-        for ip in tracker.ips:
-            other_hosts = recent_index.get(ip, set()) - {tracker.host}
-            if not other_hosts:
-                continue
-            other_hosts_str = ", ".join(sorted(other_hosts))
-            key = (tracker.host, ip, other_hosts_str)
-            if key in warned:
-                continue
-            warned.add(key)
+def warn_of_ip_conflicts() -> None:
+    current_index, recent_index = build_ip_indexes(db.get_all_data())
+    for ip, current_hosts in current_index.items():
+        current_names = ", ".join(sorted(current_hosts))
+        if len(current_hosts) > 1:
             logger.warning(
-                "Tracker %s resolved to IP %s recently seen on %s",
-                tracker.host,
+                "IP %s is currently shared by %s",
                 ip,
-                other_hosts_str,
+                current_names,
             )
 
-
-def warn_of_ip_conflicts() -> None:
-    trackers = db.get_all_data()
-    all_ips, recent_index = build_ip_indexes(trackers)
-    warn_of_duplicate_ips(all_ips)
-    warn_of_recent_ip_overlaps(trackers, recent_index)
+        historical_only_hosts = recent_index.get(ip, set()) - current_hosts
+        if historical_only_hosts:
+            logger.warning(
+                "IP %s currently used by %s was recently seen on %s",
+                ip,
+                current_names,
+                ", ".join(sorted(historical_only_hosts)),
+            )
 
 
 def warn_of_ip_conflicts_periodically() -> NoReturn:

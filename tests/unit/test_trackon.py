@@ -688,126 +688,89 @@ class TestProcessSubmittedQueue:
             assert mock_save.call_count == 2  # pyright: ignore[reportUnknownMemberType]
 
 
-class TestWarnOfDuplicateIps:
-    """Tests for warn_of_duplicate_ips function."""
+class TestWarnOfIpConflicts:
+    """Current duplicates and historical overlaps should produce distinct warnings."""
 
-    def test_detects_duplicate_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
-        """Test that duplicate IPs are detected and logged."""
-        from newtrackon import trackon
-
-        all_ips = ["1.2.3.4", "1.2.3.4"]
-
-        with caplog.at_level(logging.WARNING):
-            trackon.warn_of_duplicate_ips(all_ips)
-
-        assert "1.2.3.4 is duplicated" in caplog.text
-
-    def test_detects_multiple_duplicate_ips(
-        self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture
+    @pytest.mark.parametrize(
+        ("tracker_data", "expected_messages"),
+        [
+            pytest.param(
+                [("b.example", ["1.2.3.4"], ["1.2.3.4"]), ("a.example", ["1.2.3.4"], ["1.2.3.4"])],
+                ["IP 1.2.3.4 is currently shared by a.example, b.example"],
+                id="current-duplicate-without-historical-echoes",
+            ),
+            pytest.param(
+                [
+                    ("a.example", ["1.2.3.4"], list[str]()),
+                    ("b.example", ["1.2.3.4"], list[str]()),
+                    ("c.example", None, list[str]()),
+                ],
+                ["IP 1.2.3.4 is currently shared by a.example, b.example"],
+                id="current-duplicate-without-history",
+            ),
+            pytest.param(
+                [("a.example", ["1.2.3.4"], ["1.2.3.4"]), ("b.example", ["5.6.7.8"], ["1.2.3.4", "5.6.7.8"])],
+                ["IP 1.2.3.4 currently used by a.example was recently seen on b.example"],
+                id="historical-overlap",
+            ),
+            pytest.param(
+                [
+                    ("b.example", ["1.2.3.4"], ["1.2.3.4"]),
+                    ("a.example", ["1.2.3.4"], ["1.2.3.4"]),
+                    ("d.example", None, ["1.2.3.4"]),
+                    ("c.example", None, ["1.2.3.4"]),
+                ],
+                [
+                    "IP 1.2.3.4 is currently shared by a.example, b.example",
+                    "IP 1.2.3.4 currently used by a.example, b.example was recently seen on c.example, d.example",
+                ],
+                id="mixed-current-and-historical-overlaps",
+            ),
+            pytest.param(
+                [
+                    ("a.example", ["1.2.3.4", "5.6.7.8"], list[str]()),
+                    ("b.example", ["1.2.3.4", "5.6.7.8"], list[str]()),
+                ],
+                [
+                    "IP 1.2.3.4 is currently shared by a.example, b.example",
+                    "IP 5.6.7.8 is currently shared by a.example, b.example",
+                ],
+                id="multiple-shared-ips",
+            ),
+            pytest.param(
+                [("a.example", ["1.2.3.4", "1.2.3.4"], ["1.2.3.4"]), ("b.example", ["5.6.7.8"], ["5.6.7.8"])],
+                [],
+                id="no-overlap-between-hosts",
+            ),
+            pytest.param(
+                [("a.example", None, ["1.2.3.4"]), ("b.example", list[str](), ["1.2.3.4"])],
+                [],
+                id="historical-ip-with-no-current-users",
+            ),
+            pytest.param([], [], id="no-trackers"),
+        ],
+    )
+    def test_conflict_warnings(
+        self,
+        tracker_data: list[tuple[str, list[str] | None, list[str]]],
+        expected_messages: list[str],
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
-        """Test that multiple duplicate IPs are detected."""
         from newtrackon import trackon
 
-        tracker1 = MagicMock()
-        tracker1.ips = ["1.2.3.4", "5.6.7.8"]
-        tracker1.recent_ips = {"1.2.3.4": 1700000000, "5.6.7.8": 1700000000}
-        tracker2 = MagicMock()
-        tracker2.ips = ["1.2.3.4"]  # Duplicate
-        tracker2.recent_ips = {"1.2.3.4": 1700000000}
-        tracker3 = MagicMock()
-        tracker3.ips = ["5.6.7.8"]  # Another duplicate
-        tracker3.recent_ips = {"5.6.7.8": 1700000000}
-        all_ips, _ = trackon.build_ip_indexes([tracker1, tracker2, tracker3])
+        trackers: list[Tracker] = []
+        for host, ips, recent_ips in tracker_data:
+            tracker = create_test_tracker(f"udp://{host}:6969/announce", ips=ips)
+            tracker.recent_ips = dict.fromkeys(recent_ips, 1700000000)
+            trackers.append(tracker)
 
-        with caplog.at_level(logging.WARNING):
-            trackon.warn_of_duplicate_ips(all_ips)
+        with (
+            patch("newtrackon.trackon.db.get_all_data", return_value=trackers),
+            caplog.at_level(logging.WARNING, logger="newtrackon"),
+        ):
+            trackon.warn_of_ip_conflicts()
 
-        assert "1.2.3.4 is duplicated" in caplog.text
-        assert "5.6.7.8 is duplicated" in caplog.text
-
-    def test_no_warning_for_unique_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
-        """Test that no warning is logged when all IPs are unique."""
-        from newtrackon import trackon
-
-        tracker1 = MagicMock()
-        tracker1.ips = ["1.2.3.4"]
-        tracker1.recent_ips = {"1.2.3.4": 1700000000}
-        tracker2 = MagicMock()
-        tracker2.ips = ["5.6.7.8"]
-        tracker2.recent_ips = {"5.6.7.8": 1700000000}
-        all_ips, _ = trackon.build_ip_indexes([tracker1, tracker2])
-
-        with caplog.at_level(logging.WARNING):
-            trackon.warn_of_duplicate_ips(all_ips)
-
-        assert "duplicated" not in caplog.text
-
-    def test_no_warning_when_no_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
-        """Test that no warning is logged when there are no IPs."""
-        from newtrackon import trackon
-
-        with caplog.at_level(logging.WARNING):
-            trackon.warn_of_duplicate_ips([])
-
-        assert "duplicated" not in caplog.text
-
-    def test_handles_trackers_with_no_ips(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
-        """Test duplicate detection when some trackers have no IPs."""
-        from newtrackon import trackon
-
-        tracker1 = MagicMock()
-        tracker1.ips = ["1.2.3.4"]
-        tracker1.recent_ips = {"1.2.3.4": 1700000000}
-        tracker2 = MagicMock()
-        tracker2.ips = None
-        tracker2.recent_ips = {}
-        tracker3 = MagicMock()
-        tracker3.ips = ["1.2.3.4"]  # Duplicate
-        tracker3.recent_ips = {"1.2.3.4": 1700000000}
-        all_ips, _ = trackon.build_ip_indexes([tracker1, tracker2, tracker3])
-
-        with caplog.at_level(logging.WARNING):
-            trackon.warn_of_duplicate_ips(all_ips)
-
-        assert "1.2.3.4 is duplicated" in caplog.text
-
-
-class TestWarnOfRecentIpOverlaps:
-    """Tests for warn_of_recent_ip_overlaps function."""
-
-    def test_detects_recent_ip_overlap(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
-        """Test that recent IP overlaps are detected and logged."""
-        from newtrackon import trackon
-
-        tracker1 = create_test_tracker("udp://tracker1.example.com:6969/announce", ips=["9.9.9.9"])
-        tracker1.recent_ips = {"1.2.3.4": 1700000000}
-
-        tracker2 = create_test_tracker("udp://tracker2.example.com:6969/announce", ips=["1.2.3.4"])
-        tracker2.recent_ips = {}
-        trackers = [tracker1, tracker2]
-        _, recent_index = trackon.build_ip_indexes(trackers)
-
-        with caplog.at_level(logging.WARNING):
-            trackon.warn_of_recent_ip_overlaps(trackers, recent_index)
-
-        assert "Tracker tracker2.example.com resolved to IP 1.2.3.4 recently seen on tracker1.example.com" in caplog.text
-
-    def test_no_warning_for_no_overlap(self, mock_db_connection: sqlite3.Connection, caplog: pytest.LogCaptureFixture) -> None:
-        """Test that no warning is logged when there is no recent IP overlap."""
-        from newtrackon import trackon
-
-        tracker1 = create_test_tracker("udp://tracker1.example.com:6969/announce", ips=["1.2.3.4"])
-        tracker1.recent_ips = {"1.2.3.4": 1700000000}
-
-        tracker2 = create_test_tracker("udp://tracker2.example.com:6969/announce", ips=["5.6.7.8"])
-        tracker2.recent_ips = {}
-        trackers = [tracker1, tracker2]
-        _, recent_index = trackon.build_ip_indexes(trackers)
-
-        with caplog.at_level(logging.WARNING):
-            trackon.warn_of_recent_ip_overlaps(trackers, recent_index)
-
-        assert "recently seen on" not in caplog.text
+        assert caplog.messages == expected_messages
 
 
 class TestLogWrongIntervalDenial:
@@ -1034,21 +997,15 @@ class TestWarnOfIpConflictsPeriodic:
     """Tests for periodic IP conflict warnings."""
 
     def test_warn_of_ip_conflicts_uses_single_db_snapshot(self, mock_db_connection: sqlite3.Connection) -> None:
-        """warn_of_ip_conflicts should fetch data once and fan out to both warning paths."""
+        """Current and historical comparisons should use the same database snapshot."""
         from newtrackon import trackon
 
-        trackers = [MagicMock()]
+        trackers = [create_test_tracker("udp://tracker.example.com:6969/announce", ips=["1.2.3.4"])]
 
-        with (
-            patch("newtrackon.trackon.db.get_all_data", return_value=trackers) as mock_get,
-            patch("newtrackon.trackon.warn_of_duplicate_ips") as mock_duplicates,
-            patch("newtrackon.trackon.warn_of_recent_ip_overlaps") as mock_recent,
-        ):
+        with patch("newtrackon.trackon.db.get_all_data", return_value=trackers) as mock_get:
             trackon.warn_of_ip_conflicts()
 
         mock_get.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
-        mock_duplicates.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
-        mock_recent.assert_called_once()  # pyright: ignore[reportUnknownMemberType]
 
     def test_warn_of_ip_conflicts_periodically_runs_every_120_seconds(self, mock_db_connection: sqlite3.Connection) -> None:
         """warn_of_ip_conflicts_periodically should run loop body every 120 seconds."""
